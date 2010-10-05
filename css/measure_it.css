@@ -1,0 +1,102 @@
+h1, h2, h3, h4, h5, h6 {
+	margin: 0px;
+	padding: 3px;
+}
+
+div.sensor-inner {
+	float: left;
+	margin: 5px;
+	margin-top: 10px;
+}
+
+div.sensor {
+	clear: left;
+	height: 130px;
+	margin-bottom: 10px;
+}
+
+div.sensor_id {
+	float: left;
+	padding: 3px;
+	margin: 4px;
+	border: 1px solid #c0c0c0;
+	cursor: pointer;
+}
+
+.selected {
+	background-color: #c0c0c0;
+}
+
+.inner {
+	padding: 3px;
+}
+
+.button{
+	display: block;
+	width: 97%;
+}
+
+.float_left {
+	float: left;
+}
+
+.padding5 {
+	padding: 5px;
+}
+
+.ui-corner-all a {
+	text-decoration: none;
+}
+
+div.data {
+	padding: 5px;
+}
+
+div.placeholder{
+	height: 400px;
+	width: 78%;
+}
+
+div.placeholder #infobox{
+	position: absolute;
+	left: 70px;
+	top: 10px;
+	width: 300px;
+	height: 20px;
+	text-align: center;
+}
+
+div.overview{
+	height: 40px;
+	width: 78%;
+}
+div.menu {
+	width: 20%;
+	float: right;
+}
+div.select-display .sensor_data_change {
+	display: inline;
+}
+div.select-display {
+	display: block;
+}
+.active_element {
+	color: darkred;
+}
+div.date {
+	position: relative;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current{
+	display: none!important;
+}
+.ui-dialog {
+	width: 500px;
+}
+input,
+.button {
+	margin: 3px;
+}
+#adminmenu {
+	height: 100%;
+}
