@@ -2,6 +2,10 @@
 
 require_once( 'class.db.php' );
 
+# in demo mode no sensor actions please
+# set demo to false to get measureit work without restrictions
+$demo = true;
+
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
 		case 'navigation_main':
@@ -17,31 +21,27 @@ if( isset( $_REQUEST['do'] ) ){
 			sensor_data_get( $_REQUEST );
 		break;
 		case 'sensor_add':
-			#in demo mode no sensor actions please
-			return true;
+			if($demo){ return true; }
 			sensor_add( $_REQUEST );
 		break;
 		case 'sensor_delete':
-			#in demo mode no sensor actions please
-			return true;
+			if($demo){ return true; }
 			sensor_delete( $_REQUEST );
 		break;
 		case 'sensor_position_add':
-			#in demo mode no sensor actions please
-			return true;
+			if($demo){ return true; }
 			sensor_position_add( $_REQUEST );
 		break;
 		case 'sensor_settings_save':
+			if($demo){ return true; }
 			sensor_settings_save( $_REQUEST );
 		break;
 		case 'sensor_position_delete':
-			#in demo mode no sensor actions please
-			return true;
+			if($demo){ return true; }
 			sensor_position_delete( $_REQUEST );
 		break;
 		case 'sensor_entry_delete':
-			#in demo mode no sensor actions please
-			return true;
+			if($demo){ return true; }
 			sensor_entry_delete( $_REQUEST );
 		break;
 		default:
