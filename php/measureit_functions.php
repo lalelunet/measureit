@@ -3,8 +3,7 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-# set demo to false to get measureit work without restrictions
-$demo = true;
+$demo = false;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -52,6 +51,7 @@ if( isset( $_REQUEST['do'] ) ){
 
 function navigation_main( ){
 	$sensors = sensor_get();
+	$r = array();
 	foreach( $sensors as $k=>$v ){
 		$r[$k]['sensor'] = $v;
 	}
@@ -102,6 +102,7 @@ function sensor_data_raw_get( $params = array( ) ){
 	if( data_query_build( $params ) ){
 		$db = new mydb;
 		$query = $db->query( data_query_build( $params ) );
+		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
 			$r[] = $d['data'];
 		}
@@ -113,6 +114,7 @@ function sensor_item_get( $params = array( ) ){
 	if( data_query_build( $params ) ){
 		$db = new mydb;
 		$query = $db->query( data_query_build( $params ) );
+		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
 			$r = $d['data'];
 		}
@@ -172,6 +174,7 @@ function sensor_get( $sensor = '' ){
 		$subselect
 		ORDER BY measure_positions.position_id
 	" );
+	$r = array();
 	while( $d = $db->fetch_array( $query ) ){
 		foreach( $d as $k => $v){
 			$item = !is_numeric( $k ) ? $k : '';
