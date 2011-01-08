@@ -454,7 +454,7 @@ function sensor_detail(data){
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail', 'sensor' : data }, function(d){
 		if(  d === null ){ return true; }
 		sensor_data_selected(false, data);
-		sensor_positions( d.sensor[data].positions, data );
+		//sensor_positions( d.sensor[data].positions, data );
 		sensor_data_selection( data, 'last 2 hour watt' );
 	});
 };
@@ -610,5 +610,17 @@ function container_get(parent,id,title,css){
 	var css = typeof(css) != 'undefined' ? css : '';
 	$(parent).append('<div id="'+id+'" class="ui-widget-content ui-corner-all sensor-inner '+css+'"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+title+'</h5></div>');
 }
+
+
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-6114760-6']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+
 
 </script>
