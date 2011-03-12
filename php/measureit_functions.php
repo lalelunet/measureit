@@ -3,12 +3,12 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = false;
+$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
 		case 'navigation_main':
-			navigation_main( );
+			navigation_main();
 		break;
 		case 'summary_start':
 			summary_start();
@@ -18,6 +18,9 @@ if( isset( $_REQUEST['do'] ) ){
 		break;
 		case 'summary_sensor':
 			sensor_data_get( $_REQUEST );
+		break;
+		case 'sensor_statistic':
+			sensor_statistic( $_REQUEST );
 		break;
 		case 'sensor_add':
 			if($demo){ return true; }
@@ -98,6 +101,11 @@ function sensor_data_get( $params = array( ) ){
 	}
 }
 
+function sensor_statistic( $params = array( ) ){
+	$params['range_to'] = sensor_position_next_date_get( $params );
+	sensor_statistic_get( $params );
+}
+
 function sensor_data_raw_get( $params = array( ) ){
 	if( data_query_build( $params ) ){
 		$db = new mydb;
@@ -108,6 +116,23 @@ function sensor_data_raw_get( $params = array( ) ){
 		}
 	}
 	return $r;
+}
+
+function sensor_statistic_get( $params = array( ) ){
+	if( data_query_build( $params ) ){
+		$r = '';
+		$db = new mydb;
+		$query = $db->query( data_query_build( $params ) );
+		while( $d = $db->fetch_array( $query ) ){
+			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $t);
+			$ts = strtotime( $d['time'] );
+			$month = date( 'F', $ts );
+			$r[$t[1]][$month][$t[3]]['data'] = $d['data'];
+			$r[$t[1]][$month][$t[3]]['weekday'] = date( 'l', $ts );
+			$r[$t[1]][$month][$t[3]]['dayid'] = $d['day_id'];
+		}
+		print json_encode($r);
+	}
 }
 
 function sensor_item_get( $params = array( ) ){
@@ -126,6 +151,7 @@ function data_query_build( $params = array( ) ){
 	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly|measure_tmpr)/', $params['table'] ) ? $params['table'] : error( $params['table'] );
 	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( $params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
+	$turn = isset( $params['turn'] ) ? $params['turn'] : '';
 	switch( $params['timeframe'] ){
 		case 'static':
 			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( $params['unit'] );
@@ -145,6 +171,9 @@ function data_query_build( $params = array( ) ){
 			$to = preg_replace('/_/', ' ', $params[range_to]);
 			$timeframe = "AND time BETWEEN '$from:00:00' and '$to:00:00'";
 		break;
+		case 'position':
+			$timeframe = "AND time BETWEEN '$params[range_from]' and $params[range_to] ORDER BY $order $turn";
+		break;
 		default:
 			error('No timeframe to get data from');
 		break;
@@ -160,6 +189,14 @@ function price_sum( $params ){
 		$d += $v;
 	}
 	$r = "$d";
+	return $r;
+}
+
+function sensor_position_next_date_get( $params = array( ) ){
+	$db = new mydb;
+	$query = $db->query("SELECT position_time FROM measure_positions WHERE position_id > $params[sensor_position] AND position_sensor = $params[sensor]");
+	$date = $db->fetch_row( $query );
+	$r = is_array( $date ) ? sprintf( "'%s'", substr( $date[0], 0, 10) ) : 'now()';
 	return $r;
 }
 

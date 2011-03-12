@@ -36,8 +36,21 @@ div.sensor_id {
 	width: 97%;
 }
 
+.hidden{
+display: none;
+}
+
+
 .float_left {
 	float: left;
+}
+
+.float_right{
+	float: right;
+}
+
+.pointer{
+	cursor: pointer;
 }
 
 .padding5 {
@@ -74,6 +87,49 @@ div.menu {
 	width: 20%;
 	float: right;
 }
+
+.menu div{
+	width: 100%;
+}
+
+
+.sensor_statistic_table{
+	margin: 20px 0px 20px 20px;
+}
+
+.level2{
+	margin: 7px 0px 20px 20px;
+}
+
+.month_header,
+.statistic_position{
+	background-color: #e0e0e0;
+	border: 2px solid #ffffff;
+	padding: 5px;
+	-moz-border-radius: 8px;
+}
+
+.day_header{
+	padding: 2px 4px 2px 5px;
+	-moz-border-radius: 5px;
+}
+
+.sensor_statistic_table{
+	border: 1px solid #c0c0c0;	
+	padding: 2px 4px 2px 5px;	
+	-moz-border-radius: 15px;
+	padding: 10px;
+}
+	
+.level4{
+	margin: 4px 10px 0px 15px;
+	background-color: #ffffff;
+}
+
+.even{
+	background-color: f0f0f0;
+}
+
 div.select-display .sensor_data_change {
 	display: inline;
 }
