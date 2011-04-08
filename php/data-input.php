@@ -40,8 +40,8 @@ if ($fp=fopen("php://stdin","r")) {
 			$tmpr = preg_replace( '/\.0/', '', $tmpr );
 			$sensors[$sensor]['tmpr'] = $tmpr;
 			$sensors[$sensor]['watts'] = $watts;
-			data_update( $tmpr, $sensor, 'tmpr_last', 'measure_tmpr' );
-			data_update( $watts, $sensor, 'watt_last', 'measure_watt' );
+			data_update_tmpr( $tmpr, $sensor, 'tmpr_last', 'measure_tmpr' );
+			data_update_watt( $watts, $sensor, 'watt_last', 'measure_watt' );
 		}
 		#print $line."\n";
 		
@@ -49,7 +49,7 @@ if ($fp=fopen("php://stdin","r")) {
 
 }
 
-function data_update( $data, $sensor, $type, $table ){
+function data_update_watt( $data, $sensor, $type, $table ){
 	global $sensors;
 	# store only when data has changed
 	if( $sensors[$sensor][$type] != $data ){
@@ -58,6 +58,19 @@ function data_update( $data, $sensor, $type, $table ){
 		@$db->query( "INSERT INTO $table ( sensor, data, time ) VALUES ( $sensor, $data, NOW( ) )" );
 		$hour = date('H');
 		$tmpr = $type == 'tmpr_last' ? $db->query( "INSERT IGNORE INTO measure_tmpr_hourly ( sensor, data, time, hour ) VALUES ( $sensor, $data, NOW( ), $hour )" ) : '';
+	}
+	return true;
+}
+
+function data_update_tmpr( $data, $sensor, $type, $table ){
+	global $sensors;
+	# store only when data has changed
+	if( $sensors[$sensor][$type] != $data ){
+		$sensors[$sensor][$type] = $data;
+		$db = new mydb;
+		@$db->query( "INSERT INTO $table ( data, time ) VALUES ( $data, NOW( ) )" );
+		$hour = date('H');
+		$tmpr = $type == 'tmpr_last' ? $db->query( "INSERT IGNORE INTO measure_tmpr_hourly ( data, time, hour ) VALUES ( $data, NOW( ), $hour )" ) : '';
 	}
 	return true;
 }
