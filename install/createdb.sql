@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS `measure_settings` (
 
 CREATE TABLE IF NOT EXISTS `measure_tmpr` (
   `tmpr_id` int(128) NOT NULL AUTO_INCREMENT,
-  `sensor` tinyint(1) NOT NULL,
   `data` float NOT NULL,
   `time` datetime NOT NULL,
   PRIMARY KEY (`tmpr_id`)
@@ -42,12 +41,11 @@ CREATE TABLE IF NOT EXISTS `measure_tmpr` (
 
 CREATE TABLE IF NOT EXISTS `measure_tmpr_hourly` (
   `hour_id` int(11) NOT NULL AUTO_INCREMENT,
-  `sensor` tinyint(1) NOT NULL,
   `data` float NOT NULL,
   `hour` tinyint(2) NOT NULL,
   `time` date NOT NULL,
   PRIMARY KEY (`hour_id`),
-  UNIQUE KEY `data` (`sensor`,`hour`,`time`)
+  UNIQUE KEY `data` (`hour`,`time`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 
