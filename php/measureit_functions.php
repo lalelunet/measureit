@@ -71,13 +71,13 @@ function sensor_detail( $params = array( ) ){
 }
 
 function summary_start( ){
-	$tmpr = sensor_item_get( array( 'sensor'=> 1, 'table'=> 'measure_tmpr', 'timeframe'=> 'last') );
 	$sensors = sensor_get();
 	foreach( $sensors as $k=>$v ){
 		$p = end( $v['positions'] );
+		$vn = sensor_values_now_get( $k );
 		$r[$k]['sensor'] = $v;
-		$r[$k]['tmpr'] = $tmpr;
-		$r[$k]['watt'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt', 'timeframe'=> 'last') );
+		$r[$k]['tmpr'] = $vn['tmpr'];
+		$r[$k]['watt'] = $vn['watt'];
 		$r[$k]['daily'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_daily', 'timeframe'=> 'last', 'limit' => $p['time']  ) );
 		$r[$k]['hourly'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_hourly', 'timeframe'=> 'last', 'order' => 'hour', 'limit' => $p['time']  ) );
 		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'static', 'limit' => $p['time']  ) ) );
@@ -101,6 +101,15 @@ function sensor_data_get( $params = array( ) ){
 		$r = '['.$r.']';
 		print $r;
 	}
+}
+
+function sensor_values_now_get( $sensor ){
+	if( is_numeric( $sensor ) ){
+		$db = new mydb;
+		$query = $db->query( "SELECT * FROM measure_data_now WHERE sensor_id = $sensor" );
+		return $db->fetch_array( $query );
+	}
+	return true;
 }
 
 function sensor_statistic( $params = array( ) ){
@@ -154,14 +163,12 @@ function data_query_build( $params = array( ) ){
 	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( $params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
 	$turn = isset( $params['turn'] ) ? $params['turn'] : '';
-	// temperature data are from the base station not from a sensor
-	$condition = $params['table'] != 'measure_tmpr' ? 'WHERE sensor = '.$sensor : '';
+	$limit = isset( $params['limit'] ) ? ' AND time > '.$params['limit'] : '';
 	switch( $params['timeframe'] ){
 		case 'static':
 			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( $params['unit'] );
 			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( $params['unit_value'] );
-			$limit = isset( $params['limit'] ) ? ' AND time > "'.$params['limit'].'"' : '';
-			$timeframe = " AND time > NOW( ) - INTERVAL $unit_value $unit  $limit ORDER BY $order";
+			$timeframe = " AND time > NOW( ) - INTERVAL $unit_value $unit  ORDER BY $order";
 		break;
 		case 'last':
 			$timeframe = " ORDER BY $order DESC LIMIT 1";
@@ -183,8 +190,8 @@ function data_query_build( $params = array( ) ){
 			error('No timeframe to get data from');
 		break;
 	}
-	$query = "SELECT * FROM $table $condition $timeframe";
-	#print "SELECT * FROM $table  $condition $timeframe<br />";
+	$query = "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
+	#print "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
 	return $query;
 }
 
@@ -268,6 +275,7 @@ function sensor_delete( $params = array() ){
 	$db->query("DELETE FROM measure_it.measure_positions WHERE position_sensor = $params[sensor_id]");
 	$db->query("DELETE FROM measure_it.measure_settings WHERE measure_sensor = $params[sensor_id]");
 	$db->query("DELETE FROM measure_it.measure_watt WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_it.measure_data_now WHERE sensor = $params[sensor_id]");
 	$db->query("DELETE FROM measure_it.measure_watt_daily WHERE sensor = $params[sensor_id]");
 	$db->query("DELETE FROM measure_it.measure_watt_hourly WHERE sensor = $params[sensor_id]");
 	$db->query("DELETE FROM measure_it.measure_watt_monthly WHERE sensor = $params[sensor_id]");
@@ -276,6 +284,7 @@ function sensor_delete( $params = array() ){
 
 function sensor_add( $params = array() ){
 	$db = new mydb;
+	$db->query("INSERT IGNORE INTO measure_it.measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
 	$db->query("INSERT INTO measure_it.measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
 	return true;
 }
