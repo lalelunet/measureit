@@ -88,6 +88,25 @@ CREATE TABLE IF NOT EXISTS `measure_watt_monthly` (
   UNIQUE KEY `data` (`sensor`,`time`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+CREATE TABLE IF NOT EXISTS `measure_data_now` (
+  `sensor_id` tinyint(2) NOT NULL,
+  `watt` smallint(5) NOT NULL,
+  `tmpr` float NOT NULL,
+  PRIMARY KEY (`sensor_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+INSERT INTO `measure_data_now` (`sensor_id`, `watt`, `tmpr`) VALUES
+(1, 0, 0),
+(2, 0, 0),
+(3, 0, 0),
+(4, 0, 0),
+(5, 0, 0),
+(6, 0, 0),
+(7, 0, 0),
+(8, 0, 0),
+(9, 0, 0);
+
 INSERT INTO `measure_it`.`measure_positions` (`position_time`, `position_description`, `position_sensor`) VALUES (now(), 'start position', '1');
 INSERT INTO `measure_it`.`measure_sensors` (`sensor_id`, `sensor_title`) VALUES ('1', 'Sensor 1');
 INSERT INTO `measure_it`.`measure_settings` (`measure_history`, `measure_currency`, `measure_sensor`, `measure_price`) VALUES ('365', 'Euro', '1', '0.22');
