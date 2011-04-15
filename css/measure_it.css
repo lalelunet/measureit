@@ -156,3 +156,6 @@ input,
 #adminmenu {
 	height: 100%;
 }
+#adminmenu .sensor-inner {
+	width: 300px;
+}
