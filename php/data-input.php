@@ -40,6 +40,7 @@ if ($fp=fopen("php://stdin","r")) {
 			$tmpr = preg_replace( '/\.0/', '', $tmpr );
 			$sensors[$sensor]['tmpr'] = $tmpr;
 			$sensors[$sensor]['watts'] = $watts;
+			last_state_data_update( $tmpr, $watts, $sensor);
 			data_update_tmpr( $tmpr, $sensor, 'tmpr_last', 'measure_tmpr' );
 			data_update_watt( $watts, $sensor, 'watt_last', 'measure_watt' );
 		}
@@ -73,6 +74,13 @@ function data_update_tmpr( $data, $sensor, $type, $table ){
 		$tmpr = $type == 'tmpr_last' ? $db->query( "INSERT IGNORE INTO measure_tmpr_hourly ( data, time, hour ) VALUES ( $data, NOW( ), $hour )" ) : '';
 	}
 	return true;
+}
+
+function last_state_data_update( $tmpr = false, $watts = false, $sensor){
+	if( $tmpr && $watts){
+		$db = new mydb;
+		$db->query( "UPDATE measure_data_now SET watt = $watts, tmpr = $tmpr WHERE sensor_id = $sensor" );
+	}
 }
 
 function history_update( $data, $sensor, $unit, $unit_value ){
