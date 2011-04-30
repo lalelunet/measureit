@@ -88,10 +88,11 @@ function summary_start( ){
 }
 
 function sensor_data_get( $params = array( ) ){
-	if( data_query_build( $params ) ){
+	$q = !strpos( $params['table'], 'tmpr' ) ? data_query_build( $params ) : tmpr_get_query( $params );
+	if( $q ){
 		$t = '';
 		$db = new mydb;
-		$query = $db->query( data_query_build( $params ) );
+		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			$u = $params['unit_return'] == 'timeframe' ? ( strtotime( $time ) + 7200 )*1000 : $time;
@@ -158,8 +159,14 @@ function sensor_item_get( $params = array( ) ){
 	return $r;
 }
 
+function tmpr_get_query( $params = array( )){
+	if( !strpos( $params['table'], 'tmpr' ) ){ return false; }
+	$query = "SELECT * FROM $params[table] WHERE time = '$params[select]'";
+	return $query;
+}
+
 function data_query_build( $params = array( ) ){
-	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly|measure_tmpr)/', $params['table'] ) ? $params['table'] : error( $params['table'] );
+	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly)/', $params['table'] ) ? $params['table'] : error( $params['table'] );
 	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( $params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
 	$turn = isset( $params['turn'] ) ? $params['turn'] : '';
