@@ -9,7 +9,7 @@
 <div id="main">
 	<div id="nav-top">
 		<div id="tabs">
-			<ul></ul>
+			<ul id="tabcontainer"></ul>
 			<div id="tabs-0">
 				<div id="summary"></div>
 			</div>
@@ -53,14 +53,14 @@ function hist_update(stop){
 
 function navigation_main( data ) {
 	hist_update('0');
-	$('#tabs ul li').remove();
-	$('#tabs ul').append('<li class="ui-state-default ui-corner-top" value="0"><a href="#tabs-0" name="o">Home</a></li>');
+	$('#tabcontainer li').remove();
+	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="0"><a href="#tabs-0" name="o">Home</a></li>');
 	
 	$.each( data, function(d){
-		$('#tabs ul').append('<li class="ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
+		$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
 		$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 		});
-	$('#tabs ul').append('<li class="ui-state-default ui-corner-top" value="11"><a href="#tabs-11" name="11">Setup</a></li>');
+	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="11"><a href="#tabs-11" name="11">Setup</a></li>');
 	$('#tabs').tabs({
 	    select: function(event, ui){
 			$('.tooltip').hide();
@@ -391,8 +391,8 @@ function sensor_data_selection( sensor ){
 	$('#date'+ sensor).remove();
 	// choose day
 	container_get('#menu'+sensor,'date'+sensor,'Sensor details');
-	$('#date'+ sensor).append( '<input id="reload'+sensor+'" class="date button" value="refresh" /><br />' );
-	$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="choose day" />' );
+	$('#date'+ sensor).append( '<button id="reload'+sensor+'" class="date button">refresh</button><br />' );
+	$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="choose day"/>' );
 
 	$('#date_picker'+sensor).datepicker({
 		maxDate: '+0D',
@@ -579,30 +579,33 @@ function graph_draw(sensor, query, options, info){
 			            }
 
 			    });
-			    $(placeholder).bind("plotclick", function (e, pos, item) {
-			        if (item) {
-						$("#tooltip"+sensor).remove();
-						if(options.select !== 'time'){
-			        		var d = new Date(item.datapoint[0]);
-				        	var hour_from = d.getHours()-2;
-				        	var hour_to = d.getHours()-1;
-							var dat = {
-									"range_from" : options.select+'_'+hour_from,
-									"range_to" : options.select+'_'+hour_to,
+			    if( $('#show'+sensor).val() !== 't' ){
+				    	$(placeholder).bind("plotclick", function (e, pos, item) {
+					        if (item) {
+								$("#tooltip"+sensor).remove();
+								if(options.select !== 'time'){
+					        		var d = new Date(item.datapoint[0]);
+						        	var hour_from = d.getHours()-2;
+						        	var hour_to = d.getHours()-1;
+									var dat = {
+											"range_from" : options.select+'_'+hour_from,
+											"range_to" : options.select+'_'+hour_to
+										}
+									var info = options.select+' '+hour_from+'-'+hour_to;
+								}else if(options.select === 'time'){
+					        		var d = new Date(item.datapoint[0]);
+									var dat = {
+											"selectedDay" : d.getDate(),
+											"selectedMonth" : d.getMonth(),
+											"selectedYear" : d.getFullYear()
+										}
 								}
-							var info = options.select+' '+hour_from+'-'+hour_to;
-						}else if(options.select === 'time'){
-			        		var d = new Date(item.datapoint[0]);
-							var dat = {
-									"selectedDay" : d.getDate(),
-									"selectedMonth" : d.getMonth(),
-									"selectedYear" : d.getFullYear()
-								}
-						}
-						sensor_data_selected( dat, sensor, info );
-						$(placeholder).unbind();
-			        }
-			    });
+								sensor_data_selected( dat, sensor, info );
+								$(placeholder).unbind();
+					        }
+					    });
+				    }
+			    
 			    
 			    $(placeholder).bind("plotselected", function (event, ranges) {
 			        plot = $.plot($(placeholder), [d],
