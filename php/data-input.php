@@ -31,7 +31,7 @@ if ($fp=fopen("php://stdin","r")) {
 						if( preg_match( '/(d|h)/', $unit[1] ) && is_numeric( $kwatts ) && is_numeric( $k ) && is_numeric( $vd ) ){
 							history_update( $kwatts, $k, $unit[1], $vd );
 						}else{
-							`$line."\n" >> /tmp/measureit.log.txt`;
+							#`$line."\n" >> /tmp/measureit.log.txt`;
 						}
 					}
 				}
@@ -53,7 +53,7 @@ if ($fp=fopen("php://stdin","r")) {
 function data_update_watt( $data, $sensor, $type, $table ){
 	global $sensors;
 	# store only when data has changed
-	if( $sensors[$sensor][$type] != $data ){
+	if( $sensors[$sensor][$type] != $data || $data == 0 ){
 		$sensors[$sensor][$type] = $data;
 		$db = new mydb;
 		@$db->query( "INSERT INTO $table ( sensor, data, time ) VALUES ( $sensor, $data, NOW( ) )" );
