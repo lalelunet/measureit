@@ -80,8 +80,8 @@ function summary_start( ){
 		$r[$k]['watt'] = $vn['watt'];
 		$r[$k]['daily'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_daily', 'timeframe'=> 'last', 'limit' => $p['time']  ) );
 		$r[$k]['hourly'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_hourly', 'timeframe'=> 'last', 'order' => 'hour', 'limit' => $p['time']  ) );
-		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'static', 'limit' => $p['time']  ) ) );
-		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'static', 'limit' => $p['time']  ) ) );
+		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit', 'limit' => $p['time']  ) ) );
+		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit', 'limit' => $p['time']  ) ) );
 	}
 	print json_encode($r);
 	return true;
@@ -166,16 +166,18 @@ function tmpr_get_query( $params = array( )){
 }
 
 function data_query_build( $params = array( ) ){
-	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly)/', $params['table'] ) ? $params['table'] : error( $params['table'] );
-	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( $params['sensor'] );
+	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly)/', $params['table'] ) ? $params['table'] : error( 'no database table selected: '.$params['table'] );
+	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( 'no sensor error: '.$params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
 	$turn = isset( $params['turn'] ) ? $params['turn'] : '';
-	$limit = isset( $params['limit'] ) ? ' AND time > '.$params['limit'] : '';
+	#$limit = isset( $params['limit'] ) ? ' AND time > '.$params['limit'] : '';
+	#var_dump($params['timeframe']);
+	
 	switch( $params['timeframe'] ){
 		case 'static':
-			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( $params['unit'] );
-			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( $params['unit_value'] );
-			$timeframe = " AND time > NOW( ) - INTERVAL $unit_value $unit  ORDER BY $order";
+			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( 'unit error: '.$params['unit'] );
+			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( 'unit value error: '.$params['unit_value'] );
+			$timeframe = " AND time > NOW( ) - INTERVAL $unit_value $unit ORDER BY $order";
 		break;
 		case 'last':
 			$timeframe = " ORDER BY $order DESC LIMIT 1";
@@ -192,6 +194,11 @@ function data_query_build( $params = array( ) ){
 		break;
 		case 'position':
 			$timeframe = "AND time BETWEEN '$params[range_from]' and $params[range_to] ORDER BY $order $turn";
+		break;
+		case 'limit':
+			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( 'unit error: '.$params['unit'] );
+			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( 'unit value error: '.$params['unit_value'] );
+			$timeframe = ' AND time > "'.$params['limit'].'"';
 		break;
 		default:
 			error('No timeframe to get data from');

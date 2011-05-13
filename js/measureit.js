@@ -404,7 +404,7 @@ function infobox(placeholder, info){
 };
 
 function price_format( d,p,c,u ){
-	if( d === null ){return '';}
+	if( d === null || d == '' ){return ' - ' + u + '<br />---';}
 	return ' ' + u + '<br />'+ (parseFloat(d).toFixed(2).replace('.','') * p).toFixed(2) + ' ' + c;
 }
 
