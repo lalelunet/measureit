@@ -80,8 +80,8 @@ function summary_start( ){
 		$r[$k]['watt'] = $vn['watt'];
 		$r[$k]['daily'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_daily', 'timeframe'=> 'last', 'limit' => $p['time']  ) );
 		$r[$k]['hourly'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_hourly', 'timeframe'=> 'last', 'order' => 'hour', 'limit' => $p['time']  ) );
-		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit', 'limit' => $p['time']  ) ) );
-		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit', 'limit' => $p['time']  ) ) );
+		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
+		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
 	}
 	print json_encode($r);
 	return true;
@@ -100,6 +100,7 @@ function sensor_data_get( $params = array( ) ){
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
 		$r = '['.$r.']';
+		#echo '<pre>';var_dump($r);exit;
 		print $r;
 	}
 }
@@ -184,6 +185,10 @@ function data_query_build( $params = array( ) ){
 			# last hour watts has an extra option
 			$timeframe = $params['table'] == 'measure_watt_hourly' ? 'AND time = DATE( NOW( ) ) '.$timeframe : $timeframe;
 		break;
+		case 'limit-last':
+			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( 'unit value error: '.$params['unit_value'] );
+			$timeframe = " ORDER BY $order DESC LIMIT $unit_value";
+		break;
 		case 'select':
 			$timeframe = "AND time = '$params[select]'";
 		break;
@@ -205,7 +210,7 @@ function data_query_build( $params = array( ) ){
 		break;
 	}
 	$query = "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
-	#print "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
+	#print "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe<br />";
 	return $query;
 }
 
