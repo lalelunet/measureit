@@ -3,7 +3,7 @@ USE `measure_it`;
 
 CREATE USER 'measureit'@'localhost' IDENTIFIED BY 'measureitpasswd';
 
-GRANT SELECT , INSERT , UPDATE , DELETE ON * . * TO 'measureit'@'localhost' IDENTIFIED BY 'measureitpasswd';
+GRANT SELECT , INSERT , UPDATE , DELETE, LOCK TABLES ON * . * TO 'measureit'@'localhost' IDENTIFIED BY 'measureitpasswd';
 
 CREATE TABLE IF NOT EXISTS `measure_positions` (
   `position_id` int(11) NOT NULL AUTO_INCREMENT,
