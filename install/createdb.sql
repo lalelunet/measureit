@@ -109,4 +109,4 @@ INSERT INTO `measure_data_now` (`sensor_id`, `watt`, `tmpr`) VALUES
 
 INSERT INTO `measure_it`.`measure_positions` (`position_time`, `position_description`, `position_sensor`) VALUES (now(), 'start position', '1');
 INSERT INTO `measure_it`.`measure_sensors` (`sensor_id`, `sensor_title`) VALUES ('1', 'Sensor 1');
-INSERT INTO `measure_it`.`measure_settings` (`measure_history`, `measure_currency`, `measure_sensor`, `measure_price`) VALUES ('365', 'Euro', '1', '0.22');
+INSERT INTO `measure_it`.`measure_settings` (`measure_history`, `measure_currency`, `measure_sensor`, `measure_price`) VALUES ('365', 'Euro', '1', '0.0022');
