@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS `measure_watt` (
   `sensor` tinyint(1) NOT NULL,
   `data` smallint(5) NOT NULL,
   `time` datetime NOT NULL,
-  PRIMARY KEY (`watt_id`)
+  PRIMARY KEY (`watt_id`),
+  KEY `time_sensor` (`time`,`sensor`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 
