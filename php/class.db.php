@@ -51,6 +51,10 @@ class mydb extends db_accountdata
    {
      return mysql_insert_id();
    }
+   function backup(){
+   		set_time_limit(0);
+		system( 'mysqldump --opt -h'.$this->host.' -u'.$this->user.' -p'.$this->pass.' '.$this->datenbank.' | gzip > ../backup/measureit_backup_'.date('Ymd-His').'.gz' );
+   }
 
 }
 
