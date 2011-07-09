@@ -106,7 +106,9 @@ function sensor_list( data ){
 			});
 	});
 	button_get('#sensor_admin','sensor_add','Add Sensor');
+	button_get('#sensor_admin','backup','Backup / Export');
 	sensor_add(data);
+	system_backup();
 }
 
 function sensor_admin_list_items( data, sensor ){
@@ -227,3 +229,46 @@ function sensor_add(data){
 			});
 		});
 }
+
+function system_backup(){
+	$('#backup').click(function(){
+		sensor_settings_clean();
+		sensor_settings_detail_clean();
+		container_get('#adminmenu','admin_backup_container','Database backups', 'sensor_settings center');
+		div_get('#admin_backup_container','backup',span_get('sensor_id_select_text',' ','float_left padding5'));
+		
+		$.getJSON('php/measureit_functions.php', { 'do' : 'backup_list_get' }, function( data ){
+			$.each(data, function(d){
+				$('#admin_backup_container').append(span_get( data[d].file, data[d].day+' '+data[d].time+' '+data[d].size, 'padding5 button center')+span_get(data[d].time,'<a href="'+data[d].file+'" class="padding5">Download</a>  <a href="javascript: void(0);" onclick="javascript: backup_delete(\''+data[d].filename+'\')">Delete</a><hr />', 'padding5'));
+			});
+		});
+		
+		button_get('#admin_backup_container','backup_create','Create backup');
+		$('#backup_create').click(function(){
+			$.get('php/measureit_functions.php', { 'do' : 'backup_create' });
+			div_get('#main','backup_create_dialog','Backup was startet. This can take some time dependent from your database size');
+			$("#backup_create_dialog").dialog({
+				resizable: true,
+				height:200,
+				modal: true,
+				buttons: {
+					'OK': function() {
+						$(this).dialog('close');
+						sensor_settings_clean();
+						sensor_settings_detail_clean();
+					}
+				}
+			});
+		});
+
+		
+	});
+
+}
+
+function backup_delete( file ){
+	$.get('php/measureit_functions.php', { 'do' : 'backup_delete', 'filename' : file });
+	sensor_settings_clean();
+	sensor_settings_detail_clean();
+}
+
