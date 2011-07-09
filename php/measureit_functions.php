@@ -3,7 +3,7 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = false;
+$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -45,6 +45,17 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'sensor_entry_delete':
 			if($demo){ return true; }
 			sensor_entry_delete( $_REQUEST );
+		break;
+		case 'backup_list_get':
+			backup_list_get();
+		break;
+		case 'backup_create':
+			if($demo){ return true; }
+			backup_create();
+		break;
+		case 'backup_delete':
+			if($demo){ return true; }
+			backup_delete( $_REQUEST );
 		break;
 		default:
 			echo 'this is not a valid request';
@@ -193,8 +204,8 @@ function data_query_build( $params = array( ) ){
 			$timeframe = "AND time = '$params[select]'";
 		break;
 		case 'range':
-			$from = preg_replace('/_/', ' ', $params[range_from]);
-			$to = preg_replace('/_/', ' ', $params[range_to]);
+			$from = preg_replace('/_/', ' ', $params['range_from']);
+			$to = preg_replace('/_/', ' ', $params['range_to']);
 			$timeframe = "AND time BETWEEN '$from:00:00' and '$to:00:00'";
 		break;
 		case 'position':
@@ -306,6 +317,40 @@ function sensor_add( $params = array() ){
 	$db->query("INSERT IGNORE INTO measure_it.measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
 	$db->query("INSERT INTO measure_it.measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
 	return true;
+}
+
+function backup_create(){
+	if( !is_dir('../backup') ){ mkdir( '../backup', 0775 ); }
+	$db = new mydb;
+	$db->backup();
+}
+
+function backup_list_get(){
+	$dir = opendir('../backup');
+	while( false !== ( $file = readdir( $dir ) ) ){
+		if ( preg_match( '/\.gz/', $file ) ) {
+			$day = preg_replace( '/(\d{4,})(\d{2,})(\d{2,})/', "$1-$2-$3", substr( $file, 17, 8 ) );
+			$time = preg_replace( '/(\d{2,})(\d{2,})(\d{2,})/', "$1:$2:$3", substr( $file, 26, 6 ) );
+			$files[$file]['file'] = 'backup/'.$file;
+			$files[$file]['filename'] = $file;
+			$files[$file]['day'] = $day;
+			$files[$file]['time'] = $time;
+			$files[$file]['size'] = format_bytes( filesize( '../backup/'.$file ) );
+		}
+	}
+	print json_encode($files);
+}
+
+function backup_delete( $params = array() ){
+	if( isset( $params['filename'] ) && file_exists( '../backup/'.$params['filename'] ) && preg_match( '/^measureit_backup_(\d{8,8})-(\d{6,6}).gz$/', $params['filename'] ) ){
+		unlink( '../backup/'.$params['filename'] );
+	}
+}
+
+function format_bytes($size) {
+    $units = array(' B', ' KB', ' MB', ' GB', ' TB');
+    for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
+    return round($size, 2).$units[$i];
 }
 
 function error( $error = 'unknown' ){
