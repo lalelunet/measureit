@@ -30,7 +30,7 @@ function hist_update(stop){
 function navigation_main( data ) {
 	hist_update('0');
 	$('#tabcontainer li').remove();
-	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="0"><a href="#tabs-0" name="o">Home</a></li>');
+	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="0"><a href="#tabs-0" name="0">Home</a></li>');
 	
 	$.each( data, function(d){
 		$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
