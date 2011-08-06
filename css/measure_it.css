@@ -37,7 +37,7 @@ div.sensor_id {
 }
 
 .hidden{
-display: none;
+	display: none;
 }
 
 
@@ -51,6 +51,10 @@ display: none;
 
 .pointer{
 	cursor: pointer;
+}
+
+.center{
+	text-align: center;
 }
 
 .padding5 {
