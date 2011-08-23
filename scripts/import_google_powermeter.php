@@ -28,18 +28,18 @@ $fp = @fopen( $argv[2], 'r') or die ('can not open file. '.$argv[2]." was not fo
 		$db->query( "INSERT INTO measure_watt ( sensor, data, time) values( $argv[1], round( $watt ), '$date' )" );
 	 	$count++;
 	}
-	$db->query( "INSERT INTO measure_positions ( position_time, position_description, position_sensor) values( '$position', 'google Power Meter import', $argv[1] )" );
+	$db->query( "INSERT INTO measure_positions ( position_time, position_description, position_sensor) values( '$position', 'google Power Meter import', '$argv[1]' )" );
 	#var_dump($usage);exit;
 	foreach($usage as $k => $v){
 		foreach( $v as $vk => $vv){
 			@$daily += $vv[watt];
 			$count_hourly++;
 			@$w = number_format( round($vv[watt]), 0, ',', '.' );
-			$db->query( "INSERT INTO measure_watt_hourly( sensor, data, hour, time) values( $argv[1], $w, $vk, '$k' )" );
+			$db->query( "INSERT INTO measure_watt_hourly( sensor, data, hour, time) values( '$argv[1]', '$w', '$vk', '$k' )" );
 		}
 		$count_daily++;
 		$daily = number_format( round($daily), 0, ',', '.' );
-		$db->query( "INSERT INTO measure_watt_daily( sensor, data, time) values( $argv[1], $daily, '$k' )" );
+		$db->query( "INSERT INTO measure_watt_daily( sensor, data, time) values( '$argv[1]', '$daily', '$k' )" );
 	}
 	#var_dump($usage);
 fclose($fp);
