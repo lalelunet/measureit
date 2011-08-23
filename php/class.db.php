@@ -1,4 +1,4 @@
-<?
+<?php
 
  class db_accountdata {
   var $host                 = "localhost";
