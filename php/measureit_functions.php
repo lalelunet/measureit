@@ -47,6 +47,7 @@ if( isset( $_REQUEST['do'] ) ){
 			sensor_entry_delete( $_REQUEST );
 		break;
 		case 'backup_list_get':
+			if($demo){ return true; }
 			backup_list_get();
 		break;
 		case 'backup_create':
