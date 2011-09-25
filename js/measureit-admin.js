@@ -55,7 +55,7 @@ function sensor_position_delete(item,sensor){
 						});
 					});
 				},
-				'chancel': function() {
+				'cancel': function() {
 					$(this).dialog('close');
 					$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
 						navigation_main( data );
