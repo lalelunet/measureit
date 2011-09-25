@@ -3,6 +3,10 @@ h1, h2, h3, h4, h5, h6 {
 	padding: 3px;
 }
 
+div {
+	font-family: Verdana,Arial,sans-serif;
+}
+
 div.sensor-inner {
 	float: left;
 	margin: 5px;
@@ -67,6 +71,10 @@ div.sensor_id {
 
 div.data {
 	padding: 5px;
+}
+
+#tabs {
+	border-bottom: 0px;
 }
 
 div.placeholder{
@@ -137,6 +145,20 @@ div.menu {
 div.select-display .sensor_data_change {
 	display: inline;
 }
+
+.selection-container{
+	width: 70%;
+	padding: 0px 15px;
+}
+
+.check-container{
+	padding-right: 25px;
+}
+
+.legend-container {
+	padding: 25px 0px 0px 25px;
+}
+
 div.select-display {
 	display: block;
 }
@@ -146,6 +168,8 @@ div.select-display {
 div.date {
 	position: relative;
 }
+
+.ui-tabs .ui-tabs-hide { height: 100% !important; }
 
 .ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current{
 	display: none!important;
