@@ -1,9 +1,14 @@
-// load navi
-$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
-	navigation_main( data );
-})
+if( pc === 1 ){
+	// load navi
+	$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
+		navigation_main( data );
+	})
 
-var timer = setTimeout(hist_update, 10000);
+	var timer = setTimeout(hist_update, 10000);
+	$('.ui-tabs').click(function(){ $('.ui-tabs').css( 'height', '100%' ) });
+}
+
+
 // functions
 
 // data from start page
@@ -62,10 +67,15 @@ function navigation_main( data ) {
 function sensor_statistic( data, sensor ){
 	$('#statistic'+sensor).remove();
 	container_get('#menu'+ sensor, 'statistic'+sensor,'statistic');
-	button_get('#statistic'+sensor,'sensor_statistic'+sensor,'Statistic');
+	button_get('#statistic'+sensor,'sensor_statistic'+sensor,'costs');
+	button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
+	button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
 	$('#sensor_statistic'+sensor).click(function( ) { 
 		$('#placeholder'+sensor).empty();
 		$('#overview'+sensor).empty();
+		$('#placeholder'+sensor).unbind();
+		$('.tooltip').remove();
+		$('.sensor_legend').remove();
 		
 		$.each( data, function(d){
 			div_get('#placeholder'+sensor,'sensor_position'+d,'');
@@ -77,6 +87,9 @@ function sensor_statistic( data, sensor ){
 		});
 		
 	});
+	
+	$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
+	$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
 }
 
 function sensor_statistic_generate( data, sensor, position ){
@@ -86,7 +99,6 @@ function sensor_statistic_generate( data, sensor, position ){
 		price_kwh = d.sensor[sensor].measure_price;
 		currency = d.sensor[sensor].measure_currency;
 	} );
-	
 	$.getJSON('php/measureit_functions.php', {
 		'do' : 'sensor_statistic',
 		'sensor_position': position,
@@ -115,7 +127,7 @@ function sensor_statistic_generate( data, sensor, position ){
 						var kwh_month = 0;
 						$('#sensor_statistic_month'+v+m).click(function(){
 							$('#sensor_statistic_month_container'+v+m).toggle('slow');
-							$('#tabs').css( 'height', $(document).height() + 500);
+							$('#tabs').css('height','100%');
 							$('#overview'+sensor).css('display','none');
 							});
 						//days
@@ -305,6 +317,7 @@ function sensor_detail(data){
 
 function graph_draw(sensor, query, options, info){
 	$('.tooltip').remove();
+	$('.sensor_legend').empty();
 	$('#overview'+sensor).css('display','inline');
 	$.getJSON('php/measureit_functions.php', query, function(d) {
 				var plot = false;
@@ -335,7 +348,6 @@ function graph_draw(sensor, query, options, info){
 		                        y = item.datapoint[1].toFixed(2);
 		                    showTooltip(item.pageX, item.pageY, y, sensor);
 			            }
-
 			    });
 			    
 			    if( $('#show'+sensor).val() !== 't' ){
@@ -381,8 +393,131 @@ function graph_draw(sensor, query, options, info){
 		});
 }
 
+function graph_draw_multiple( d, sensor, range, exclude){
+	$('#placeholder'+sensor).unbind();
+	$('.sensor_legend').empty();
+	$('#overview'+sensor).empty();
+	$('.tooltip').remove();
+	div_get('#placeholder'+sensor,'sensor_usage'+sensor,'');
+	div_get('#tabs-'+sensor,'sensor_legend'+sensor,'','sensor_legend');
+	div_get('#sensor_legend'+sensor,'container-legend','','legend-container float_left');
+	div_get('#sensor_legend'+sensor,'container-selection','','selection-container float_left');
+	
+	var dataset = [];
+	var cnt = 1;
+	var label = '';
+	
+	$.each(d, function(dat){
+		var label = range == 'week' ? day_get(dat) : month_get(dat);
+		var tmp = [];
+		div_get('#container-selection','container-'+dat,'','check-container float_left');
+		checkbox_get('#container-'+dat,dat,'displaythis',dat+' sensor_legend',dat,1);
+		$('#container-'+dat).append(dat+' '+label);
+		$.each( d[dat], function( set ){
+			tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
+		});
+		var day = {
+            label: dat+' '+label,
+            id: dat,
+            data: tmp,
+            yaxes: cnt
+        };
+		dataset.push(day);
+		cnt++;
+	});
+
+	$("#placeholder"+sensor).bind("plothover", function (e, pos, item, sensor) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+            if (item) {
+            	var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
+                $("#tooltip"+sensor).remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
+            }
+    });
+	$.plot($("#placeholder"+sensor), dataset, {
+        selection: { mode: "x" },
+        grid: { hoverable: true },
+        lines: { show: true, lineWidth: 1 },
+        points: { show: true, radius: 2 },
+        legend: { show: true, container: $('#container-legend') }
+    });
+	
+	$('#tabs').css('height','100%');
+	
+	$('.check-container').find('input.sensor_legend').click(function(){
+		$('.tooltip').remove();
+		var selection = [];
+		var dataset = [];
+		var cnt = 1;
+		$('.check-container').find('input:checked').each(function(){ 
+			selection.push($(this)[0].id);
+		});
+			
+		$.each(d, function(dat){
+			if( $.inArray(dat, selection) != -1 ){
+				var label = range == 'week' ? day_get(dat) : month_get(dat);
+				var tmp = [];
+				$.each( d[dat], function( set ){
+					tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
+				});
+				var day = {
+		            label: dat+' '+label,
+		            id: dat,
+		            data: tmp,
+		            yaxes: cnt
+		        };
+				dataset.push(day);
+				cnt++;
+			}
+			
+		});
+		
+		$("#placeholder"+sensor).bind("plothover", function (e, pos, item, sensor, range) {
+	        $("#x").text(pos.x.toFixed(2));
+	        $("#y").text(pos.y.toFixed(2));
+	            if (item) {
+	            	var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
+	                $("#tooltip"+sensor).remove();
+	                var x = item.datapoint[0].toFixed(2),
+	                    y = item.datapoint[1].toFixed(2);
+	                showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
+	            }
+	    });
+		$.plot($("#placeholder"+sensor), dataset, {
+	        selection: { mode: "x" },
+	        grid: { hoverable: true },
+	        lines: { show: true, lineWidth: 1 },
+	        points: { show: true, radius: 2 },
+	        legend: { show: true, container: $('#container-legend') }
+	    });
+	});
+}
+
+function sensor_history_get( sensor, range ){
+	var days = range == 'week' ? 8 : 365;
+	var table = range == 'week' ? 'measure_watt_hourly' : 'measure_watt_daily';
+	var arrange = range == 'week' ? false : 'month';
+	var call = range == 'week' ? 'sensor_history_week' : 'sensor_history_year';
+	$.getJSON('php/measureit_functions.php', {
+		"do" : call,
+		"sensor" : sensor,
+		"timeframe" : 'static',
+		"unit" : 'day',
+		"unit_return" : "timeframe",
+		"unit_value" : days,
+		"table" : table,
+		'arrange' : arrange
+	}, function( d ) {
+		graph_draw_multiple( d, sensor, range );
+	});	
+}
+
 function showTooltip(x, y, contents, sensor ) {
-	$('<div id="tooltip'+ sensor +'" class="tooltip">' + contents + '</div>').css( {
+	$('.tooltip').remove();
+	$('<div class="tooltip">' + contents + '</div>').css( {
 		position: 'absolute',
 		display: 'none',
 		top: y + 5,
@@ -438,7 +573,58 @@ function button_get(parent,id,title,css,value){
 	$("button, input:submit, a", ".button").button();
 }
 
+function checkbox_get(parent,id,name,css,value,checked){
+	var css = typeof(css) != 'undefined' ? css : '';
+	var checked = checked == 1 ? ' checked="checked"' : '';
+	$(parent).append( '<input id="'+id+'" class="checkbox '+css+'" type="checkbox" name="'+name+'" value="'+value+'"'+checked+'>' );
+	$("button, input:submit, a", ".button").button();
+}
+
 function container_get(parent,id,title,css){
 	var css = typeof(css) != 'undefined' ? css : '';
 	$(parent).append('<div id="'+id+'" class="ui-widget-content ui-corner-all sensor-inner '+css+'"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+title+'</h5></div>');
 }
+
+function day_get(date){
+	var d=new Date(date);
+	var weekday=new Array(7);
+	weekday[0]="Sunday";
+	weekday[1]="Monday";
+	weekday[2]="Tuesday";
+	weekday[3]="Wednesday";
+	weekday[4]="Thursday";
+	weekday[5]="Friday";
+	weekday[6]="Saturday";
+	return weekday[d.getDay()];
+}
+
+function month_get(date){
+	var d=new Date(date);
+	var month=new Array(12);
+	month[0]="January";
+	month[1]="February";
+	month[2]="March";
+	month[3]="April";
+	month[4]="May";
+	month[5]="June";
+	month[6]="July";
+	month[7]="August";
+	month[8]="September";
+	month[9]="October";
+	month[10]="November";
+	month[11]="December";
+	return month[d.getMonth()];
+}
+
+function iphone_navigation_main( data ) {
+	$('#tabcontainer li').remove();
+	$.each( data, function(d){
+		$('#tabcontainer').append('<li class="edgetoedge" value="'+data[d].sensor.sensor_id+'"><a href="#page'+data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'" class="slideleft'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
+		//$('#contentconatainer').append('');
+		$('#jqt').append('<div id="page'+data[d].sensor.sensor_id+'" class="info"><div class="toolbar"><a href="#" class="back">back</a><h1>' + data[d].sensor.position_description + '</h1></div>');
+		$('#page'+data[d].sensor.sensor_id).append('<div class="info">The title for this page was automatically set from it&#8217;s referring link, no extra scripts required. Just include the extension and this happens.</div></div>');
+		});
+	$('#tabcontainer').append('<li class="edgetoedge" value="11"><a href="#tabs-11" name="11">Setup</a></li>');
+	$('#home').addClass('current');
+	
+};
