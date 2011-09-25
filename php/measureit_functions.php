@@ -3,7 +3,7 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = true;
+$demo = false;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -18,6 +18,12 @@ if( isset( $_REQUEST['do'] ) ){
 		break;
 		case 'summary_sensor':
 			sensor_data_get( $_REQUEST );
+		break;
+		case 'sensor_history_week':
+			sensor_history_week( $_REQUEST );
+		break;
+		case 'sensor_history_year':
+			sensor_history_year( $_REQUEST );
 		break;
 		case 'sensor_statistic':
 			sensor_statistic( $_REQUEST );
@@ -94,6 +100,32 @@ function summary_start( ){
 		$r[$k]['hourly'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_hourly', 'timeframe'=> 'last', 'order' => 'hour', 'limit' => $p['time']  ) );
 		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
 		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
+	}
+	print json_encode($r);
+	return true;
+}
+
+function sensor_history_week( $params = array( ) ){
+	$ret = '';
+	$q = data_query_build( $params );
+	$db = new mydb;
+	$query = $db->query( $q );
+	while( $d = $db->fetch_array( $query ) ){
+		$r[$d['time']][$d['hour']]['data'] = $d['data'];
+		ksort($r[$d['time']]);
+	}
+	print json_encode($r);
+	return true;
+}
+
+function sensor_history_year( $params = array( ) ){
+	$ret = '';
+	$q = data_query_build( $params );
+	$db = new mydb;
+	$query = $db->query( $q );
+	while( $d = $db->fetch_array( $query ) ){
+		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
+		$r[$ret[1].'-'.$ret[2]][$ret[3]]['data'] += $d['data'];
 	}
 	print json_encode($r);
 	return true;
@@ -241,6 +273,13 @@ function sensor_position_next_date_get( $params = array( ) ){
 	$date = $db->fetch_row( $query );
 	$r = is_array( $date ) ? sprintf( "'%s'", substr( $date[0], 0, 10) ) : 'now()';
 	return $r;
+}
+
+function sensor_position_last_get( $sensor ){
+	$db = new mydb;
+	$query = $db->query("SELECT * FROM `measure_positions` WHERE position_sensor = $sensor  ORDER BY position_id DESC  LIMIT 1");
+	$sp = $db->fetch_row( $query );
+	return $sp;
 }
 
 function sensor_get( $sensor = '' ){
