@@ -4,6 +4,7 @@ require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
 $demo = false;
+error_reporting(0);
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
