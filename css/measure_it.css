@@ -93,7 +93,8 @@ div.placeholder #infobox{
 
 div.overview{
 	height: 40px;
-	width: 78%;
+	left: 20px;
+	width: 74%;
 }
 div.menu {
 	width: 20%;
