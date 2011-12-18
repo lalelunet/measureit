@@ -169,6 +169,10 @@ div.date {
 	position: relative;
 }
 
+#ui-datepicker-div {
+	display: none;
+} 
+
 .ui-tabs .ui-tabs-hide { height: 100% !important; }
 
 .ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current{
