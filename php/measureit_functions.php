@@ -4,7 +4,7 @@ require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
 $demo = false;
-error_reporting(0);
+#error_reporting(0);
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -138,9 +138,13 @@ function sensor_data_get( $params = array( ) ){
 		$t = '';
 		$db = new mydb;
 		$query = $db->query( $q );
+		if( $diff = timezone_diff_get( $params ) ) $use_diff = true;
 		while( $d = $db->fetch_array( $query ) ){
-			$time =  preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
-			$u = $params['unit_return'] == 'timeframe' ? ( strtotime( $time ) + 7200 )*1000 : $time;
+			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
+			if( isset( $use_diff ) ){
+				$ts = $diff['prefix'] == false ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+			}
+			$u = $params['unit_return'] == 'timeframe' ? $ts*1000 : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
@@ -183,7 +187,7 @@ function sensor_statistic_get( $params = array( ) ){
 		$query = $db->query( data_query_build( $params ) );
 		while( $d = $db->fetch_array( $query ) ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $t);
-			$ts = strtotime( $d['time'] );
+			$ts = @strtotime( $d['time'] );
 			$month = date( 'F', $ts );
 			$r[$t[1]][$month][$t[3]]['data'] = $d['data'];
 			$r[$t[1]][$month][$t[3]]['weekday'] = date( 'l', $ts );
@@ -316,7 +320,7 @@ function sensor_position_add( $params = array() ){
 function sensor_settings_save( $params = array() ){
 	$params['sensor_price'] = preg_replace('/,/', '.', $params['sensor_price']);
 	$db = new mydb;
-	$db->query("UPDATE measure_it.measure_settings SET measure_history = '$params[sensor_history]', measure_currency = '$params[sensor_currency]', measure_price = '$params[sensor_price]' WHERE measure_sensor = '$params[sensor_id]'");
+	$db->query("UPDATE measure_it.measure_settings SET measure_history = '$params[sensor_history]', measure_currency = '$params[sensor_currency]', measure_price = '$params[sensor_price]', measure_timezone_diff = '$params[sensor_timezone_diff]' WHERE measure_sensor = '$params[sensor_id]'");
 	return true;
 }
 function sensor_position_delete( $params = array() ){
@@ -386,6 +390,15 @@ function backup_delete( $params = array() ){
 	if( isset( $params['filename'] ) && file_exists( '../backup/'.$params['filename'] ) && preg_match( '/^measureit_backup_(\d{8,8})-(\d{6,6}).gz$/', $params['filename'] ) ){
 		unlink( '../backup/'.$params['filename'] );
 	}
+}
+
+function timezone_diff_get( $params = array( ) ){
+	$sensor = sensor_get( $params['sensor'] );
+	if( $sensor[$params['sensor']]['measure_timezone_diff'] == 0 ) return false;
+	preg_match( '/(-)?(\d)/', $sensor[$params['sensor']]['measure_timezone_diff'], $r );
+	$diff['prefix'] = $r[1] != '' ? $r[1] : false;
+	$diff['diff'] = ( $r[2] * 60 ) * 60;
+	return $diff;
 }
 
 function format_bytes($size) {
