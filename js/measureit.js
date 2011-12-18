@@ -764,6 +764,8 @@ function sensor_admin_settings(data, sensor){
 		container_get('#adminmenu','sensor_settings_container','Settings', 'sensor_settings_detail');
 		div_get('#sensor_settings_container','sensor_id','Price:','padding5');
 		input_get('#sensor_settings_container','sensor_price',data[sensor].sensor.measure_price === undefined ? '0.00' : data[sensor].sensor.measure_price);
+		div_get('#sensor_settings_container','sensor_id','difference from GMT in hours ( 2 or -2 ):','padding5');
+		input_get('#sensor_settings_container','sensor_timezone_diff',data[sensor].sensor.measure_timezone_diff);
 		div_get('#sensor_settings_container','sensor_id','currency (Euro/Pound):','padding5');
 		input_get('#sensor_settings_container','sensor_currency',data[sensor].sensor.measure_currency === undefined ? 'Û' : data[sensor].sensor.measure_currency);
 		div_get('#sensor_settings_container','sensor_id','days keep history:','padding5');
@@ -777,6 +779,7 @@ function sensor_admin_settings(data, sensor){
 					'sensor_id' : sensor,
 					'sensor_currency' : $('#sensor_currency').val(),
 					'sensor_price' : $('#sensor_price').val(),
+					'sensor_timezone_diff' : $('#sensor_timezone_diff').val(),
 					'sensor_history' : $('#sensor_history').val()
 					}, function(sensor){
 						delete data;
@@ -788,7 +791,6 @@ function sensor_admin_settings(data, sensor){
 							hist_update('1');
 							});
 					});
-					console.log($('#sensor_price').val());
 				}
 			});
 
