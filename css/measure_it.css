@@ -105,6 +105,26 @@ div.menu {
 	width: 100%;
 }
 
+.switch-link-container{
+	height: 36px;
+	width: 100%;
+	display: block;
+	padding: 5px;
+}
+
+.switch-link {
+	width: 36px;
+	height: 36px;
+	cursor: pointer;
+}
+
+.switch-link-left{
+	background: url(/img/bck.png) no-repeat;
+}
+
+.switch-link-right{
+	background: url(/img/fwd.png) no-repeat;
+}
 
 .sensor_statistic_table{
 	margin: 20px 0px 20px 20px;
