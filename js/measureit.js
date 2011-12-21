@@ -61,7 +61,6 @@ function navigation_main( data ) {
 			}
 	    }
 	});
-	
 };
 
 function sensor_statistic( data, sensor ){
@@ -317,6 +316,7 @@ function sensor_detail(data){
 
 function graph_draw(sensor, query, options, info){
 	$('.tooltip').remove();
+	$('#switch-placeholder'+sensor).remove();
 	$('.sensor_legend').empty();
 	$('#overview'+sensor).css('display','inline');
 	$.getJSON('php/measureit_functions.php', query, function(d) {
@@ -349,6 +349,8 @@ function graph_draw(sensor, query, options, info){
 		                    showTooltip(item.pageX, item.pageY, y, sensor);
 			            }
 			    });
+
+			    date_switch_generate(sensor, query, options);
 			    
 			    if( $('#show'+sensor).val() !== 't' ){
 				    	$(placeholder).bind("plotclick", function (e, pos, item) {
@@ -537,6 +539,27 @@ function infobox(placeholder, info){
 			}, 3000);
 		});
 };
+
+function date_switch_generate( sensor, query, options ){
+	div_get('#placeholder'+sensor, 'switch-placeholder'+sensor, '', 'switch-link-container');
+	div_get('#switch-placeholder'+sensor, 'switch-link-left'+sensor, '<div id="switch-link-left'+sensor+'" />', 'switch-link switch-link-left float_left');
+	div_get('#switch-placeholder'+sensor, 'switch-link-right'+sensor, '<div id="switch-link-right'+sensor+'" />', 'switch-link switch-link-right float_right');
+	
+	
+	$('#switch-link-left'+sensor).click(function(){
+		query.unit_value = query.table == 'measure_watt_daily' ? parseFloat(query.unit_value) +12 : parseFloat(query.unit_value) +2;
+		graph_draw(sensor, query, options, 'Watt last '+query.unit_value+' hours');
+	});
+	
+	if( query.unit_value == 2 ){
+		$('#switch-link-right'+sensor).css('visibility','hidden');
+	}else{
+		$('#switch-link-right'+sensor).click(function(){
+			query.unit_value = query.table == 'measure_watt_daily' ? parseFloat(query.unit_value) -12 : parseFloat(query.unit_value) -2;
+			graph_draw(sensor, query, options, 'Watt last '+query.unit_value+' hours');
+		});
+	}
+}
 
 function price_format( d,p,c,u ){
 	if( d === null || d == '' ){return ' - ' + u + '<br />---';}
