@@ -3,7 +3,7 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = false;
+$demo = true;
 #error_reporting(0);
 
 if( isset( $_REQUEST['do'] ) ){
@@ -188,9 +188,9 @@ function sensor_statistic_get( $params = array( ) ){
 		while( $d = $db->fetch_array( $query ) ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $t);
 			$ts = @strtotime( $d['time'] );
-			$month = date( 'F', $ts );
+			$month = @date( 'F', $ts );
 			$r[$t[1]][$month][$t[3]]['data'] = $d['data'];
-			$r[$t[1]][$month][$t[3]]['weekday'] = date( 'l', $ts );
+			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
 			$r[$t[1]][$month][$t[3]]['dayid'] = $d['day_id'];
 		}
 		print json_encode($r);
