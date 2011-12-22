@@ -541,6 +541,7 @@ function infobox(placeholder, info){
 };
 
 function date_switch_generate( sensor, query, options ){
+	if(query.table != 'measure_watt') return true;
 	div_get('#placeholder'+sensor, 'switch-placeholder'+sensor, '', 'switch-link-container');
 	div_get('#switch-placeholder'+sensor, 'switch-link-left'+sensor, '<div id="switch-link-left'+sensor+'" />', 'switch-link switch-link-left float_left');
 	div_get('#switch-placeholder'+sensor, 'switch-link-right'+sensor, '<div id="switch-link-right'+sensor+'" />', 'switch-link switch-link-right float_right');
