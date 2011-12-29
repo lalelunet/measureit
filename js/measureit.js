@@ -69,6 +69,7 @@ function sensor_statistic( data, sensor ){
 	button_get('#statistic'+sensor,'sensor_statistic'+sensor,'costs');
 	button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
 	button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
+	button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,'day / time usage');
 	$('#sensor_statistic'+sensor).click(function( ) { 
 		$('#placeholder'+sensor).empty();
 		$('#overview'+sensor).empty();
@@ -89,6 +90,60 @@ function sensor_statistic( data, sensor ){
 	
 	$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
 	$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
+	$('#sensor_statistic_datetime'+sensor).click( function(){ sensor_statistic_datetime( sensor ) });
+}
+
+function sensor_statistic_datetime( sensor ){
+	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail_statistic', 'sensor' : sensor }, function(d){
+	    $('#placeholder'+sensor).empty();
+	    $('#overview'+sensor).empty();
+		
+		$.each( d, function(dat){
+			if(typeof(d[dat]) == 'object' && ( dat == 'yearhours' || dat == 'yeardays' ) ){
+				var dataset = []; var cnt = 0;
+				div_get('#placeholder'+sensor,dat+''+sensor, '<div class="title"><h5 class="ui-widget-header ui-corner-all datetime-container">Usage per day / hour in Kwh last 365 days</h5></div>', 'ui-widget-content ui-corner-all datetime-container-main');
+				div_get('#'+dat+''+sensor, dat+'container'+sensor,'','datetime-container-inner');
+				$('#'+dat+'container'+sensor).css('height','100%');
+				var l = dat == 'yearhours' ? ':00' : '';
+				$.each( d[dat], function(p){
+					dataset[cnt] = { label: p+''+l,  data: d[dat][p]};
+					cnt = cnt+1;
+				});
+				sensor_detail_statistic_draw( '#'+dat+'container'+sensor, dataset);
+			}
+			
+		});
+	});
+}
+
+function sensor_detail_statistic_draw( placeholder, data){
+	$.plot($(placeholder), data,{
+		 series: {
+           pie: {
+               show: true,
+               radius: 1,
+               tilt: 0.5,
+				stroke: {
+					color: '#D8D8D8',
+					width: 1
+				},
+               label: {
+                   show: true,
+                   radius: 1,
+                   formatter: function(label, series){
+                       return '<div style="font-size:8pt;text-align:center;padding:2px;color:#000;background-color:#E6E6E6; border: 1px solid #585858;">'+label+'<br/>'+parseFloat( series.data[0][1] ).toFixed(2)+'</div>';
+                   },
+                   background: { opacity: 0.8 }
+               },
+               combine: {
+                   threshold: -1
+               }
+           }
+       },
+       legend: {
+           show: false
+       }
+	});
 }
 
 function sensor_statistic_generate( data, sensor, position ){
