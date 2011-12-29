@@ -20,6 +20,9 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'summary_sensor':
 			sensor_data_get( $_REQUEST );
 		break;
+		case 'sensor_detail_statistic':
+			sensor_detail_statistic( $_REQUEST );
+		break;
 		case 'sensor_history_week':
 			sensor_history_week( $_REQUEST );
 		break;
@@ -85,6 +88,34 @@ function sensor_detail( $params = array( ) ){
 	if( is_numeric( $params['sensor'] ) &&  $params['sensor'] > 0){
 		$r['sensor'] = sensor_get( $params['sensor'] );
 		print json_encode($r);
+	}
+	return true;
+}
+
+function sensor_detail_statistic( $params = array( ) ){
+	if( is_numeric( $params['sensor'] ) &&  $params['sensor'] > 0){
+		$params['timeframe'] = 'static';
+		$params['table'] = 'measure_watt_daily';
+		$params['unit_value'] = '1';
+		$params['unit'] = 'YEAR';
+		$q = data_query_build( $params );
+		$db = new mydb;
+		$query = $db->query( $q );
+		while( $d = $db->fetch_array( $query ) ){
+			$r['yeardays'][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			$r['yearsdaysdetail'][@date( M, @strtotime( $d['time'].' 00:00' ) )][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+		}
+		$params['table'] = 'measure_watt_hourly';
+		$q = data_query_build( $params );
+		$db = new mydb;
+		$query = $db->query( $q );
+		while( $d = $db->fetch_array( $query ) ){
+			$r['yearhours'][$d['hour']] += $d['data'];
+			ksort($r['yearhours']);
+			$r['monthshoursdetail'][@date( M, @strtotime( $d['time'].' 00:00' ) )][$d['hour']] += $d['data'];
+		}
+		print json_encode($r);
+		return true;
 	}
 	return true;
 }
@@ -225,7 +256,7 @@ function data_query_build( $params = array( ) ){
 	
 	switch( $params['timeframe'] ){
 		case 'static':
-			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( 'unit error: '.$params['unit'] );
+			$unit = preg_match( '/(hour|day|month|year)/i', $params['unit'] ) ? $params['unit'] : error( 'unit error: '.$params['unit'] );
 			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( 'unit value error: '.$params['unit_value'] );
 			$timeframe = " AND time > NOW( ) - INTERVAL $unit_value $unit ORDER BY $order";
 		break;
