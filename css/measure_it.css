@@ -82,6 +82,10 @@ div.placeholder{
 	width: 78%;
 }
 
+.yeardates{
+	height: 400px;
+	width: 78%;
+}
 div.placeholder #infobox{
 	position: absolute;
 	left: 70px;
@@ -129,6 +133,17 @@ div.menu {
 	margin: 20px 0px 20px 20px;
 }
 
+.datetime-container {
+	padding: 7px;
+}
+
+.datetime-container-main {
+	margin-bottom: 20px;
+}
+
+.datetime-container-inner {
+	margin: 20px;
+}
 .level2{
 	margin: 7px 0px 20px 20px;
 }
@@ -179,6 +194,15 @@ div.select-display .sensor_data_change {
 	padding: 25px 0px 0px 25px;
 }
 
+.widged-small{
+	width: 48%;
+	float:left;
+}
+
+div .widged-large{
+	width: 48%;
+	float:left;
+}
 div.select-display {
 	display: block;
 }
