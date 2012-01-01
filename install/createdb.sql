@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS `measure_settings` (
   `measure_currency` varchar(5) NOT NULL,
   `measure_sensor` tinyint(1) NOT NULL,
   `measure_price` float NOT NULL,
-  `measure_range` varchar(5) NOT NULL
+  `measure_range` varchar(5) NOT NULL,
+  `measure_timezone_diff` SMALLINT( 4 ) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
