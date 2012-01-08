@@ -3,7 +3,7 @@
 require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = true;
+$demo = false;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -84,7 +84,7 @@ function navigation_main( ){
 }
 
 function sensor_detail( $params = array( ) ){
-	if( is_numeric( $params['sensor'] ) &&  $params['sensor'] > 0){
+	if( is_numeric( $params['sensor'] ) ){
 		$r['sensor'] = sensor_get( $params['sensor'] );
 		print json_encode($r);
 	}
@@ -92,7 +92,7 @@ function sensor_detail( $params = array( ) ){
 }
 
 function sensor_detail_statistic( $params = array( ) ){
-	if( is_numeric( $params['sensor'] ) &&  $params['sensor'] > 0){
+	if( is_numeric( $params['sensor'] ) ){
 		$params['timeframe'] = 'static';
 		$params['table'] = 'measure_watt_daily';
 		$params['unit_value'] = '1';
@@ -116,7 +116,6 @@ function sensor_detail_statistic( $params = array( ) ){
 			$r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )][$d['hour']] += $d['data'];
 			ksort($r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )]);
 		}
-		#echo '<pre>';var_dump($r);
 		print json_encode($r);
 		return true;
 	}
@@ -330,18 +329,19 @@ function sensor_get( $sensor = '' ){
 		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
 		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
 		$subselect
-		ORDER BY measure_positions.position_id
+		ORDER BY measure_sensors.sensor_id, measure_positions.position_id
 	" );
 	$r = array();
 	while( $d = $db->fetch_array( $query ) ){
 		foreach( $d as $k => $v){
-			$item = !is_numeric( $k ) ? $k : '';
+			$item = !is_numeric( $k ) ? $k : 'x';
 			$r[$d['sensor_id']][$item] = $d[$k];
 		}
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
 	}
+	#echo '<pre>'; var_dump($r);
 	return $r;
 }
 
