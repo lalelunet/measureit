@@ -35,13 +35,13 @@ function hist_update(stop){
 function navigation_main( data ) {
 	hist_update('0');
 	$('#tabcontainer li').remove();
-	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="0"><a href="#tabs-0" name="0">Home</a></li>');
+	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1000"><a href="#tabs-1000" name="1000">Home</a></li>');
 	
 	$.each( data, function(d){
 		$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
 		$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 		});
-	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="11"><a href="#tabs-11" name="11">Setup</a></li>');
+	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1011"><a href="#tabs-1011" name="1011">Setup</a></li>');
 	$('#tabs').tabs({
 	    select: function(event, ui){
 			$('.tooltip').hide();
@@ -79,7 +79,7 @@ function sensor_statistic( data, sensor ){
 		
 		$.each( data, function(d){
 			div_get('#placeholder'+sensor,'sensor_position'+d,'');
-			div_get('#sensor_position'+d,'sensor_position_statistic'+d,data[d].description,'pointer statistic_position');
+			div_get('#sensor_position'+d,'sensor_position_statistic'+d,'>> '+data[d].description,'pointer statistic_position');
 			$('#sensor_position_statistic'+d).click(function( ){
 				$('.sensor_statistic_table').remove();
 				sensor_statistic_generate(data, sensor, d);	
@@ -97,24 +97,74 @@ function sensor_statistic_datetime( sensor ){
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail_statistic', 'sensor' : sensor }, function(d){
 	    $('#placeholder'+sensor).empty();
 	    $('#overview'+sensor).empty();
-		
-		$.each( d, function(dat){
+	    $('#container-legend').remove();
+	    $('.sensor_legend').remove();
+	    
+	    $.each( d, function(dat){
+			var dataset = []; var cnt = 0;
+			
+			div_get('#placeholder'+sensor,dat+''+cnt+'containerset'+sensor,'','ui-corner-all');
+			div_get('#'+dat+''+cnt+'containerset'+sensor,dat+''+sensor, '<div class="button datetime-container-button" id="'+dat+'title'+sensor+'" />', 'datetime-container-button-class spbutton');
+			
+			// yearly graphs
 			if(typeof(d[dat]) == 'object' && ( dat == 'yearhours' || dat == 'yeardays' ) ){
-				var dataset = []; var cnt = 0;
-				div_get('#placeholder'+sensor,dat+''+sensor, '<div class="title"><h5 class="ui-widget-header ui-corner-all datetime-container">Usage per day / hour in Kwh last 365 days</h5></div>', 'ui-widget-content ui-corner-all datetime-container-main');
-				div_get('#'+dat+''+sensor, dat+'container'+sensor,'','datetime-container-inner');
-				$('#'+dat+'container'+sensor).css('height','100%');
 				var l = dat == 'yearhours' ? ':00' : '';
+				var val = dat == 'yearhours' ? 'Usage last 12 months per hour' : 'Usage last 12 months per day';
+				$('#'+dat+'title'+sensor).append(val);
 				$.each( d[dat], function(p){
-					dataset[cnt] = { label: p+''+l,  data: d[dat][p]};
+					dataset[cnt] = { label: p+''+l,  data: d[dat][p] };
 					cnt = cnt+1;
 				});
-				sensor_detail_statistic_draw( '#'+dat+'container'+sensor, dataset);
+
+				$('#'+dat+'title'+sensor).click(function(){
+					$('#data-container'+sensor).empty();
+					div_get('#data-container'+sensor, 'loading'+sensor,'','loader');
+					sensor_detail_statistic_draw( '#data-container'+sensor, dataset);
+					$('.loader').fadeOut();
+				});
 			}
 			
+			// monthly graphs
+			if(typeof(d[dat]) == 'object' && ( dat == 'yearsdaysdetail' ) || dat == 'monthshoursdetail' ){
+				var datasetdetail = []; var cnt = 0;
+				var val = dat == 'monthshoursdetail' ? 'Detailed usage last 12 months per hour' : 'Detailed usage last 12 months per day';
+				$('#'+dat+'title'+sensor).append(val);
+				$.each( d[dat], function(p){
+					var l = dat == 'monthshoursdetail' ? ':00' : '';
+					var tmp = [];
+					tmp.push({'lb': p });
+					$.each(d[dat][p], function(f){
+						tmp.push({ label: f+''+l,  data: d[dat][p][f] });
+					});
+					datasetdetail[cnt] = tmp;
+					cnt = cnt+1;
+				});
+				
+				$('#'+dat+'title'+sensor).click(function(){
+					$('#data-container'+sensor).empty();
+					$('#'+dat+'container'+sensor).empty();
+					div_get('#data-container'+sensor, 'loading'+sensor,'','loader');
+					var cnt = 1;
+					$.each(datasetdetail, function(set){
+						div_get('#data-container'+sensor,dat+''+cnt+'containerset'+sensor,'','ui-widget-content ui-corner-all');
+						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+'title'+cnt+'container'+sensor,datasetdetail[set][0]['lb'],'padding5 ui-state-default ui-corner-all');
+						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+''+cnt+'container'+sensor,'','padding15');
+						$('#'+dat+''+cnt+'container'+sensor).css('height','100%');
+						div_get('#data-container'+sensor,dat+''+cnt+'container'+sensor,'','spacer');
+						sensor_detail_statistic_draw( '#'+dat+''+cnt+'container'+sensor, datasetdetail[set]);
+						cnt = cnt+1;
+					});
+					$('#data-container'+sensor).css('padding','15px');
+					$('.loader').fadeOut();
+				});
+			} 
 		});
+	    div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
+		$('#data-container'+sensor).css('height','100%');div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
+		
 	});
 }
+
 
 function sensor_detail_statistic_draw( placeholder, data){
 	$.plot($(placeholder), data,{
@@ -175,7 +225,7 @@ function sensor_statistic_generate( data, sensor, position ){
 					$.each( this, function( m ){
 						var statistics_val_month = button_get();
 						div_get('#sensor_statistic_year'+v, 'sensor_statistic_month'+v+m, '', 'level3 pointer');
-						div_get('#sensor_statistic_month'+v+m,'',m+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
+						div_get('#sensor_statistic_month'+v+m,'','> '+m+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
 						div_get('#sensor_statistic_month'+v+m, 'sensor_statistic_month_container'+v+m, '', 'level3 hidden');
 						
 						var kwh_month = 0;
@@ -211,7 +261,6 @@ function sensor_positions( data, sensor ){
 	$.each( data, function(d){
 		button_get('#positions'+sensor,'sensor_position'+sensor,data[d].description);
 	});
-	$("a", ".button").click(function( ) { return false; });
 }
 
 function sensor_data_selection( sensor ){
@@ -711,7 +760,7 @@ function iphone_navigation_main( data ) {
 
 function measureit_admin( data ){
 	$('#adminmenu').remove();
-	$('#tabs-11').append('<div id="adminmenu" />');
+	$('#tabs-1011').append('<div id="adminmenu" />');
 	sensor_list(data);
 }
 
@@ -916,7 +965,7 @@ function sensor_add(data){
 		sensor_settings_detail_clean();
 		container_get('#adminmenu','sensor_add_container','Sensor', 'sensor_settings');
 		div_get('#sensor_add_container','sensor_id',span_get('sensor_id_select_text','Sensor ID: ','float_left padding5'));
-		for( i=1;i<10;i++){
+		for( i=0;i<10;i++){
 				if(!data[i]){
 						div_get('#sensor_id','',i,'sensor_id');
 					}
