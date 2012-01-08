@@ -28,6 +28,9 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'sensor_history_year':
 			sensor_history_year( $_REQUEST );
 		break;
+		case 'sensor_statistic_comparison':
+			sensor_statistic_comparison( $_REQUEST );
+		break;
 		case 'sensor_statistic':
 			sensor_statistic( $_REQUEST );
 		break;
@@ -152,6 +155,33 @@ function sensor_history_week( $params = array( ) ){
 	return true;
 }
 
+function sensor_statistic_comparison( $params ){
+	$params['table'] = 'measure_watt_monthly';
+	$q = data_query_build( $params );
+	$db = new mydb;
+	$query = $db->query( $q );
+	while( $d = $db->fetch_array( $query ) ){
+		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
+		$r[$ret[1]][$ret[2]]['data'] = $d['data'];
+	}
+	$params['table'] = 'measure_watt_daily';
+	$q = data_query_build( $params );
+	$query = $db->query( $q );
+	while( $d = $db->fetch_array( $query ) ){
+		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
+		$r[$ret[1]][$ret[2]][$ret[3]]['data'] = $d['data'];
+	}
+	$params['table'] = 'measure_watt_hourly';
+	$q = data_query_build( $params );
+	$query = $db->query( $q );
+	while( $d = $db->fetch_array( $query ) ){
+		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
+		$r[$ret[1]][$ret[2]][$ret[3]][$d['hour']]['data'] = $d['data'];
+	}
+	print json_encode($r);
+	return true;
+}
+
 function sensor_history_year( $params = array( ) ){
 	$ret = '';
 	$q = data_query_build( $params );
@@ -253,8 +283,6 @@ function data_query_build( $params = array( ) ){
 	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( 'no sensor error: '.$params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
 	$turn = isset( $params['turn'] ) ? $params['turn'] : '';
-	#$limit = isset( $params['limit'] ) ? ' AND time > '.$params['limit'] : '';
-	#var_dump($params['timeframe']);
 	
 	switch( $params['timeframe'] ){
 		case 'static':
@@ -286,6 +314,9 @@ function data_query_build( $params = array( ) ){
 			$unit = preg_match( '/(hour|day| month)/i', $params['unit'] ) ? $params['unit'] : error( 'unit error: '.$params['unit'] );
 			$unit_value = is_numeric( $params['unit_value'] ) ? $params['unit_value'] : error( 'unit value error: '.$params['unit_value'] );
 			$timeframe = ' AND time > "'.$params['limit'].'"';
+		break;
+		case 'all':
+			$timeframe = '';
 		break;
 		default:
 			error('No timeframe to get data from');
