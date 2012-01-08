@@ -45,16 +45,16 @@ function navigation_main( data ) {
 	$('#tabs').tabs({
 	    select: function(event, ui){
 			$('.tooltip').hide();
-			if(data[ui.index]){
+			if($(ui.tab).attr('name') != '1000' && $(ui.tab).attr('name') != '1011' ){
 				sensor_detail($(ui.tab).attr('name'));
 				hist_update('1');
 				return true;
 			}
-			if(ui.index == '0'){
+			if($(ui.tab).attr('name') == '1000'){
 				hist_update('0');
 				return true;
 			}
-			if(!data[ui.index]){
+			if($(ui.tab).attr('name') == '1011'){
 				measureit_admin( data );
 				hist_update('1');
 				return true;
