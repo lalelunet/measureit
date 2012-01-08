@@ -4,7 +4,6 @@ require_once( 'class.db.php' );
 
 # in demo mode no sensor actions please
 $demo = true;
-#error_reporting(0);
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -103,8 +102,10 @@ function sensor_detail_statistic( $params = array( ) ){
 		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
 			$r['yeardays'][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			$r['yearsdaysdetail'][@date( M, @strtotime( $d['time'].' 00:00' ) )][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			$r['yearsdaysdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			ksort($r['yearsdaysdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )]);
 		}
+		
 		$params['table'] = 'measure_watt_hourly';
 		$q = data_query_build( $params );
 		$db = new mydb;
@@ -112,8 +113,10 @@ function sensor_detail_statistic( $params = array( ) ){
 		while( $d = $db->fetch_array( $query ) ){
 			$r['yearhours'][$d['hour']] += $d['data'];
 			ksort($r['yearhours']);
-			$r['monthshoursdetail'][@date( M, @strtotime( $d['time'].' 00:00' ) )][$d['hour']] += $d['data'];
+			$r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )][$d['hour']] += $d['data'];
+			ksort($r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )]);
 		}
+		#echo '<pre>';var_dump($r);
 		print json_encode($r);
 		return true;
 	}
