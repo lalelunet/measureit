@@ -65,6 +65,14 @@ div.sensor_id {
 	padding: 5px;
 }
 
+.padding15 {
+	padding: 15px;
+}
+
+.spacer {
+	height: 15px;
+}
+
 .ui-corner-all a {
 	text-decoration: none;
 }
@@ -122,11 +130,11 @@ div.menu {
 }
 
 .switch-link-left{
-	background: url(/img/bck.png) no-repeat;
+	background: url(../img/bck.png) no-repeat;
 }
 
 .switch-link-right{
-	background: url(/img/fwd.png) no-repeat;
+	background: url(../img/fwd.png) no-repeat;
 }
 
 .sensor_statistic_table{
@@ -138,7 +146,20 @@ div.menu {
 }
 
 .datetime-container-main {
-	margin-bottom: 20px;
+	border: 1px solid #aaaaaa; background: #ffffff url(images/ui-bg_flat_75_ffffff_40x100.png) 50% 50% repeat-x; color: #222222;
+}
+
+div.datetime-container-button {
+	background-color: #e0e0e0;
+	border: 2px solid #ffffff;
+}
+
+.datetime-container-button{
+	background-color: #e0e0e0;
+	border: 2px solid #c0c0c0;
+	padding: 5px;
+	-moz-border-radius: 8px;
+	cursor: pointer;
 }
 
 .datetime-container-inner {
@@ -149,7 +170,7 @@ div.menu {
 }
 
 .month_header,
-.statistic_position{
+.statistic_position {
 	background-color: #e0e0e0;
 	border: 2px solid #ffffff;
 	padding: 5px;
@@ -234,4 +255,13 @@ input,
 }
 #adminmenu .sensor-inner {
 	width: 300px;
+}
+.sensor-detail-statistic-data-container {
+	padding: 15px;
+}
+.loader {
+	background: #ffffff url(../img/loader.gif) center no-repeat;
+	width: 100%;
+	height: 100%;
+	opacity: .5;
 }
