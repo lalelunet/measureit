@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `measure_data_now` (
 
 
 INSERT INTO `measure_data_now` (`sensor_id`, `watt`, `tmpr`) VALUES
-(1, 0, 0),
+(0, 0, 0),
 (2, 0, 0),
 (3, 0, 0),
 (4, 0, 0),
@@ -109,6 +109,6 @@ INSERT INTO `measure_data_now` (`sensor_id`, `watt`, `tmpr`) VALUES
 (8, 0, 0),
 (9, 0, 0);
 
-INSERT INTO `measure_it`.`measure_positions` (`position_time`, `position_description`, `position_sensor`) VALUES (now(), 'start position', '1');
-INSERT INTO `measure_it`.`measure_sensors` (`sensor_id`, `sensor_title`) VALUES ('1', 'Sensor 1');
-INSERT INTO `measure_it`.`measure_settings` (`measure_history`, `measure_currency`, `measure_sensor`, `measure_price`) VALUES ('365', 'Euro', '1', '0.0022');
+INSERT INTO `measure_it`.`measure_positions` (`position_time`, `position_description`, `position_sensor`) VALUES (now(), 'start position', '0');
+INSERT INTO `measure_it`.`measure_sensors` (`sensor_id`, `sensor_title`) VALUES ('0', 'Sensor 0');
+INSERT INTO `measure_it`.`measure_settings` (`measure_history`, `measure_currency`, `measure_sensor`, `measure_price`) VALUES ('365', 'Euro', '0', '0.0022');
