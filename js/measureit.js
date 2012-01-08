@@ -70,6 +70,7 @@ function sensor_statistic( data, sensor ){
 	button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
 	button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
 	button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,'day / time usage');
+	//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
 	$('#sensor_statistic'+sensor).click(function( ) { 
 		$('#placeholder'+sensor).empty();
 		$('#overview'+sensor).empty();
@@ -91,6 +92,26 @@ function sensor_statistic( data, sensor ){
 	$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
 	$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
 	$('#sensor_statistic_datetime'+sensor).click( function(){ sensor_statistic_datetime( sensor ) });
+	//$('#sensor_statistic_comparison'+sensor).click( function(){ sensor_statistic_comparison( sensor ) });
+}
+
+function sensor_statistic_comparison( sensor ){
+    $.getJSON('php/measureit_functions.php', { 'do' : 'sensor_statistic_comparison', 'sensor' : sensor, 'timeframe' : 'all' }, function(d){
+    	//graph_draw_comparison( d, sensor);
+    	var dataset = []; var tmp=[]; var cnt = 0;
+    	$.each(d, function(dat){
+    		//console.log('1',d[dat]);
+    		$.each(d[dat], function(f){
+    			if(typeof(d[dat][f]) == 'object'){
+    				//console.log(d[dat][f]);
+        			tmp.push({ label: dat+'-'+f,  data: d[dat][f]['data'] });
+    			} 
+			});
+			dataset[cnt] = tmp;
+			cnt = cnt+1;
+    	});
+    	console.log(dataset);
+    });
 }
 
 function sensor_statistic_datetime( sensor ){
@@ -497,6 +518,23 @@ function graph_draw(sensor, query, options, info){
 
 			    infobox(placeholder, info);
 		});
+}
+
+function graph_draw_comparison( d, sensor){
+	$('#placeholder'+sensor).empty();
+	$('.sensor_legend').empty();
+	$('#overview'+sensor).empty();
+	$('.tooltip').remove();
+	div_get('#placeholder'+sensor,'sensor_comparison'+sensor,'');
+	div_get('#tabs-'+sensor,'sensor_comparison_legend'+sensor,'','sensor_legend');
+	div_get('#sensor_comparison_legend'+sensor,'container-legend','','legend-container float_left');
+	div_get('#sensor_comparison_legend'+sensor,'container-selection','','selection-container float_left');
+	
+	var dataset = [];
+	var cnt = 1;
+	var label = '';
+	
+	console.log(d);
 }
 
 function graph_draw_multiple( d, sensor, range, exclude){
