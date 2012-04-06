@@ -1,9 +1,11 @@
 <?php
 
  class db_accountdata {
+  #var $host                 = "localhost:10001";
+  #var $pass                 = "nhjw_4k=0)/_rhje$$/e34%";
   var $host                 = "localhost";
-  var $user                 = "measureit";
   var $pass                 = "measureitpasswd";
+  var $user                 = "measureit";
   var $datenbank            = "measure_it";
 }
 
@@ -18,7 +20,7 @@ class mydb extends db_accountdata
 
    function connect($host,$user,$pass,$datenbank)
    {
-      $this->link = @mysql_connect($host,$user,$pass) or die ("Datenbankverbindung nicht moeglich!");
+      $this->link = @mysql_connect($host,$user,$pass) or die ("Datenbankverbindung nicht moeglich!".mysql_error( ) );
       $this->choosedb($datenbank);
    }
 
