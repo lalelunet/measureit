@@ -42,6 +42,10 @@ if( isset( $_REQUEST['do'] ) ){
 			if($demo){ return true; }
 			sensor_delete( $_REQUEST );
 		break;
+		case 'clamp_add':
+			if($demo){ return true; }
+			clamp_add( $_REQUEST );
+		break;
 		case 'sensor_position_add':
 			if($demo){ return true; }
 			sensor_position_add( $_REQUEST );
@@ -70,17 +74,39 @@ if( isset( $_REQUEST['do'] ) ){
 			if($demo){ return true; }
 			backup_delete( $_REQUEST );
 		break;
+		case 'clamp_usage_create':
+			clamp_usage_create( );
+		break;
 		default:
 			echo 'this is not a valid request';
 		break;
 	}
 }
 
+function clamp_usage_create( ){
+	$db = new mydb;
+	$query = $db->query( "select * from measure_watt where sensor > 9 and time between '2012-03-23 00:00:00' and '2012-03-24 00:00:00'" );
+	while( $d = $db->fetch_array( $query ) ){
+		$r[$d['sensor']]['watt_sum'] += $d['data'];
+		$r[$d['sensor']]['watts'][] = $d['data'];
+	}
+	foreach( $r as $k => $v ){
+		$usage[$k]['watt_sum'] += ( $r[$k]['watt_sum'] / count($r[$k]['watts'] ) ) / 1000; 
+		$rr += $usage[$k]['watt_sum'];
+		
+	}
+	var_dump($usage);
+	#var_dump($r);
+}
+
 function navigation_main( ){
-	$sensors = sensor_get();
+	$sensors = sensors_get();
 	$r = array();
 	foreach( $sensors as $k=>$v ){
 		$r[$k]['sensor'] = $v;
+		if( $clamps = sensor_clamps_get( $k ) ){
+			$r[$k]['sensor']['clamps'] = $clamps;
+		}
 	}
 	print json_encode($r);
 	return true;
@@ -89,9 +115,26 @@ function navigation_main( ){
 function sensor_detail( $params = array( ) ){
 	if( is_numeric( $params['sensor'] ) ){
 		$r['sensor'] = sensor_get( $params['sensor'] );
+		$r['sensor']['clamps'] = sensor_clamps_get( $params['sensor'] );
 		print json_encode($r);
 	}
 	return true;
+}
+
+function sensor_clamps_get( $sensor ){
+	$sensors = sensors_get();
+	$clamps = array();
+	foreach( $sensors as $k => $v){
+		for( $i=1; $i<4; $i++){
+			if( $v['sensor_id'] == $i.$sensor ){
+				$clamps[$v['sensor_id']] = 'clamp '.$i;
+			}
+		}
+	}
+	if( count( $clamps ) > 0 ){
+		return $clamps;
+	}
+	return false;
 }
 
 function sensor_detail_statistic( $params = array( ) ){
@@ -126,7 +169,7 @@ function sensor_detail_statistic( $params = array( ) ){
 }
 
 function summary_start( ){
-	$sensors = sensor_get();
+	$sensors = sensors_get();
 	foreach( $sensors as $k=>$v ){
 		$p = end( $v['positions'] );
 		$vn = sensor_values_now_get( $k );
@@ -198,14 +241,14 @@ function sensor_history_year( $params = array( ) ){
 function sensor_data_get( $params = array( ) ){
 	$q = !strpos( $params['table'], 'tmpr' ) ? data_query_build( $params ) : tmpr_get_query( $params );
 	if( $q ){
-		$t = '';
+		$t = ''; $use_diff = false;
 		$db = new mydb;
 		$query = $db->query( $q );
-		if( $diff = timezone_diff_get( $params ) ) $use_diff = true;
+		if( $diff = timezone_diff_get( $params ) ) $use_diff = false;
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			if( isset( $use_diff ) ){
-				$ts = $diff['prefix'] == false ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+				$ts = isset( $diff['prefix'] ) ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
 			}
 			$u = $params['unit_return'] == 'timeframe' ? $ts*1000 : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
@@ -353,13 +396,35 @@ function sensor_position_last_get( $sensor ){
 
 function sensor_get( $sensor = '' ){
 	$db = new mydb;
-	$subselect = is_numeric( $sensor ) ? 'WHERE measure_sensors.sensor_id = '.$sensor : '';
 	$query = $db->query( "
 		SELECT * 
 		FROM measure_sensors
 		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
 		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
-		$subselect
+		WHERE measure_sensors.sensor_id = $sensor$subselect
+		ORDER BY measure_sensors.sensor_id, measure_positions.position_id
+	" );
+	$r = array();
+	while( $d = $db->fetch_array( $query ) ){
+		foreach( $d as $k => $v){
+			$item = !is_numeric( $k ) ? $k : 'x';
+			$r[$d['sensor_id']][$item] = $d[$k];
+		}
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
+	}
+	#echo '<pre>'; var_dump($r);
+	return $r;
+}
+
+function sensors_get( ){
+	$db = new mydb;
+	$query = $db->query( "
+		SELECT * 
+		FROM measure_sensors
+		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
+		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
 		ORDER BY measure_sensors.sensor_id, measure_positions.position_id
 	" );
 	$r = array();
@@ -426,7 +491,14 @@ function sensor_add( $params = array() ){
 	$db = new mydb;
 	$db->query("INSERT IGNORE INTO measure_it.measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
 	$db->query("INSERT INTO measure_it.measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
+	$db->query("INSERT INTO measure_it.measure_settings ( measure_sensor ) VALUES ( '$params[sensor_id]' )");
 	return true;
+}
+
+function clamp_add( $_REQUEST ){
+	# a clamp is internal just a sensor :)
+	$_REQUEST['sensor_id'] = $_REQUEST['clamp_id'].$_REQUEST['sensor_id'];
+	sensor_add( $_REQUEST );
 }
 
 function backup_create(){
@@ -459,7 +531,9 @@ function backup_delete( $params = array() ){
 
 function timezone_diff_get( $params = array( ) ){
 	$sensor = sensor_get( $params['sensor'] );
-	if( $sensor[$params['sensor']]['measure_timezone_diff'] == 0 ) return false;
+	if( $sensor[$params['sensor']]['measure_timezone_diff'] == 0 ){
+		return false;
+	}
 	preg_match( '/(-)?(\d)/', $sensor[$params['sensor']]['measure_timezone_diff'], $r );
 	$diff['prefix'] = $r[1] != '' ? $r[1] : false;
 	$diff['diff'] = ( $r[2] * 60 ) * 60;
