@@ -17,6 +17,7 @@ function hist_update(stop){
 	if( stop == '1'){ return true; }
 	$.getJSON('php/measureit_functions.php', { 'do' : 'summary_start' }, function(data) {
 		$.each(data, function(d){
+			if(data[d].sensor.sensor_id < 9){
 				$('#'+data[d].sensor.sensor_id).remove();
 				$('#summary').append('<div id="'+data[d].sensor.sensor_id+'">');
 				$('#'+data[d].sensor.sensor_id).addClass('ui-widget-content ui-corner-all sensor').append('<h5 class="ui-widget-header ui-corner-all">' + data[d].sensor.position_description + '</h5>');
@@ -26,6 +27,7 @@ function hist_update(stop){
 				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last day</h5></div><div class="data">'+data[d].daily + price_format( data[d].daily, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh') +'</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="weekly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 7 days</h5></div><div class="data">'+data[d].weekly + price_format( data[d].weekly, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh')+'</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="monthly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 30 days</h5></div><div class="data">'+data[d].monthly + price_format( data[d].monthly, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh') +'</div></div>' );
+			}
 		});
 	})
 	$('.refresh').css('background-color','darkred');
@@ -38,11 +40,16 @@ function navigation_main( data ) {
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1000"><a href="#tabs-1000" name="1000">Home</a></li>');
 	
 	$.each( data, function(d){
-		$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
-		$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
+		if( data[d].sensor.sensor_id < 9 ){
+			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'" id="submenu'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
+			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
+			sensor_clamps(data[d].sensor.clamps,d);
+
+		}
+			
 		});
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1011"><a href="#tabs-1011" name="1011">Setup</a></li>');
-	$('#tabs').tabs({
+	$('#tabs,#foo').tabs({
 	    select: function(event, ui){
 			$('.tooltip').hide();
 			if($(ui.tab).attr('name') != '1000' && $(ui.tab).attr('name') != '1011' ){
@@ -64,35 +71,58 @@ function navigation_main( data ) {
 };
 
 function sensor_statistic( data, sensor ){
-	$('#statistic'+sensor).remove();
-	container_get('#menu'+ sensor, 'statistic'+sensor,'statistic');
-	button_get('#statistic'+sensor,'sensor_statistic'+sensor,'costs');
-	button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
-	button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
-	button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,'day / time usage');
-	//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
-	$('#sensor_statistic'+sensor).click(function( ) { 
-		$('#placeholder'+sensor).empty();
-		$('#overview'+sensor).empty();
-		$('#placeholder'+sensor).unbind();
-		$('.tooltip').remove();
-		$('.sensor_legend').remove();
-		
-		$.each( data, function(d){
-			div_get('#placeholder'+sensor,'sensor_position'+d,'');
-			div_get('#sensor_position'+d,'sensor_position_statistic'+d,'>> '+data[d].description,'pointer statistic_position');
-			$('#sensor_position_statistic'+d).click(function( ){
-				$('.sensor_statistic_table').remove();
-				sensor_statistic_generate(data, sensor, d);	
+	// there are no clamp details from the current cost device
+	if(sensor < 10){
+		$('#statistic'+sensor).remove();
+		container_get('#menu'+ sensor, 'statistic'+sensor,'statistic');
+		button_get('#statistic'+sensor,'sensor_statistic'+sensor,'costs');
+		button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
+		button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
+		button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,'day / time usage');
+		//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
+		$('#sensor_statistic'+sensor).click(function( ) { 
+			$('#placeholder'+sensor).empty();
+			$('#overview'+sensor).empty();
+			$('#placeholder'+sensor).unbind();
+			$('.tooltip').remove();
+			$('.sensor_legend').remove();
+			
+			$.each( data, function(d){
+				div_get('#placeholder'+sensor,'sensor_position'+d,'');
+				div_get('#sensor_position'+d,'sensor_position_statistic'+d,'>> '+data[d].description,'pointer statistic_position');
+				$('#sensor_position_statistic'+d).click(function( ){
+					$('.sensor_statistic_table').remove();
+					sensor_statistic_generate(data, sensor, d);	
+				});
 			});
+			
 		});
 		
-	});
-	
-	$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
-	$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
-	$('#sensor_statistic_datetime'+sensor).click( function(){ sensor_statistic_datetime( sensor ) });
-	//$('#sensor_statistic_comparison'+sensor).click( function(){ sensor_statistic_comparison( sensor ) });
+		$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
+		$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
+		$('#sensor_statistic_datetime'+sensor).click( function(){ sensor_statistic_datetime( sensor ) });
+		//$('#sensor_statistic_comparison'+sensor).click( function(){ sensor_statistic_comparison( sensor ) });	
+	}
+}
+
+function sensor_clamps( data, sensor ){
+	if($(data).length > 0){
+		console.log(data);
+		$('#submenu'+sensor).append('<ul class="sensor_hide_helper"><li class="sensor_hide_helper"><a href="#tab" id="sensor_hide'+sensor+'"><span class="ui-icon ui-icon-circle-plus sensor_hide"></span></a></li></ul>');
+		$('#submenu'+sensor).addClass('menu_clamp_with_sensor');
+		$.each(data, function(d){
+			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top sensor_clamp_menu sensor_clamp_menu'+sensor+'"><a href="#tabs-' + d + '" name="'+d+'">' + data[d] + '</a></li>');
+			$('#tabs').append('<div id="tabs-'+d+'" name="'+d+'"><div id="menu'+d+'" class="menu" /><div id="det'+d+'" class="det"><div class="placeholder" id="placeholder' +d+'" /><div class="overview" id="overview' +d+'" /></div></div>');
+		});
+		$('#sensor_hide'+sensor).toggle(
+				function(){
+					$('.sensor_clamp_menu'+sensor).fadeIn('slow');
+				},
+				function(){
+					$('.sensor_clamp_menu'+sensor).fadeOut('slow');
+				}
+			);
+	}
 }
 
 function sensor_statistic_comparison( sensor ){
@@ -289,58 +319,62 @@ function sensor_data_selection( sensor ){
 	// choose day
 	container_get('#menu'+sensor,'date'+sensor,'Sensor details');
 	$('#date'+ sensor).append( '<button id="reload'+sensor+'" class="date button">refresh</button><br />' );
-	$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="choose day"/>' );
-
-	$('#date_picker'+sensor).datepicker({
-		maxDate: '+0D',
-		showButtonPanel : true,
-		onSelect: function(dateText, inst) {
-			sensor_data_selected( inst, sensor, inst.selectedDay+'-'+inst.selectedMonth+'-'+inst.selectedYear+' Kwh' );
-			$('.ui-datepicker-inline').hide();
-	 	}
-	});
-
-	var datepicker_from = 'date_picker_from'+sensor;
-	var datepicker_to = 'date_picker_to'+sensor;	
-	$('#date'+ sensor).append( '<br /><input id="'+datepicker_from+'" class="date dateselect button" value="day from" /><input id="'+datepicker_to+'" class="date dateselect button" value="day to" />' );
-
-	$('.dateselect').datepicker({
-		maxDate: '+0D',
-		showButtonPanel : true,
-		onSelect: function() {
-			var from_str = $('#'+datepicker_from).val();
-			var to_str = $('#'+datepicker_to).val();
-			if( from_str !== 'day from' && to_str !== 'day to'){
-					var from = from_str.split('/');
-					var to = to_str.split('/');
-					var data = {
-						'range_to' : to[2]+'-'+to[0]+'-'+to[1]+'_0',
-						'range_from' : from[2]+'-'+from[0]+'-'+from[1]+'_0',
-						'day_range' : true
-						}
-					sensor_data_selected( data, sensor, from[2]+'-'+from[0]+'-'+from[1]+' - '+to[2]+'-'+to[0]+'-'+to[1]+' Kwh' );
-				};
-	 	}
-	});
-	$('#date'+ sensor).append( '<br /><button id="select_output_'+sensor+'" class="button"><span id="w'+sensor+'" class="active_element">Watt</span> / <span id="t'+sensor+'">Temperature</span></button><input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
-	$('#date'+ sensor).append( '<input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
 	
-	$('#select_output_'+sensor).toggle(
-			function() {
-			$('#show'+sensor).val('t');
-			$('#t'+sensor).addClass('active_element');
-			$('#w'+sensor).removeClass('active_element');
-			$('#'+ datepicker_from).fadeOut('slow');
-			$('#'+ datepicker_to).fadeOut('slow');
-			$('#reload'+sensor).fadeOut('slow');
-		}, function() {
-			$('#show'+sensor).val('w');
-			$('#w'+sensor).addClass('active_element');
-			$('#t'+sensor).removeClass('active_element');
-			$('#'+ datepicker_from).fadeIn('slow');
-			$('#'+ datepicker_to).fadeIn('slow');
-			$('#reload'+sensor).fadeIn('slow');
+	if(sensor<10){
+		$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="choose day"/>' );
+
+		$('#date_picker'+sensor).datepicker({
+			maxDate: '+0D',
+			showButtonPanel : true,
+			onSelect: function(dateText, inst) {
+				sensor_data_selected( inst, sensor, inst.selectedDay+'-'+inst.selectedMonth+'-'+inst.selectedYear+' Kwh' );
+				$('.ui-datepicker-inline').hide();
+		 	}
 		});
+
+		var datepicker_from = 'date_picker_from'+sensor;
+		var datepicker_to = 'date_picker_to'+sensor;	
+		$('#date'+ sensor).append( '<br /><input id="'+datepicker_from+'" class="date dateselect button" value="day from" /><input id="'+datepicker_to+'" class="date dateselect button" value="day to" />' );
+
+		$('.dateselect').datepicker({
+			maxDate: '+0D',
+			showButtonPanel : true,
+			onSelect: function() {
+				var from_str = $('#'+datepicker_from).val();
+				var to_str = $('#'+datepicker_to).val();
+				if( from_str !== 'day from' && to_str !== 'day to'){
+						var from = from_str.split('/');
+						var to = to_str.split('/');
+						var data = {
+							'range_to' : to[2]+'-'+to[0]+'-'+to[1]+'_0',
+							'range_from' : from[2]+'-'+from[0]+'-'+from[1]+'_0',
+							'day_range' : true
+							}
+						sensor_data_selected( data, sensor, from[2]+'-'+from[0]+'-'+from[1]+' - '+to[2]+'-'+to[0]+'-'+to[1]+' Kwh' );
+					};
+		 	}
+		});
+		$('#date'+ sensor).append( '<br /><button id="select_output_'+sensor+'" class="button"><span id="w'+sensor+'" class="active_element">Watt</span> / <span id="t'+sensor+'">Temperature</span></button><input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
+		$('#date'+ sensor).append( '<input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
+		
+		$('#select_output_'+sensor).toggle(
+				function() {
+				$('#show'+sensor).val('t');
+				$('#t'+sensor).addClass('active_element');
+				$('#w'+sensor).removeClass('active_element');
+				$('#'+ datepicker_from).fadeOut('slow');
+				$('#'+ datepicker_to).fadeOut('slow');
+				$('#reload'+sensor).fadeOut('slow');
+			}, function() {
+				$('#show'+sensor).val('w');
+				$('#w'+sensor).addClass('active_element');
+				$('#t'+sensor).removeClass('active_element');
+				$('#'+ datepicker_from).fadeIn('slow');
+				$('#'+ datepicker_to).fadeIn('slow');
+				$('#reload'+sensor).fadeIn('slow');
+			});
+	}
+	
 	$('#reload'+sensor).click( function(){ sensor_detail(sensor) } );
 	$(".button").button();
 }
@@ -895,6 +929,9 @@ function sensor_list( data ){
 	sensor_settings_detail_clean();
 	container_get('#adminmenu','sensor_admin','Sensor');
 	$.each( data, function(d){
+		if(d>9){
+			data[d].sensor.sensor_title = 'Sensor '+d.substr(1,1)+' clamp: '+d.substr(0,1);
+		}
 		button_get('#sensor_admin','sensor_admin'+d,data[d].sensor.sensor_title);
 		$('#sensor_admin'+d).click(function() {
 			sensor_settings_clean();
@@ -903,8 +940,10 @@ function sensor_list( data ){
 			});
 	});
 	button_get('#sensor_admin','sensor_add','Add Sensor');
+	button_get('#sensor_admin','clamp_add','Add Clamp');
 	button_get('#sensor_admin','backup','Backup / Export');
 	sensor_add(data);
+	clamp_add(data);
 	system_backup();
 }
 
@@ -916,10 +955,10 @@ function sensor_admin_list_items( data, sensor ){
 	button_get('#sensor_admin_list','sensor_admin_sensor_delete'+sensor,'Delete');
 	$('#sensor_admin_positions'+sensor).click(function(){
 		sensor_positions_admin(data,sensor);
-		});
+	});
 	$('#sensor_admin_settings'+sensor).click(function(){
-			sensor_admin_settings(data, sensor);
-		});
+		sensor_admin_settings(data, sensor);
+	});
 	$('#sensor_admin_sensor_delete'+sensor).click(function(){
 		sensor_delete(sensor);
 	});
@@ -1009,10 +1048,11 @@ function sensor_add(data){
 					}
 			}
 		$('.sensor_id').click(function(){
-				$('.sensor_id').removeClass('selected');
-				$(this).addClass('selected');
-			});
-		$('#sensor_add_container').append(span_get('sensor_title_select_text','Title','padding5')+'<br /><input type="text" id="sensor_name" />');
+			$('.sensor_id').removeClass('selected');
+			$(this).addClass('selected');
+		});
+
+		div_get('#sensor_add_container','sensor_title_text',span_get('sensor_title_text','Title:<br /> <input type="text" id="sensor_name" />','float_left padding5'));
 		button_get('#sensor_add_container','sensor_add_action','Add','padding5');
 		$('#sensor_add_action').click(function(){
 				if($('#sensor_name').val() != '' && $('.selected').html() != null){
@@ -1027,6 +1067,60 @@ function sensor_add(data){
 					}
 			});
 		});
+}
+
+function clamp_add(data){
+	$('#clamp_add').click(function(){
+		sensor_settings_clean();
+		sensor_settings_detail_clean();
+		container_get('#adminmenu','clamp_add_container','Clamp', 'sensor_settings');
+		div_get('#clamp_add_container','sensor_id',span_get('sensor_id_select_text','Sensor: <select id="sensor_select_box" name="sensor_select_box"><option selected="selected" value="x">Please choose Sensor</option></select>','float_left padding5 block'));
+		div_get('#clamp_add_container','clamp_id',span_get('sensor_id_select_text','Clamp: ','float_left padding5 block'));
+
+		for( i=0;i<10;i++){
+				if(data[i]){
+					$('#sensor_select_box').append('<option value="'+i+'">'+data[i].sensor.sensor_title+'</option>');	
+					}
+			}
+		$('.sensor_id').click(function(){
+			$('.sensor_id').removeClass('selected');
+			$(this).addClass('selected');
+		});
+		
+		$('#sensor_id').change(function(){
+			available_clamps_get($('#sensor_select_box').val(), data);
+		});
+
+		div_get('#clamp_add_container','sensor_title_text',span_get('sensor_title_text','Title:<br /> <input type="text" id="sensor_name" />','float_left padding5'));
+		button_get('#clamp_add_container','clamp_add_action','Add','padding5');
+		$('#clamp_add_action').click(function(){
+			if( $('#sensor_select_box').val() != 'x' && $('#sensor_select_box').val() != 'null' && $('.clamp_selected').html() != null){
+					$.get('php/measureit_functions.php',{ 'do' : 'clamp_add', 'sensor_id' : $('#sensor_select_box').val(), 'clamp_id' : $('.clamp_selected').html(), 'sensor_name' : $('#sensor_name').val() }, function(){
+						delete data;
+						$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
+							navigation_main( data );
+							measureit_admin( data );
+							hist_update('1');
+							});
+						});
+				}
+			});
+		
+		});
+}
+
+function available_clamps_get(sensor, data){
+	$('.clamp_id').remove();
+	for( i=1;i<4;i++){
+		var sensor_clamp = i+sensor;
+		if(!data[sensor_clamp]){
+			div_get('#clamp_id','',i,'clamp_id');
+		}
+	}
+	$('.clamp_id').click(function(){
+		$('.clamp_id').removeClass('clamp_selected');
+		$(this).addClass('clamp_selected');
+	});
 }
 
 function system_backup(){
