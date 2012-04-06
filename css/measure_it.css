@@ -19,7 +19,8 @@ div.sensor {
 	margin-bottom: 10px;
 }
 
-div.sensor_id {
+div.sensor_id,
+div.clamp_id {
 	float: left;
 	padding: 3px;
 	margin: 4px;
@@ -27,7 +28,8 @@ div.sensor_id {
 	cursor: pointer;
 }
 
-.selected {
+.selected,
+.clamp_selected {
 	background-color: #c0c0c0;
 }
 
@@ -42,6 +44,10 @@ div.sensor_id {
 
 .hidden{
 	display: none;
+}
+
+.block{
+	display: block;
 }
 
 
@@ -264,4 +270,25 @@ input,
 	width: 100%;
 	height: 100%;
 	opacity: .5;
+}
+
+li.sensor_clamp_menu{
+	display: none;
+}
+#tabcontainer li.menu_clamp_with_sensor a{
+	padding-left: 30px;
+}
+
+ul.sensor_hide_helper{
+	position: absolute;
+	width: 0px;
+}
+
+#tabcontainer li.sensor_hide_helper{
+	float: right;
+	cursor: pointer;
+}
+
+#tabcontainer li.sensor_hide_helper a{
+	cursor: pointer;
 }
