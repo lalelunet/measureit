@@ -77,6 +77,14 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'clamp_usage_create':
 			clamp_usage_create( );
 		break;
+		case 'global_settings_get':
+			if($demo){ return true; }
+			global_settings_get( );
+		break;
+		case 'global_settings_set':
+			if($demo){ return true; }
+			global_settings_set( $_REQUEST );
+		break;
 		default:
 			echo 'this is not a valid request';
 		break;
@@ -501,6 +509,24 @@ function clamp_add( $_REQUEST ){
 	sensor_add( $_REQUEST );
 }
 
+function global_settings_get( ){
+	$db = new mydb;
+	$r = array();
+	$query = $db->query("SELECT * FROM measure_system");
+	while( $d = $db->fetch_array( $query ) ){
+		$r[$d['measure_system_setting_name']] = stripslashes( $d['measure_system_setting_value'] );
+	}
+	print json_encode( $r );
+}
+
+function global_settings_set( $_REQUEST ){
+	$db = new mydb;
+	$db->query("DELETE FROM measure_system");
+	foreach( $_REQUEST['data'] as $k => $v ){
+		$db->query("INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) VALUES ('$k', '$v' )");
+	}
+}
+
 function backup_create(){
 	if( !is_dir('../backup') ){ mkdir( '../backup', 0775 ); }
 	$db = new mydb;
@@ -531,10 +557,17 @@ function backup_delete( $params = array() ){
 
 function timezone_diff_get( $params = array( ) ){
 	$sensor = sensor_get( $params['sensor'] );
-	if( $sensor[$params['sensor']]['measure_timezone_diff'] == 0 ){
+	$db = new mydb;
+	$r = array();
+	$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'global_timezone_use'");
+	$d = $db->fetch_array( $query );
+	
+	$timezone_diff = ( isset( $d['measure_system_setting_value'] ) && is_numeric( $d['measure_system_setting_value'] ) ) ? $d['measure_system_setting_value'] : $sensor[$params['sensor']]['measure_timezone_diff'];
+	
+	if( $timezone_diff == 0 ){
 		return false;
 	}
-	preg_match( '/(-)?(\d)/', $sensor[$params['sensor']]['measure_timezone_diff'], $r );
+	preg_match( '/(-)?(\d+)/', $timezone_diff, $r );
 	$diff['prefix'] = $r[1] != '' ? $r[1] : false;
 	$diff['diff'] = ( $r[2] * 60 ) * 60;
 	return $diff;
