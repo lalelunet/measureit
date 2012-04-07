@@ -75,6 +75,17 @@ div.clamp_id {
 	padding: 15px;
 }
 
+.notice{
+	color: darkred;
+}
+
+.notice_box{
+	border: 1px solid darkred;
+	border-radius: 5px;
+	padding: 5px;
+	color: darkred;
+}
+
 .spacer {
 	height: 15px;
 }
