@@ -107,7 +107,6 @@ function sensor_statistic( data, sensor ){
 
 function sensor_clamps( data, sensor ){
 	if($(data).length > 0){
-		console.log(data);
 		$('#submenu'+sensor).append('<ul class="sensor_hide_helper"><li class="sensor_hide_helper"><a href="#tab" id="sensor_hide'+sensor+'"><span class="ui-icon ui-icon-circle-plus sensor_hide"></span></a></li></ul>');
 		$('#submenu'+sensor).addClass('menu_clamp_with_sensor');
 		$.each(data, function(d){
@@ -839,6 +838,7 @@ function measureit_admin( data ){
 function sensor_settings_clean(){
 	$('.sensor_settings').remove();
 	$('.sensor_list_settings').remove();
+	$('.system_settings').remove();
 }
 
 function sensor_settings_detail_clean(){
@@ -942,9 +942,15 @@ function sensor_list( data ){
 	button_get('#sensor_admin','sensor_add','Add Sensor');
 	button_get('#sensor_admin','clamp_add','Add Clamp');
 	button_get('#sensor_admin','backup','Backup / Export');
+	button_get('#sensor_admin','global_settings','System settings');
 	sensor_add(data);
 	clamp_add(data);
 	system_backup();
+	
+	$('#global_settings').click(function(){
+		global_settings();
+	});
+	
 }
 
 function sensor_admin_list_items( data, sensor ){
@@ -1157,6 +1163,59 @@ function system_backup(){
 		
 	});
 
+}
+
+function global_settings( ){
+	sensor_settings_clean();
+	sensor_settings_detail_clean();
+	container_get('#adminmenu','admin_settings_container','System settings', 'system_settings');
+	div_get('#admin_settings_container','system_settings_container','','padding5');
+	$('#system_settings_container').append(span_get('system_settings_timezone','Use global timezone settings for all sensors instead of one setting per sensor<br />difference from GMT in hours ( 2 or -2 ):<br />',''));
+	input_get('#system_settings_container','system_settings_timezone_value','');
+	$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
+	input_get('#system_settings_container','system_settings_hosting_value','');
+	$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
+	checkbox_get('#system_settings_container','system_settings_database_value','','','0');
+	button_get('#system_settings_container','system_settings_save','Save settings');
+	div_get('#admin_settings_container','system_settings_container_notice','You had to restart the grabbing script to activate this settings','notice_box padding5');
+	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
+		
+		if(system_data.global_timezone_use){
+			$('#system_settings_timezone_value').val(system_data.global_timezone_use);
+		}
+		if(system_data.external_hoster_use){
+			$('#system_settings_hosting_value').val(system_data.external_hoster_use);
+		}
+		if(system_data.local_database_use){
+			$('#system_settings_database_value').attr('checked', true);
+		}
+		
+		});
+
+	$('#system_settings_save').click(function(){
+		var system_settings = {};
+		var system_item = false;
+		if( $.isNumeric( $('#system_settings_timezone_value').val() ) ){
+			system_settings['global_timezone_use'] =  $('#system_settings_timezone_value').val();
+			system_item = true;
+		}
+		if( $('#system_settings_hosting_value').val() != '' ){
+			system_settings['external_hoster_use'] =  $('#system_settings_hosting_value').val();
+			system_item = true;
+		}
+		if( $('#system_settings_database_value').attr('checked') ){
+			system_settings['local_database_use'] =  0;
+			system_item = true;
+		}
+		
+		if(system_item){
+			$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){});
+		}
+		sensor_settings_clean();
+		sensor_settings_detail_clean();
+		
+	});
+	
 }
 
 function backup_delete( file ){
