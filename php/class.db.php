@@ -1,12 +1,12 @@
 <?php
 
  class db_accountdata {
-  #var $host                 = "localhost:10001";
-  #var $pass                 = "nhjw_4k=0)/_rhje$$/e34%";
-  var $host                 = "localhost";
-  var $pass                 = "measureitpasswd";
-  var $user                 = "measureit";
-  var $datenbank            = "measure_it";
+ 	#var $host                 = "localhost:10001";
+	#var $pass                 = "nhjw_4k=0)/_rhje$$/e34%";
+	var $host                 = "localhost";
+	var $pass                 = "measureitpasswd";
+	var $user                 = "measureit";
+	var $datenbank            = "measure_it";
 }
 
 
