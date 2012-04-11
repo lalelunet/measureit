@@ -1172,6 +1172,8 @@ function global_settings( ){
 	div_get('#admin_settings_container','system_settings_container','','padding5');
 	$('#system_settings_container').append(span_get('system_settings_timezone','Use global timezone settings for all sensors instead of one setting per sensor<br />difference from GMT in hours ( 2 or -2 ):<br />',''));
 	input_get('#system_settings_container','system_settings_timezone_value','');
+	$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />',''));
+	input_get('#system_settings_container','system_settings_cron_value','');
 	$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
 	input_get('#system_settings_container','system_settings_hosting_value','');
 	$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
@@ -1182,6 +1184,9 @@ function global_settings( ){
 		
 		if(system_data.global_timezone_use){
 			$('#system_settings_timezone_value').val(system_data.global_timezone_use);
+		}
+		if(system_data.cron_delete_use){
+			$('#system_settings_cron_value').val(system_data.cron_delete_use);
 		}
 		if(system_data.external_hoster_use){
 			$('#system_settings_hosting_value').val(system_data.external_hoster_use);
@@ -1199,8 +1204,12 @@ function global_settings( ){
 			system_settings['global_timezone_use'] =  $('#system_settings_timezone_value').val();
 			system_item = true;
 		}
+		if( $.isNumeric( $('#system_settings_cron_value').val() ) ){
+			system_settings['global_timezone_use'] =  $('#system_settings_cron_value').val();
+			system_item = true;
+		}
 		if( $('#system_settings_hosting_value').val() != '' ){
-			system_settings['external_hoster_use'] =  $('#system_settings_hosting_value').val();
+			system_settings['cron_delete_use'] =  $('#system_settings_hosting_value').val();
 			system_item = true;
 		}
 		if( $('#system_settings_database_value').attr('checked') ){
