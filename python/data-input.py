@@ -18,8 +18,8 @@ if platform.system() == 'Linux':
 
 warnings.filterwarnings("ignore")
 # mysql connection
-#mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
-mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
+mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
+#mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
 db = mysql.cursor()
 
 def sensor_list_get():
@@ -107,6 +107,7 @@ while True:
     line = ser.readline()
     line = line.rstrip('\r\n')
     clamps = False
+    #print line
     r = re.search(r"<hist>", line)
     if r:
         for s in sensors:
@@ -116,7 +117,7 @@ while True:
                 if d:
                     for f in d:
                         history_update(s,f)
-    r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2><ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
+    r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
     if r:
         tmpr = r.group(1)
         watt_sum = int(r.group(3))
@@ -127,9 +128,10 @@ while True:
             watt_sum += watt
             sensor_data_check( sensor, watt, tmpr )
             clamps = True
-        if r.group(6):
+
+        if r.group(7):
             sensor = '3'+r.group(2)
-            watt = int(r.group(6))
+            watt = int(r.group(7))
             watt_sum += watt
             sensor_data_check( sensor, watt, tmpr )
             clamps = True
@@ -140,7 +142,4 @@ while True:
             sensor_data_check( sensor, watt, tmpr )
            
         sensor_data_check( r.group(2), watt_sum, tmpr )
-        
-        
-
 
