@@ -403,13 +403,14 @@ function sensor_position_last_get( $sensor ){
 }
 
 function sensor_get( $sensor = '' ){
+	if( !is_numeric( $sensor ) ) return true;
 	$db = new mydb;
 	$query = $db->query( "
 		SELECT * 
 		FROM measure_sensors
 		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
 		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
-		WHERE measure_sensors.sensor_id = $sensor$subselect
+		WHERE measure_sensors.sensor_id = $sensor
 		ORDER BY measure_sensors.sensor_id, measure_positions.position_id
 	" );
 	$r = array();
