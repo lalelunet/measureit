@@ -11,9 +11,4 @@
 # Description:       starts the listening process on /dev/ttyUSB0 to grab sensor data from currentcost device
 ### END INIT INFO
 
-modprobe -r pl2303
-modprobe pl2303
-stty -F /dev/ttyUSB0 57600
-stty -F /dev/ttyUSB0 57600
-
-exec cat /dev/ttyUSB0 | php5 -f /var/www/php/data-input.php &
+/usr/bin/python /var/www/python/data-input.py &

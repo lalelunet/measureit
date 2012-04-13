@@ -2,7 +2,7 @@
 
 case "$1" in
 'start')
-cat /dev/ttyUSB0 | php5 -f /var/www/measureit/php/data-input.php
+/usr/bin/python /var/www/python/data-input.py &
 ;;
 *)
 echo "Usage: $0 { start }"
