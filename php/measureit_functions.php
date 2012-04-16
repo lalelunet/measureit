@@ -135,7 +135,7 @@ function sensor_clamps_get( $sensor ){
 	foreach( $sensors as $k => $v){
 		for( $i=1; $i<4; $i++){
 			if( $v['sensor_id'] == $i.$sensor ){
-				$clamps[$v['sensor_id']] = 'clamp '.$i;
+				$clamps[$v['sensor_id']] = $v['position_description'];
 			}
 		}
 	}
