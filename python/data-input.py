@@ -11,6 +11,7 @@ import platform
 sensors = {}
 settings = {}
 db = {}
+debug = False
 
 usbport = 'COM3'
 if platform.system() == 'Linux':
@@ -70,6 +71,47 @@ def history_update( sensor, hist ):
         query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[1]+'", "'+date_hour[0]+'" )'
     db.execute(query)
 
+def cron_timer_hourly():
+    now = datetime.datetime.now()
+    day_from = datetime.date.today()
+    hour_from = now.hour-1
+    hour_to = now.hour
+    if now.hour == 0:
+        hour_from = 23
+        day_from = datetime.date.today() - datetime.timedelta(days=1)
+    date_from = str(day_from)+' '+str(hour_from)+':00:00'
+    date_to = str(day_from)+' '+str(hour_to)+':00:00'
+    for sensor in sensors:
+        usage_sum_hourly = usage_sum_count = sum = 0
+        db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
+        r = db.fetchall() 
+        for row in r:
+            usage_sum_hourly += float(row[1])
+            usage_sum_count += 1
+        if usage_sum_count != 0:
+            sum = (usage_sum_hourly/usage_sum_count)/1000
+        query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
+        db.execute(query)
+        timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
+        timer_hourly.start()
+    
+def cron_timer_daily():
+    for sensor in sensors:
+        usage_sum_daily = usage_sum_count = sum = 0
+        date_from = str(datetime.date.today() - datetime.timedelta(days=1))+' 00:00:00'
+        date_to = str(datetime.date.today())+' 00:00:00'
+        db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
+        r = db.fetchall() 
+        for row in r:
+            usage_sum_daily += float(row[1])
+            usage_sum_count += 1
+        if usage_sum_count != 0:
+            sum = ((usage_sum_daily/usage_sum_count)*24)/1000
+        query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
+        db.execute(query)
+        timer_daily = threading.Timer(86400.0, cron_timer_daily)
+        timer_daily.start()
+
 def date_hour_get( hours ):
     db.execute('SELECT NOW() - INTERVAL '+hours+' HOUR')
     date = db.fetchone()
@@ -89,34 +131,34 @@ def sensor_data_check( sensor, watt, tmpr ):
             sensor_data_change( 'watt', sensor, watt )
             sensor_watt_insert( sensor, watt )
 
-def cron_timer_hourly():
-    for sensor in sensors:
-        print sensor
-    t = threading.Timer(10.0, cron_timer)
-    t.start()
-
 sensors = sensor_list_get()
-#cron_timer()
 
 ser = serial.Serial(port=usbport, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=3)
 
 if 'test' in sys.argv:
     debug = True
 
+cron_timer_hourly()
+cron_timer_daily()
+
 while True:
     line = ser.readline()
     line = line.rstrip('\r\n')
     clamps = False
-    #print line
-    r = re.search(r"<hist>", line)
-    if r:
-        for s in sensors:
-            r = re.search(r"<data><sensor>"+str(s)+"</sensor>(.+?)</data>", line)
-            if r:
-                d = re.findall(r"<(d|m|h)(\d+)>(.+?)</.+?>", r.group(1) )
-                if d:
-                    for f in d:
-                        history_update(s,f)
+    if debug:
+        print line
+    
+    # parsing from history_output 
+    #r = re.search(r"<hist>", line)
+    #if r:
+    #    for s in sensors:
+    #        r = re.search(r"<data><sensor>"+str(s)+"</sensor>(.+?)</data>", line)
+    #        if r:
+    #            d = re.findall(r"<(d|m|h)(\d+)>(.+?)</.+?>", r.group(1) )
+    #           if d:
+    #                for f in d:
+    #                    history_update(s,f)
+    
     r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
     if r:
         tmpr = r.group(1)
