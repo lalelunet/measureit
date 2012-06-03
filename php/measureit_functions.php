@@ -74,8 +74,24 @@ if( isset( $_REQUEST['do'] ) ){
 			if($demo){ return true; }
 			backup_delete( $_REQUEST );
 		break;
-		case 'clamp_usage_create':
-			clamp_usage_create( );
+		case 'sensor_prices_get':
+			sensor_prices_get( $_REQUEST );
+		break;
+		case 'sensor_prices_set':
+			if($demo){ return true; }
+			sensor_prices_set( $_REQUEST );
+		break;
+		case 'sensor_price_delete':
+			if($demo){ return true; }
+			sensor_price_delete( $_REQUEST );
+		break;
+		case 'sensor_prices_delete':
+			if($demo){ return true; }
+			sensor_prices_delete( $_REQUEST );
+		break;
+		case 'sensor_price_add':
+			if($demo){ return true; }
+			sensor_price_add( $_REQUEST );
 		break;
 		case 'global_settings_get':
 			if($demo){ return true; }
@@ -89,22 +105,6 @@ if( isset( $_REQUEST['do'] ) ){
 			echo 'this is not a valid request';
 		break;
 	}
-}
-
-function clamp_usage_create( ){
-	$db = new mydb;
-	$query = $db->query( "select * from measure_watt where sensor > 9 and time between '2012-03-23 00:00:00' and '2012-03-24 00:00:00'" );
-	while( $d = $db->fetch_array( $query ) ){
-		$r[$d['sensor']]['watt_sum'] += $d['data'];
-		$r[$d['sensor']]['watts'][] = $d['data'];
-	}
-	foreach( $r as $k => $v ){
-		$usage[$k]['watt_sum'] += ( $r[$k]['watt_sum'] / count($r[$k]['watts'] ) ) / 1000; 
-		$rr += $usage[$k]['watt_sum'];
-		
-	}
-	var_dump($usage);
-	#var_dump($r);
 }
 
 function navigation_main( ){
@@ -274,6 +274,47 @@ function sensor_values_now_get( $sensor ){
 		$query = $db->query( "SELECT * FROM measure_data_now WHERE sensor_id = $sensor" );
 		return $db->fetch_array( $query );
 	}
+	return true;
+}
+
+function sensor_prices_get( $params = array( ) ){
+	$subselect = ( isset( $params['sensor'] ) && preg_match( '/[0-9]/', $params['sensor'] ) ) ? ' WHERE costs_sensor = '.$params['sensor'] : '';
+	$db = new mydb;
+	$query = $db->query( 'SELECT * from measure_costs'.$subselect.' ORDER BY costs_since desc' );
+	$r = array();
+	$cnt = 0;
+	while( $d = $db->fetch_array( $query ) ){
+		if( !is_numeric( $params['sensor'] ) ) continue;
+		$r[$d['costs_since']][$cnt]['costs_id'] = $d['costs_id'];
+		$r[$d['costs_since']][$cnt]['costs_sensor'] = $d['costs_sensor'];
+		$r[$d['costs_since']][$cnt]['costs_from'] = $d['costs_from'];
+		$r[$d['costs_since']][$cnt]['costs_to'] = $d['costs_to'];
+		$r[$d['costs_since']][$cnt]['costs_price'] = $d['costs_price'];
+		$cnt++;
+	}
+	print json_encode( $r );
+}
+
+function sensor_price_delete( $params = array( ) ){
+	if( !isset( $params['id'] ) && !preg_match( '/[0-9]/', $params['id'] ) ) return true;
+	$db = new mydb;
+	$query = $db->query( 'DELETE from measure_costs WHERE costs_id = '.$params['id'] );
+	return true;
+}
+
+function sensor_prices_delete( $params = array( ) ){
+	if( !isset( $params['date'] ) ) return true;
+	$db = new mydb;
+	$query = $db->query( 'DELETE from measure_costs WHERE costs_since = "'.$params['date'].'"' );
+	return true;
+}
+
+function sensor_price_add( $params = array( ) ){
+	preg_match( '/\d{4,4}-\d{2,2}-\d{2,2}/', $params['date'], $r );
+	if( !is_numeric( $params['price'] ) || !is_numeric( $params['from'] ) || !is_numeric( $params['to'] ) || strlen( $r['0'] ) != 10 ) return true;
+	$q = 'INSERT INTO measure_costs (costs_sensor, costs_from, costs_to, costs_price, costs_since) VALUES ( '.$params['sensor'].', '.$params['from'].', '.$params['to'].', '.$params['price'].', "'.$params['date'].'")';
+	$db = new mydb;
+	$query = $db->query( $q );
 	return true;
 }
 
