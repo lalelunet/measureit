@@ -92,8 +92,11 @@ def cron_timer_hourly():
             sum = (usage_sum_hourly/usage_sum_count)/1000
         query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
         db.execute(query)
-        timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
-        timer_hourly.start()
+        usage_sum_hourly = usage_sum_count = sum = r = 0
+        
+    timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
+    timer_hourly.start()
+        
     
 def cron_timer_daily():
     for sensor in sensors:
@@ -109,8 +112,10 @@ def cron_timer_daily():
             sum = ((usage_sum_daily/usage_sum_count)*24)/1000
         query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
         db.execute(query)
-        timer_daily = threading.Timer(86400.0, cron_timer_daily)
-        timer_daily.start()
+        usage_sum_daily = usage_sum_count = sum = r = 0
+    
+    timer_daily = threading.Timer(86400.0, cron_timer_daily)
+    timer_daily.start()
 
 def date_hour_get( hours ):
     db.execute('SELECT NOW() - INTERVAL '+hours+' HOUR')
@@ -130,6 +135,7 @@ def sensor_data_check( sensor, watt, tmpr ):
             sensors[sensor]['watt'] = watt
             sensor_data_change( 'watt', sensor, watt )
             sensor_watt_insert( sensor, watt )
+        return True    
 
 sensors = sensor_list_get()
 
