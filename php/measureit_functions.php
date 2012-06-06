@@ -493,14 +493,14 @@ function sensors_get( ){
 
 function sensor_position_add( $params = array() ){
 	$db = new mydb;
-	$db->query("INSERT INTO measure_it.measure_positions ( position_time, position_description, position_sensor ) VALUES ( now( ), '$params[sensor_position_name]', '$params[sensor_id]' )");
+	$db->query("INSERT INTO measure_positions ( position_time, position_description, position_sensor ) VALUES ( now( ), '$params[sensor_position_name]', '$params[sensor_id]' )");
 	return true;
 }
 
 function sensor_settings_save( $params = array() ){
 	$params['sensor_price'] = preg_replace('/,/', '.', $params['sensor_price']);
 	$db = new mydb;
-	$db->query("UPDATE measure_it.measure_settings SET measure_history = '$params[sensor_history]', measure_currency = '$params[sensor_currency]', measure_price = '$params[sensor_price]', measure_timezone_diff = '$params[sensor_timezone_diff]' WHERE measure_sensor = '$params[sensor_id]'");
+	$db->query("UPDATE measure_settings SET measure_history = '$params[sensor_history]', measure_currency = '$params[sensor_currency]', measure_price = '$params[sensor_price]', measure_timezone_diff = '$params[sensor_timezone_diff]' WHERE measure_sensor = '$params[sensor_id]'");
 	return true;
 }
 function sensor_position_delete( $params = array() ){
@@ -508,7 +508,7 @@ function sensor_position_delete( $params = array() ){
 		error('sensor position is wrong');
 	}
 	$db = new mydb;
-	$db->query("DELETE FROM measure_it.measure_positions WHERE position_id = $params[sensor_position_id] LIMIT 1");
+	$db->query("DELETE FROM measure_positions WHERE position_id = $params[sensor_position_id] LIMIT 1");
 	return true;
 }
 
@@ -517,7 +517,7 @@ function sensor_entry_delete( $params = array() ){
 		error('sensor is wrong');
 	}
 	$db = new mydb;
-	$db->query("DELETE FROM measure_it.measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
+	$db->query("DELETE FROM measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
 	return true;
 }
 
@@ -526,22 +526,22 @@ function sensor_delete( $params = array() ){
 		error('sensor is wrong');
 	}
 	$db = new mydb;
-	$db->query("DELETE FROM measure_it.measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
-	$db->query("DELETE FROM measure_it.measure_positions WHERE position_sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_settings WHERE measure_sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_watt WHERE sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_data_now WHERE sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_watt_daily WHERE sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_watt_hourly WHERE sensor = $params[sensor_id]");
-	$db->query("DELETE FROM measure_it.measure_watt_monthly WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
+	$db->query("DELETE FROM measure_positions WHERE position_sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_settings WHERE measure_sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_watt WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_data_now WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_watt_daily WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_watt_hourly WHERE sensor = $params[sensor_id]");
+	$db->query("DELETE FROM measure_watt_monthly WHERE sensor = $params[sensor_id]");
 	return true;
 }
 
 function sensor_add( $params = array() ){
 	$db = new mydb;
-	$db->query("INSERT IGNORE INTO measure_it.measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
-	$db->query("INSERT INTO measure_it.measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
-	$db->query("INSERT INTO measure_it.measure_settings ( measure_sensor ) VALUES ( '$params[sensor_id]' )");
+	$db->query("INSERT IGNORE INTO measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
+	$db->query("INSERT INTO measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
+	$db->query("INSERT INTO measure_settings ( measure_sensor ) VALUES ( '$params[sensor_id]' )");
 	return true;
 }
 
