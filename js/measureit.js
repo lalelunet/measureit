@@ -1142,7 +1142,6 @@ function sensor_admin_settings(data, sensor){
 							navigation_main( data );
 							measureit_admin( data );
 							sensor_admin_list_items( data, sensor );
-							//sensor_admin_settings( data, sensor );
 							hist_update('1');
 							});
 					});
@@ -1324,8 +1323,8 @@ function global_settings( ){
 	
 	$('#system_settings_container').append(span_get('system_settings_timezone','Use global timezone settings for all sensors instead of one setting per sensor<br />difference from GMT in hours ( 2 or -2 ):<br />',''));
 	input_get('#system_settings_container','system_settings_timezone_value','');
-	$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />','notice'));
-	input_get('#system_settings_container','system_settings_cron_value','');
+	//$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />','notice'));
+	//input_get('#system_settings_container','system_settings_cron_value','');
 	//$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
 	//input_get('#system_settings_container','system_settings_hosting_value','');
 	//$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
@@ -1338,7 +1337,7 @@ function global_settings( ){
 			$('#system_settings_timezone_value').val(system_data.global_timezone_use);
 		}
 		if(system_data.cron_delete_use){
-			$('#system_settings_cron_value').val(system_data.cron_delete_use);
+			//$('#system_settings_cron_value').val(system_data.cron_delete_use);
 		}
 		if(system_data.hosting_value_use){
 			//$('#system_settings_hosting_value').val(system_data.hosting_value_use);
