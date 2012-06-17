@@ -23,10 +23,10 @@ function hist_update(stop){
 				$('#'+data[d].sensor.sensor_id).addClass('ui-widget-content ui-corner-all sensor').append('<h5 class="ui-widget-header ui-corner-all">' + data[d].sensor.position_description + '</h5>');
 				$('#'+data[d].sensor.sensor_id).append( '<div id="tmpr'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">temperature</h5></div><div class="data refresh">'+data[d].tmpr+' C</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="watt'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">current watt</h5></div><div class="data refresh">'+data[d].watt + 'W</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="hourly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last hour</h5></div><div class="data">'+parseFloat(data[d].hourly).toFixed(3) + price_format( data[d].hourly, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh')+'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last day</h5></div><div class="data">'+parseFloat(data[d].daily).toFixed(3) + price_format( data[d].daily, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh') +'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="weekly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 7 days</h5></div><div class="data">'+parseFloat(data[d].weekly).toFixed(3) + price_format( data[d].weekly, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh')+'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="monthly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 30 days</h5></div><div class="data">'+parseFloat(data[d].monthly).toFixed(3) + price_format( data[d].monthly, data[d].sensor.measure_price, data[d].sensor.measure_currency, 'kWh') +'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="hourly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last hour</h5></div><div class="data">'+data[d].hourly+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last day</h5></div><div class="data">'+data[d].daily+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="weekly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 7 days</h5></div><div class="data">'+data[d].weekly+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="monthly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 30 days</h5></div><div class="data">'+data[d].monthly+' '+data[d].sensor.measure_currency+'</div></div>' );
 			}
 		});
 	})
@@ -247,7 +247,7 @@ function sensor_detail_statistic_draw( placeholder, data){
 }
 
 function sensor_statistic_generate( data, sensor, position ){
-	var price_kwh = 0;
+	var price_kwh = cost_month = 0;
 	var currency = '';
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail', 'sensor' : sensor }, function(d){
 		price_kwh = d.sensor[sensor].measure_price;
@@ -257,10 +257,10 @@ function sensor_statistic_generate( data, sensor, position ){
 		'do' : 'sensor_statistic',
 		'sensor_position': position,
 		'sensor' : sensor,
-		'table' : 'measure_watt_daily',
+		'table' : 'measure_watt_hourly',
 		'timeframe' : 'position',
 		'range_from' : data[position].time.substr( 0, 10 ),
-		'order' : 'day_id',
+		'order' : 'hour_id',
 		'turn' : 'desc' 
 		}, function(d) {
 			$.each( d, function( v ){
@@ -268,7 +268,7 @@ function sensor_statistic_generate( data, sensor, position ){
 				
 				// year
 				$.each( $(d[v]), function( y ){
-					var kwh_year = 0;
+					var kwh_year = costs_year = 0;
 					$('#sensor_statistic_table'+y).remove();
 					div_get('#sensor_statistic_table'+v, 'sensor_statistic_year'+v, '', 'level2');
 					// month
@@ -278,7 +278,7 @@ function sensor_statistic_generate( data, sensor, position ){
 						div_get('#sensor_statistic_month'+v+m,'','> '+m+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
 						div_get('#sensor_statistic_month'+v+m, 'sensor_statistic_month_container'+v+m, '', 'level3 hidden');
 						
-						var kwh_month = 0;
+						var kwh_month = cost_month = 0;
 						$('#sensor_statistic_month'+v+m).click(function(){
 							$('#sensor_statistic_month_container'+v+m).toggle('slow');
 							$('#tabs').css('height','100%');
@@ -288,18 +288,19 @@ function sensor_statistic_generate( data, sensor, position ){
 						$.each( this, function( d ){
 							div_get('#sensor_statistic_month_container'+v+m, 'sensor_statistic_day'+v+m+d, '', 'level4');
 							div_get('#sensor_statistic_day'+v+m+d,'',d+' '+this.weekday+span_get('sensor_statistic_day_watt'+v+m+d, '', 'float_right statistic_day_data statistic_data'),'day_header');
-							$('#sensor_statistic_day_watt'+v+m+d).append( parseFloat(this.data).toFixed(2) + ' kwh - ' );
-							$('#sensor_statistic_day_watt'+v+m+d).append( ( parseFloat(this.data).toFixed(2) .replace('.','') * price_kwh ).toFixed(2) + ' ' + currency );
+							$('#sensor_statistic_day_watt'+v+m+d).append( this.price.toFixed(2).replace('.',',') + ' ' + currency );
 							kwh_month = kwh_month + parseFloat(this.data);
+							cost_month = cost_month + parseFloat(this.price);
 							});
-							$('#sensor_statistic_month_watt'+v+m).append( kwh_month.toFixed(2) + ' kwh - ' );
-							$('#sensor_statistic_month_watt'+v+m).append( ( kwh_month.toFixed(2).replace('.','') * price_kwh ).toFixed(2) + ' ' + currency );
+							$('#sensor_statistic_month_watt'+v+m).append( kwh_month.toFixed(2).replace('.',',') + ' kwh - ' );
+							$('#sensor_statistic_month_watt'+v+m).append( ( cost_month.toFixed(2).replace('.',',') ) + ' ' + currency );
 							kwh_year += kwh_month;
+							costs_year += cost_month;
 						});
 					
 						$('.level4:even').addClass('even');
-						$('#sensor_statistic_year_watt'+v).append( kwh_year.toFixed(2) + ' kwh - ' );
-						$('#sensor_statistic_year_watt'+v).append( ( kwh_year.toFixed(2) .replace('.','') * price_kwh ).toFixed(2) + ' ' + currency );
+						$('#sensor_statistic_year_watt'+v).append( kwh_year.toFixed(2).replace('.',',') + ' kwh - ' );
+						$('#sensor_statistic_year_watt'+v).append( ( costs_year.toFixed(2).replace('.',',') ) + ' ' + currency );
 					});
 				});
 		});
@@ -848,9 +849,8 @@ function date_switch_generate( sensor, query, options ){
 	}
 }
 
-function price_format( d,p,c,u ){
-	if( d === null || d == '' ){return ' - ' + u + '<br />---';}
-	return ' ' + u + '<br />'+ (parseFloat(d).toFixed(2).replace('.','') * p).toFixed(2) + ' ' + c;
+function price_format( d,u ){
+	return d + ' ' + c;
 }
 
 function div_empty_get(parent,id,css){

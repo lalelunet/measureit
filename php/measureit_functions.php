@@ -178,16 +178,17 @@ function sensor_detail_statistic( $params = array( ) ){
 
 function summary_start( ){
 	$sensors = sensors_get();
+	$prices = sensor_prices_all_get( );
 	foreach( $sensors as $k=>$v ){
 		$p = end( $v['positions'] );
 		$vn = sensor_values_now_get( $k );
 		$r[$k]['sensor'] = $v;
 		$r[$k]['tmpr'] = $vn['tmpr'];
 		$r[$k]['watt'] = $vn['watt'];
-		$r[$k]['daily'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_daily', 'timeframe'=> 'last', 'limit' => $p['time']  ) );
-		$r[$k]['hourly'] = sensor_item_get( array( 'sensor'=> $k, 'table'=> 'measure_watt_hourly', 'timeframe'=> 'last', 'order' => 'hour', 'limit' => $p['time']  ) );
-		$r[$k]['weekly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 7, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
-		$r[$k]['monthly'] = price_sum( sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 30, 'unit'=> 'day', 'table'=> 'measure_watt_daily', 'timeframe'=> 'limit-last' ) ) );
+		$r[$k]['daily'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 24, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last' ) ), 'prices'=>$prices ) );
+		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 1, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last' ) ), 'prices'=>$prices ) );
+		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 168, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last' ) ), 'prices'=>$prices ) );
+		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last' ) ), 'prices'=>$prices ) );
 	}
 	print json_encode($r);
 	return true;
@@ -263,7 +264,6 @@ function sensor_data_get( $params = array( ) ){
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
 		$r = '['.$r.']';
-		#echo '<pre>';var_dump($r);exit;
 		print $r;
 	}
 }
@@ -280,7 +280,7 @@ function sensor_values_now_get( $sensor ){
 function sensor_prices_get( $params = array( ) ){
 	$subselect = ( isset( $params['sensor'] ) && preg_match( '/[0-9]/', $params['sensor'] ) ) ? ' WHERE costs_sensor = '.$params['sensor'] : '';
 	$db = new mydb;
-	$query = $db->query( 'SELECT * from measure_costs'.$subselect.' ORDER BY costs_since desc' );
+	$query = $db->query( 'SELECT * FROM measure_costs'.$subselect.' ORDER BY costs_since desc' );
 	$r = array();
 	$cnt = 0;
 	while( $d = $db->fetch_array( $query ) ){
@@ -293,6 +293,31 @@ function sensor_prices_get( $params = array( ) ){
 		$cnt++;
 	}
 	print json_encode( $r );
+}
+
+function sensor_prices_all_get( ){
+	$r = array();
+	$db = new mydb;
+	$query = $db->query( 'SELECT * FROM measure_costs ORDER BY costs_since desc' );
+	
+	while( $d = $db->fetch_array( $query ) ){
+		$from = @strtotime( $d['costs_since'] );
+		if( $d['costs_from'] > $d['costs_to'] ){
+			for( $i=$d['costs_from']; $i<24; $i++ ){
+				$r[$d['costs_sensor']][$from][$i] = $d['costs_price'];
+			}
+			for( $i=0; $i<=$d['costs_to']; $i++ ){
+				$r[$d['costs_sensor']][$from][$i] = $d['costs_price'];
+			}
+		}
+		if($d['costs_from'] < $d['costs_to'] ){
+			for( $i=$d['costs_from']; $i<=$d['costs_to']; $i++ ){
+				$r[$d['costs_sensor']][$from][$i] = $d['costs_price'];
+			}
+		}
+		
+	}
+	return $r;
 }
 
 function sensor_price_delete( $params = array( ) ){
@@ -324,22 +349,39 @@ function sensor_statistic( $params = array( ) ){
 }
 
 function sensor_data_raw_get( $params = array( ) ){
-	if( data_query_build( $params ) ){
+	if( $q = data_query_build( $params ) ){
 		$db = new mydb;
-		$query = $db->query( data_query_build( $params ) );
+		$query = $db->query( $q );
 		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
-			$r[] = $d['data'];
+			$r[$d['hour']] += $d['data'];
 		}
 	}
 	return $r;
 }
 
 function sensor_statistic_get( $params = array( ) ){
-	if( data_query_build( $params ) ){
-		$r = '';
+	if( $q = data_query_build( $params ) ){
+		$prices = sensor_prices_all_get( );
+		$r = ''; $tmp = array( );
 		$db = new mydb;
-		$query = $db->query( data_query_build( $params ) );
+		$query = $db->query( $q );
+		
+		while( $d = $db->fetch_array( $query ) ){
+			$tmp[$d['time']][$d['hour']] += $d['data'];
+		}
+		
+		foreach( $tmp as $day => $usage ){
+			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $day, $t);
+			$ts = @strtotime( $day );
+			$month = @date( 'F', $ts );
+			$get_day_data = price_sum_statistic( array( 'sensor'=>$params['sensor'], 'data'=>$tmp[$day], 'day'=>( $ts -1 ), 'prices'=>$prices ) );
+			$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
+			$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
+			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
+		}
+		
+		/*
 		while( $d = $db->fetch_array( $query ) ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $t);
 			$ts = @strtotime( $d['time'] );
@@ -348,6 +390,7 @@ function sensor_statistic_get( $params = array( ) ){
 			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
 			$r[$t[1]][$month][$t[3]]['dayid'] = $d['day_id'];
 		}
+		*/
 		print json_encode($r);
 	}
 }
@@ -420,12 +463,61 @@ function data_query_build( $params = array( ) ){
 }
 
 function price_sum( $params ){
-	$d = '';
-	foreach( $params as $k=>$v ){
-		$d += $v;
+	if( array_key_exists( $params['sensor'], $params['prices'] ) ){
+		$prices = array_shift(  $params['prices'][$params['sensor']] );
+	}elseif( array_key_exists( 400, $params['prices'] ) ){
+		$prices = array_shift(  $params['prices'][400] );
 	}
-	$r = "$d";
-	return $r;
+	
+	foreach( $params['data'] as $k=>$v ){
+		$sum += $v;
+		$price += $v * $prices[$k];
+	}
+	
+	return round( $sum, 3 ).' Kwh<br />'.round( $price/100, 2 );
+}
+
+function price_sum_statistic( $params ){
+	global $to;
+	if( array_key_exists( $params['sensor'], $params['prices'] ) ){
+		$prices = $params['prices'][$params['sensor']];
+	}elseif( array_key_exists( 400, $params['prices'] ) ){
+		$prices = $params['prices'][400];
+	}
+	
+	$last_date = ''; $cnt = 0;
+	foreach( $prices as $k => $v ){
+		if( $cnt == 0 ){
+			$to = @strtotime( @date( 'Y-m-d' ) );
+			if( in_range( $k, $to, $params['day'] ) ){
+				
+				$prices = $prices[$k];
+			}
+			$to = $k;
+		}else{
+			if( in_range( $k, $to, $params['day'] ) ){
+				$prices = $prices[$k];
+			}
+			$to = $k;
+		}
+		$cnt++;
+	}
+	
+	foreach( $params['data'] as $k=>$v ){
+		$sum += $v;
+		$price += $v * $prices[$k];
+	}
+	return array( 'sum'=>round( $sum, 3 ), 'price'=>round( $price/100, 2 ) );
+}
+
+function in_range( $from = false, $to = false, $day = false ){
+	if( !$from || !$to || !$day ){
+		return false;
+	}
+	if( $day > $from && $day < $to ){
+		return true;
+	}
+	return false;
 }
 
 function sensor_position_next_date_get( $params = array( ) ){

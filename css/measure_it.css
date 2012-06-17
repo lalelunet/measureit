@@ -71,8 +71,16 @@ div.clamp_id {
 	padding: 5px;
 }
 
+.padding10 {
+	padding: 10px;
+}
+
 .padding15 {
 	padding: 15px;
+}
+
+.margin10 {
+	margin: 10px;
 }
 
 .notice{
@@ -273,9 +281,30 @@ input,
 #adminmenu .sensor-inner {
 	width: 300px;
 }
+
+#adminmenu .sensor_settings_prices {
+	width: 340px;
+}
 .sensor-detail-statistic-data-container {
 	padding: 15px;
 }
+
+.sensor_settings_prices select{
+		float: left;
+		margin: 5px;
+}
+
+.sensor_price_date_toggler{
+	float: left;
+	display: block;
+}
+.sensor_price_dateselect{
+	width: 90%;
+}
+.price_time_range{
+	margin-top: 10px;
+}
+
 .loader {
 	background: #ffffff url(../img/loader.gif) center no-repeat;
 	width: 100%;
