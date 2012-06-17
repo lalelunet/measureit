@@ -1122,9 +1122,10 @@ function sensor_admin_settings(data, sensor){
 		input_get('#sensor_settings_container','sensor_timezone_diff',data[sensor].sensor.measure_timezone_diff);
 		div_get('#sensor_settings_container','sensor_id','currency (Euro/Pound/anything-you-want):','padding5');
 		input_get('#sensor_settings_container','sensor_currency',data[sensor].sensor.measure_currency === undefined ? 'Û' : data[sensor].sensor.measure_currency);
-		div_get('#sensor_settings_container','sensor_id','days keep history:','padding5');
+		div_get('#sensor_settings_container','sensor_id','days keep history:','padding5 notice');
 		input_get('#sensor_settings_container','sensor_history',data[sensor].sensor.measure_history === undefined ? '365' : data[sensor].sensor.measure_history);
 		button_get('#sensor_settings_container','sensor_admin_settings_save'+sensor,'Save settings');
+		div_get('#sensor_settings_container','sensor_settings_container_notice','You had to restart the grabbing script to activate this settings','notice_box padding5');
 
 		$('#sensor_admin_settings_save'+sensor).click(function(){
 			if($('#sensor_price').val() !== '' && $('#sensor_currency').val() !== '' && $('#sensor_history').val() !== ''){
@@ -1323,12 +1324,12 @@ function global_settings( ){
 	
 	$('#system_settings_container').append(span_get('system_settings_timezone','Use global timezone settings for all sensors instead of one setting per sensor<br />difference from GMT in hours ( 2 or -2 ):<br />',''));
 	input_get('#system_settings_container','system_settings_timezone_value','');
-	$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />',''));
+	$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />','notice'));
 	input_get('#system_settings_container','system_settings_cron_value','');
-	$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
-	input_get('#system_settings_container','system_settings_hosting_value','');
-	$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
-	checkbox_get('#system_settings_container','system_settings_database_value','','','0');
+	//$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
+	//input_get('#system_settings_container','system_settings_hosting_value','');
+	//$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
+	//checkbox_get('#system_settings_container','system_settings_database_value','','','0');
 	button_get('#system_settings_container','system_settings_save','Save settings');
 	div_get('#admin_settings_container','system_settings_container_notice','You had to restart the grabbing script to activate this settings','notice_box padding5');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
@@ -1340,10 +1341,10 @@ function global_settings( ){
 			$('#system_settings_cron_value').val(system_data.cron_delete_use);
 		}
 		if(system_data.hosting_value_use){
-			$('#system_settings_hosting_value').val(system_data.hosting_value_use);
+			//$('#system_settings_hosting_value').val(system_data.hosting_value_use);
 		}
 		if(system_data.local_database_use){
-			$('#system_settings_database_value').attr('checked', true);
+			//$('#system_settings_database_value').attr('checked', true);
 		}
 		
 		});
