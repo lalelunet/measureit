@@ -288,7 +288,7 @@ function sensor_statistic_generate( data, sensor, position ){
 						$.each( this, function( d ){
 							div_get('#sensor_statistic_month_container'+v+m, 'sensor_statistic_day'+v+m+d, '', 'level4');
 							div_get('#sensor_statistic_day'+v+m+d,'',d+' '+this.weekday+span_get('sensor_statistic_day_watt'+v+m+d, '', 'float_right statistic_day_data statistic_data'),'day_header');
-							$('#sensor_statistic_day_watt'+v+m+d).append( this.price.toFixed(2).replace('.',',') + ' ' + currency );
+							$('#sensor_statistic_day_watt'+v+m+d).append( this.data.toFixed(2).replace('.',',') + ' kwh - '+this.price.toFixed(2).replace('.',',') + ' ' + currency );
 							kwh_month = kwh_month + parseFloat(this.data);
 							cost_month = cost_month + parseFloat(this.price);
 							});
