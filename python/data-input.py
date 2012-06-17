@@ -19,8 +19,8 @@ if platform.system() == 'Linux':
 
 warnings.filterwarnings("ignore")
 # mysql connection
-mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
-#mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
+#mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
+mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
 db = mysql.cursor()
 
 def sensor_list_get():
@@ -113,6 +113,13 @@ def cron_timer_daily():
         query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
         db.execute(query)
         usage_sum_daily = usage_sum_count = sum = r = 0
+        
+        # delete old watt data
+        sensor_settings = sensor_settings_get()
+        if sensor_settings.has_key(sensor):
+            if sensor_settings[sensor] > 0:
+                query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor])+' DAY'
+                db.execute(query)
     
     timer_daily = threading.Timer(86400.0, cron_timer_daily)
     timer_daily.start()
