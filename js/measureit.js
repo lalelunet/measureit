@@ -1136,7 +1136,7 @@ function sensor_admin_settings(data, sensor){
 					'sensor_price' : $('#sensor_price').val(),
 					'sensor_timezone_diff' : $('#sensor_timezone_diff').val(),
 					'sensor_history' : $('#sensor_history').val()
-					}, function(sensor){
+					}, function(){
 						delete data;
 						$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
 							navigation_main( data );
