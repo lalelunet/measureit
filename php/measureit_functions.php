@@ -381,16 +381,6 @@ function sensor_statistic_get( $params = array( ) ){
 			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
 		}
 		
-		/*
-		while( $d = $db->fetch_array( $query ) ){
-			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $t);
-			$ts = @strtotime( $d['time'] );
-			$month = @date( 'F', $ts );
-			$r[$t[1]][$month][$t[3]]['data'] = $d['data'];
-			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
-			$r[$t[1]][$month][$t[3]]['dayid'] = $d['day_id'];
-		}
-		*/
 		print json_encode($r);
 	}
 }
