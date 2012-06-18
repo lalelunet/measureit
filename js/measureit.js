@@ -705,17 +705,20 @@ function sensor_prices_set( sensor ){
 		"sensor" : sensor
 	}, function( d ) {
 		$.each(d, function(date){
+			var cnt = 1;
 			div_get('#sensor_prices_container', 'sensor_price_date'+date,'Price since: '+date,'padding10 margin10 ui-widget-content ui-corner-all sensor_price_date title');
 			$('#sensor_price_date'+date).append( '<span id="sensor_price_date_toggle'+date+'" class="ui-icon ui-icon-arrowthick-2-n-s sensor_price_date_toggler"></span>' );
 			input_get('#sensor_price_date'+date,'sensor_price_date_value'+date,'','hidden');
 			
 			div_get('#sensor_price_date'+date, 'sensor_price_date_container'+date,'','hidden');
+			
 			$.each(d[date], function(pos){
 				hours = hours_get();
 				div_get('#sensor_price_date_container'+date, 'sensor_price_date_container'+date+pos,'');
 				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'from'+pos,hours[this.costs_from]+' - '+hours[this.costs_to]+'<br />Price: '+this.costs_price+'<br />','price_time_range');
 				var costs_id = this.costs_id;
 				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'del'+pos, 'Delete time range', '');
+				cnt++;
 				$('#sensor_price_date'+date+'del'+pos).click(function(){
 					$('#sensor_price_date_container'+date+pos).remove();
 					$.getJSON('php/measureit_functions.php', { "do" : 'sensor_price_delete', "id" : costs_id });
@@ -775,9 +778,9 @@ function sensor_price_range_add(date,sensor){
 	$('#sensor_price_range_add').remove();
 	div_get(prcontainer, 'sensor_price_range_add','');
 	div_get('#sensor_price_range_add', 'sensor_price_datefrom','');
-	hour_dropdown_get(hours_get(), 'sensor_price_datefrom');
+	hour_dropdown_get(hours_get('00'), 'sensor_price_datefrom');
 	div_get('#sensor_price_range_add', 'sensor_price_dateto','');
-	hour_dropdown_get(hours_get(), 'sensor_price_dateto');
+	hour_dropdown_get(hours_get('59'), 'sensor_price_dateto');
 	div_get('#sensor_price_range_add', 'sensor_price_datecosts','<br /><br />Price: ');
 	input_get('#sensor_price_datecosts', 'sensor_price_datecosts_input');
 	button_get('#sensor_price_range_add', 'sensor_price_date_range_add','Save','sensor_prices_container_admin');
@@ -927,18 +930,19 @@ function month_get(date){
 	return month[d.getMonth()];
 }
 
-function hours_get(){
+function hours_get(prefix){
+	var prefix = prefix == undefined ? '' : ':'+prefix;
 	var hours=new Array(24);
 	var time = timeofday = '';
 	var i = ii = 0;
 	for(i=0;i<24;i++){
 		// some countries does realy have weired settings ... :)
 		ii = ii == 13 ? 1 : ii;
-		timeofday = i<13 ? ii+' am' : ii+' pm';
+		timeofday = i<13 ? ii+prefix+' am' : ii+prefix+' pm';
 		ii++;
 		
 		time = i<10 ? '0'+i : i;
-		hours[i] = time+':00 / '+timeofday;
+		hours[i] = time+prefix+' / '+timeofday;
 	}
 	return hours;
 }
@@ -952,8 +956,8 @@ function hour_dropdown_get(hours, parent, selected_hour){
 	});
 }
 
-function hour_get_formatted( hour ){
-	hours = hours_get();
+function hour_get_formatted( hour, prefix ){
+	hours = hours_get(prefix);
 	return hours[hour];
 }
 
