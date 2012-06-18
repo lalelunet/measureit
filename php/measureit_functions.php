@@ -94,7 +94,6 @@ if( isset( $_REQUEST['do'] ) ){
 			sensor_price_add( $_REQUEST );
 		break;
 		case 'global_settings_get':
-			if($demo){ return true; }
 			global_settings_get( );
 		break;
 		case 'global_settings_set':
