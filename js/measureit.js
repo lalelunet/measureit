@@ -91,8 +91,10 @@ function sensor_statistic( data, sensor ){
 				div_get('#placeholder'+sensor,'sensor_position'+d,'');
 				div_get('#sensor_position'+d,'sensor_position_statistic'+d,'>> '+data[d].description,'pointer statistic_position');
 				$('#sensor_position_statistic'+d).click(function( ){
+					div_get('#placeholder'+sensor, 'loading'+sensor,'','loader');
 					$('.sensor_statistic_table').remove();
-					sensor_statistic_generate(data, sensor, d);	
+					sensor_statistic_generate(data, sensor, d);
+					$('.loader').fadeOut();
 				});
 			});
 			
@@ -250,7 +252,6 @@ function sensor_statistic_generate( data, sensor, position ){
 	var price_kwh = cost_month = 0;
 	var currency = '';
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail', 'sensor' : sensor }, function(d){
-		price_kwh = d.sensor[sensor].measure_price;
 		currency = d.sensor[sensor].measure_currency;
 	} );
 	$.getJSON('php/measureit_functions.php', {
