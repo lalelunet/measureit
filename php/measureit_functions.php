@@ -464,7 +464,7 @@ function price_sum( $params ){
 		$price += $v * $prices[$k];
 	}
 	
-	return round( $sum, 3 ).' Kwh<br />'.round( $price/100, 2 );
+	return round( $sum, 3 ).' Kwh<br />'.round( $price, 2 );
 }
 
 function price_sum_statistic( $params ){
