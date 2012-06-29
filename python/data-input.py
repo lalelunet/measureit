@@ -74,13 +74,14 @@ def history_update( sensor, hist ):
 def cron_timer_hourly():
     now = datetime.datetime.now()
     day_from = datetime.date.today()
+    day_to = datetime.date.today()
     hour_from = now.hour-1
     hour_to = now.hour
     if now.hour == 0:
         hour_from = 23
         day_from = datetime.date.today() - datetime.timedelta(days=1)
     date_from = str(day_from)+' '+str(hour_from)+':00:00'
-    date_to = str(day_from)+' '+str(hour_to)+':00:00'
+    date_to = str(day_to)+' '+str(hour_to)+':00:00'
     for sensor in sensors:
         usage_sum_hourly = usage_sum_count = sum = 0
         db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
