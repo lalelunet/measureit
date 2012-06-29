@@ -335,6 +335,7 @@ function sensor_prices_delete( $params = array( ) ){
 
 function sensor_price_add( $params = array( ) ){
 	preg_match( '/\d{4,4}-\d{2,2}-\d{2,2}/', $params['date'], $r );
+	$params['price'] = preg_replace(  '/,/', '.', $params['price'] );
 	if( !is_numeric( $params['price'] ) || !is_numeric( $params['from'] ) || !is_numeric( $params['to'] ) || strlen( $r['0'] ) != 10 ) return true;
 	$q = 'INSERT INTO measure_costs (costs_sensor, costs_from, costs_to, costs_price, costs_since) VALUES ( '.$params['sensor'].', '.$params['from'].', '.$params['to'].', '.$params['price'].', "'.$params['date'].'")';
 	$db = new mydb;
@@ -479,7 +480,6 @@ function price_sum_statistic( $params ){
 		if( $cnt == 0 ){
 			$to = @strtotime( @date( 'Y-m-d' ) );
 			if( in_range( $k, $to, $params['day'] ) ){
-				
 				$prices = $prices[$k];
 			}
 			$to = $k;
@@ -496,7 +496,7 @@ function price_sum_statistic( $params ){
 		$sum += $v;
 		$price += $v * $prices[$k];
 	}
-	return array( 'sum'=>round( $sum, 3 ), 'price'=>round( $price/100, 2 ) );
+	return array( 'sum'=>round( $sum, 3 ), 'price'=>round( $price, 2 ) );
 }
 
 function in_range( $from = false, $to = false, $day = false ){
