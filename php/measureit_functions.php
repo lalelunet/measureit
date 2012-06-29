@@ -458,7 +458,7 @@ function price_sum( $params ){
 	}elseif( array_key_exists( 400, $params['prices'] ) ){
 		$prices = array_shift(  $params['prices'][400] );
 	}
-	
+	$sum = $price = 0;
 	foreach( $params['data'] as $k=>$v ){
 		$sum += $v;
 		$price += $v * $prices[$k];
@@ -658,6 +658,7 @@ function backup_create(){
 
 function backup_list_get(){
 	$dir = opendir('../backup');
+	$files = array( );
 	while( false !== ( $file = readdir( $dir ) ) ){
 		if ( preg_match( '/\.gz/', $file ) ) {
 			$day = preg_replace( '/(\d{4,})(\d{2,})(\d{2,})/', "$1-$2-$3", substr( $file, 17, 8 ) );
