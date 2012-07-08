@@ -737,7 +737,7 @@ function sensor_prices_set( sensor ){
 				div_get('#sensor_price_date_container'+date, 'sensor_price_date_container'+date+pos,'');
 				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'from'+pos,hours[this.costs_from]+' - '+hours[this.costs_to]+lng.price+'<br />: '+this.costs_price+'<br />','price_time_range');
 				var costs_id = this.costs_id;
-				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'del'+pos, lng.price_range_delete, '');
+				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'del'+pos, lng.price_range_del, '');
 				cnt++;
 				$('#sensor_price_date'+date+'del'+pos).click(function(){
 					$('#sensor_price_date_container'+date+pos).remove();
@@ -746,7 +746,7 @@ function sensor_prices_set( sensor ){
 			});
 			button_get('#sensor_price_date_container'+date, 'sensor_price_date_range_add'+date,lng.price_range_add,'sensor_prices_container_admin price_time_range');
 			$('#sensor_price_date_range_add'+date).click(function(){ sensor_price_range_add(date,sensor); });
-			button_get('#sensor_price_date_container'+date, 'sensor_price_date_del'+date,lng.date_delete,'sensor_prices_container_admin');
+			button_get('#sensor_price_date_container'+date, 'sensor_price_date_del'+date,lng.date_del,'sensor_prices_container_admin');
 			$('#sensor_price_date_del'+date).click(function(){
 				$('#sensor_price_date'+date).remove();
 				$.getJSON('php/measureit_functions.php', { "do" : 'sensor_prices_delete', "date" : date });
@@ -1206,14 +1206,14 @@ function sensor_admin_settings(data, sensor){
 
 function sensor_delete(sensor){
 	sensor_settings_detail_clean();
-	div_get('#main','delete_confirm','<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>'+lng.sensor_delete_hint+'</p>');
+	div_get('#main','delete_confirm','<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>'+lng.sensor_del_hint+'</p>');
 
 	$("#delete_confirm").dialog({
 			resizable: true,
 			height:400,
 			modal: true,
 			buttons: {
-				'delete entry': function() {
+				'DELETE' : function() {
 					$(this).dialog('close');
 					$.get('php/measureit_functions.php', { 'do' : 'sensor_entry_delete', 'sensor_id' : sensor}, function(){
 						delete data;
@@ -1224,7 +1224,7 @@ function sensor_delete(sensor){
 							});
 						})
 				},
-				'delete complete': function() {
+				'DELETE COMPLETE' : function() {
 					$(this).dialog('close');
 					$.get('php/measureit_functions.php', { 'do' : 'sensor_delete', 'sensor_id' : sensor}, function(){
 						delete data;
