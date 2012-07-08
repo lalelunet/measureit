@@ -74,6 +74,9 @@ if( isset( $_REQUEST['do'] ) ){
 			if($demo){ return true; }
 			backup_delete( $_REQUEST );
 		break;
+		case 'lng_get':
+			lng_get( $_REQUEST );
+		break;
 		case 'sensor_prices_get':
 			sensor_prices_get( $_REQUEST );
 		break;
@@ -99,6 +102,9 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'global_settings_set':
 			if($demo){ return true; }
 			global_settings_set( $_REQUEST );
+		break;
+		case 'languages_get':
+			languages_get( );
 		break;
 		default:
 			echo 'this is not a valid request';
@@ -154,9 +160,9 @@ function sensor_detail_statistic( $params = array( ) ){
 		$db = new mydb;
 		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
-			$r['yeardays'][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			$r['yearsdaysdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )][@date( l, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			ksort($r['yearsdaysdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )]);
+			$r['yeardays'][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			$r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			ksort($r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
 		}
 		
 		$params['table'] = 'measure_watt_hourly';
@@ -166,8 +172,8 @@ function sensor_detail_statistic( $params = array( ) ){
 		while( $d = $db->fetch_array( $query ) ){
 			$r['yearhours'][$d['hour']] += $d['data'];
 			ksort($r['yearhours']);
-			$r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )][$d['hour']] += $d['data'];
-			ksort($r['monthshoursdetail'][@date( F, @strtotime( $d['time'].' 00:00' ) )]);
+			$r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][$d['hour']] += $d['data'];
+			ksort($r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
 		}
 		print json_encode($r);
 		return true;
@@ -374,11 +380,11 @@ function sensor_statistic_get( $params = array( ) ){
 		foreach( $tmp as $day => $usage ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $day, $t);
 			$ts = @strtotime( $day );
-			$month = @date( 'F', $ts );
+			$month = @date( 'n', $ts )-1;
 			$get_day_data = price_sum_statistic( array( 'sensor'=>$params['sensor'], 'data'=>$tmp[$day], 'day'=>( $ts -1 ), 'prices'=>$prices ) );
 			$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
 			$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
-			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'l', $ts );
+			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'w', $ts );
 		}
 		
 		print json_encode($r);
@@ -395,6 +401,31 @@ function sensor_item_get( $params = array( ) ){
 		}
 	}
 	return $r;
+}
+
+function lng_get( $params = array( ) ){
+	$db = new mydb;
+	$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'language_use'");
+	$language = $db->fetch_array( $query );
+	
+	$r = lng_str_get( 'en_EN' );
+	$r = lng_str_get( $language['measure_system_setting_value'], $r );
+
+	print json_encode( $r );
+}
+
+function lng_str_get( $language = false, $lng_str = array( ) ){
+	if( isset( $language ) && $language != '' && is_file( '../lng/'.$language.'.txt' ) ){
+		$lng = @file_get_contents( '../lng/'.$language.'.txt' );
+		$lng = preg_replace( '/[\n\t]/', '', $lng );
+		$lng = explode( ',', $lng );
+		foreach( $lng as $k => $v ){
+			$r = explode( ':', $v );
+			$lng_str[$r[0]] = $r[1];
+		}
+	}
+	
+	return $lng_str;
 }
 
 function tmpr_get_query( $params = array( )){
@@ -676,6 +707,18 @@ function backup_list_get(){
 function backup_delete( $params = array() ){
 	if( isset( $params['filename'] ) && file_exists( '../backup/'.$params['filename'] ) && preg_match( '/^measureit_backup_(\d{8,8})-(\d{6,6}).gz$/', $params['filename'] ) ){
 		unlink( '../backup/'.$params['filename'] );
+	}
+}
+
+function languages_get( ){
+	if( $h = opendir( '../lng' ) ){
+		$cnt = 1;
+		while ( false !== ( $file = readdir( $h ) ) ) {
+	        if( preg_match( '/([a-z]{2,2}_[a-z]{2,2})\.txt/i', $file, $r ) ){
+	        	$lng[$cnt++] = $r[1];
+	        }
+	    }
+	    print json_encode( $lng );
 	}
 }
 

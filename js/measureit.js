@@ -6,6 +6,12 @@ if( pc === 1 ){
 
 	var timer = setTimeout(hist_update, 10000);
 	$('.ui-tabs').click(function(){ $('.ui-tabs').css( 'height', '100%' ) });
+
+	var lng;
+	$.getJSON('php/measureit_functions.php', { 'do' : 'lng_get' }, function(data){
+		lng = data;
+	});
+	//console.log(lng);
 }
 
 
@@ -21,12 +27,12 @@ function hist_update(stop){
 				$('#'+data[d].sensor.sensor_id).remove();
 				$('#summary').append('<div id="'+data[d].sensor.sensor_id+'">');
 				$('#'+data[d].sensor.sensor_id).addClass('ui-widget-content ui-corner-all sensor').append('<h5 class="ui-widget-header ui-corner-all">' + data[d].sensor.position_description + '</h5>');
-				$('#'+data[d].sensor.sensor_id).append( '<div id="tmpr'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">temperature</h5></div><div class="data refresh">'+data[d].tmpr+' C</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="watt'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">current watt</h5></div><div class="data refresh">'+data[d].watt + 'W</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="hourly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last hour</h5></div><div class="data">'+data[d].hourly+' '+data[d].sensor.measure_currency+'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last day</h5></div><div class="data">'+data[d].daily+' '+data[d].sensor.measure_currency+'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="weekly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 7 days</h5></div><div class="data">'+data[d].weekly+' '+data[d].sensor.measure_currency+'</div></div>' );
-				$('#'+data[d].sensor.sensor_id).append( '<div id="monthly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">last 30 days</h5></div><div class="data">'+data[d].monthly+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="tmpr'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.temperature+'</h5></div><div class="data refresh">'+data[d].tmpr+' C</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="watt'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.watt_current+'</h5></div><div class="data refresh">'+data[d].watt + 'W</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="hourly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.hour_last+'</h5></div><div class="data">'+data[d].hourly+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.day_last+'</h5></div><div class="data">'+data[d].daily+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="weekly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.day_last_7+'</h5></div><div class="data">'+data[d].weekly+' '+data[d].sensor.measure_currency+'</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="monthly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.day_last_30+'</h5></div><div class="data">'+data[d].monthly+' '+data[d].sensor.measure_currency+'</div></div>' );
 			}
 		});
 	})
@@ -74,11 +80,11 @@ function sensor_statistic( data, sensor ){
 	// there are no clamp details from the current cost device
 	//if(sensor < 10){
 		$('#statistic'+sensor).remove();
-		container_get('#menu'+ sensor, 'statistic'+sensor,'statistic');
-		button_get('#statistic'+sensor,'sensor_statistic'+sensor,'costs');
-		button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,'last 7 days');
-		button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,'last 12 months');
-		button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,'day / time usage');
+		container_get('#menu'+ sensor, 'statistic'+sensor,lng.statistic);
+		button_get('#statistic'+sensor,'sensor_statistic'+sensor,lng.costs);
+		button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,lng.day_last_7);
+		button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,lng.month_last_12);
+		button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,lng.usage_day_time);
 		//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
 		$('#sensor_statistic'+sensor).click(function( ) { 
 			$('#placeholder'+sensor).empty();
@@ -160,11 +166,18 @@ function sensor_statistic_datetime( sensor ){
 			
 			// yearly graphs
 			if(typeof(d[dat]) == 'object' && ( dat == 'yearhours' || dat == 'yeardays' ) ){
-				var l = dat == 'yearhours' ? ':00' : '';
-				var val = dat == 'yearhours' ? 'Usage last 12 months per hour' : 'Usage last 12 months per day';
+				var l = '';
+				var hour_graph = 0;
+				if(dat == 'yearhours'){
+					l = ':00';
+					hour_graph = 1;
+					
+				}
+				var val = dat == 'yearhours' ? lng.month_last_usage_hour_12 : lng.month_last_usage_day_12;
 				$('#'+dat+'title'+sensor).append(val);
 				$.each( d[dat], function(p){
-					dataset[cnt] = { label: p+''+l,  data: d[dat][p] };
+					var block_label = hour_graph == 1 ? p+''+l : day_get(p) ;
+					dataset[cnt] = { label: block_label,  data: d[dat][p] };
 					cnt = cnt+1;
 				});
 
@@ -179,14 +192,20 @@ function sensor_statistic_datetime( sensor ){
 			// monthly graphs
 			if(typeof(d[dat]) == 'object' && ( dat == 'yearsdaysdetail' ) || dat == 'monthshoursdetail' ){
 				var datasetdetail = []; var cnt = 0;
-				var val = dat == 'monthshoursdetail' ? 'Detailed usage last 12 months per hour' : 'Detailed usage last 12 months per day';
+				var val = dat == 'monthshoursdetail' ? lng.month_last_usage_hour_detail_12 : lng.month_last_usage_day_detail_12;
 				$('#'+dat+'title'+sensor).append(val);
 				$.each( d[dat], function(p){
-					var l = dat == 'monthshoursdetail' ? ':00' : '';
+					var l = '';
+					var hour_graph = 0;
+					if( dat == 'monthshoursdetail' ){
+						l = ':00';
+						hour_graph = 1;
+					}
 					var tmp = [];
 					tmp.push({'lb': p });
 					$.each(d[dat][p], function(f){
-						tmp.push({ label: f+''+l,  data: d[dat][p][f] });
+						var block_label = hour_graph == 1 ? f+''+l : day_get(f) ;
+						tmp.push({ label: block_label,  data: d[dat][p][f] });
 					});
 					datasetdetail[cnt] = tmp;
 					cnt = cnt+1;
@@ -199,7 +218,7 @@ function sensor_statistic_datetime( sensor ){
 					var cnt = 1;
 					$.each(datasetdetail, function(set){
 						div_get('#data-container'+sensor,dat+''+cnt+'containerset'+sensor,'','ui-widget-content ui-corner-all');
-						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+'title'+cnt+'container'+sensor,datasetdetail[set][0]['lb'],'padding5 ui-state-default ui-corner-all');
+						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+'title'+cnt+'container'+sensor,month_get(datasetdetail[set][0]['lb']),'padding5 ui-state-default ui-corner-all');
 						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+''+cnt+'container'+sensor,'','padding15');
 						$('#'+dat+''+cnt+'container'+sensor).css('height','100%');
 						div_get('#data-container'+sensor,dat+''+cnt+'container'+sensor,'','spacer');
@@ -276,7 +295,7 @@ function sensor_statistic_generate( data, sensor, position ){
 					$.each( this, function( m ){
 						var statistics_val_month = button_get();
 						div_get('#sensor_statistic_year'+v, 'sensor_statistic_month'+v+m, '', 'level3 pointer');
-						div_get('#sensor_statistic_month'+v+m,'','> '+m+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
+						div_get('#sensor_statistic_month'+v+m,'','> '+month_get(m)+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
 						div_get('#sensor_statistic_month'+v+m, 'sensor_statistic_month_container'+v+m, '', 'level3 hidden');
 						
 						var kwh_month = cost_month = 0;
@@ -288,7 +307,7 @@ function sensor_statistic_generate( data, sensor, position ){
 						//days
 						$.each( this, function( d ){
 							div_get('#sensor_statistic_month_container'+v+m, 'sensor_statistic_day'+v+m+d, '', 'level4');
-							div_get('#sensor_statistic_day'+v+m+d,'',d+' '+this.weekday+span_get('sensor_statistic_day_watt'+v+m+d, '', 'float_right statistic_day_data statistic_data'),'day_header');
+							div_get('#sensor_statistic_day'+v+m+d,'',d+' '+day_get(this.weekday)+span_get('sensor_statistic_day_watt'+v+m+d, '', 'float_right statistic_day_data statistic_data'),'day_header');
 							$('#sensor_statistic_day_watt'+v+m+d).append( this.data.toFixed(2).replace('.',',') + ' kwh - '+this.price.toFixed(2).replace('.',',') + ' ' + currency );
 							kwh_month = kwh_month + parseFloat(this.data);
 							cost_month = cost_month + parseFloat(this.price);
@@ -319,10 +338,10 @@ function sensor_data_selection( sensor ){
 	$('#date'+ sensor).remove();
 	// choose day
 	container_get('#menu'+sensor,'date'+sensor,'Sensor details');
-	$('#date'+ sensor).append( '<button id="reload'+sensor+'" class="date button">refresh</button><br />' );
+	$('#date'+ sensor).append( '<button id="reload'+sensor+'" class="date button">'+lng.refresh+'</button><br />' );
 	
 	//if(sensor<10){
-		$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="choose day"/>' );
+		$('#date'+ sensor).append( '<input id="date_picker'+sensor+'" class="date button" value="'+lng.day_choose+'"/>' );
 
 		$('#date_picker'+sensor).datepicker({
 			maxDate: '+0D',
@@ -335,7 +354,7 @@ function sensor_data_selection( sensor ){
 
 		var datepicker_from = 'date_picker_from'+sensor;
 		var datepicker_to = 'date_picker_to'+sensor;	
-		$('#date'+ sensor).append( '<br /><input id="'+datepicker_from+'" class="date dateselect button" value="day from" /><input id="'+datepicker_to+'" class="date dateselect button" value="day to" />' );
+		$('#date'+ sensor).append( '<br /><input id="'+datepicker_from+'" class="date dateselect button" value="'+lng.day_from+'" /><input id="'+datepicker_to+'" class="date dateselect button" value="'+lng.day_to+'" />' );
 
 		$('.dateselect').datepicker({
 			maxDate: '+0D',
@@ -355,7 +374,7 @@ function sensor_data_selection( sensor ){
 					};
 		 	}
 		});
-		$('#date'+ sensor).append( '<br /><button id="select_output_'+sensor+'" class="button"><span id="w'+sensor+'" class="active_element">Watt</span> / <span id="t'+sensor+'">Temperature</span></button><input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
+		$('#date'+ sensor).append( '<br /><button id="select_output_'+sensor+'" class="button"><span id="w'+sensor+'" class="active_element">'+lng.watt+'</span> / <span id="t'+sensor+'">'+lng.temperature+'</span></button><input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
 		$('#date'+ sensor).append( '<input type="hidden" class="current_display" id="show'+sensor+'" value="w" />' );
 		
 		$('#select_output_'+sensor).toggle(
@@ -397,7 +416,7 @@ function sensor_data_selected( data, sensor, info ){
 	var selection = 'x';
 	var query = false;
 	var options = false;
-	var info = info !== undefined ? info : 'Watt last 2 hours';
+	var info = info !== undefined ? info : lng.hour_last_2;
 
 	if(data.selectedDay){
 		var unit = 'DAY';
@@ -406,10 +425,10 @@ function sensor_data_selected( data, sensor, info ){
 		if($('#show'+sensor).val() === 't'){
 			var table = 'measure_tmpr_hourly';
 			var unit_value = '1';
-			var info = select+' C hourly';
+			var info = select+' '+lng.tmp_hourly;
 		}else{
 			var table = 'measure_watt_hourly';
-			var info = select+' W 2 hourly';
+			var info = select+' '+lng.hour_last_2;
 		}
 		var timeframe = 'select';
 		var clickable = true;
@@ -428,7 +447,7 @@ function sensor_data_selected( data, sensor, info ){
 		if($('#show'+sensor).val() === 't'){
 			var table = 'measure_tmpr_hourly';
 			var unit_value = '1';	
-			var info = select+' C hourly';
+			var info = select+' '+lng.tmp_hourly;
 		}else{
 			var table = 'measure_watt_daily';
 		}
@@ -470,7 +489,7 @@ function sensor_detail(data){
 		if(  d === null ){ return true; }
 		sensor_data_selected(false, data);
 		sensor_statistic( d.sensor[data].positions, data );
-		sensor_data_selection( data, 'last 2 hour watt' );
+		sensor_data_selection( data, lng.hour_last_2 );
 	});
 };
 
@@ -587,8 +606,9 @@ function graph_draw_multiple( d, sensor, range, exclude){
 	var label = '';
 	
 	$.each(d, function(dat){
-		var label = range == 'week' ? day_get(dat) : month_get(dat);
+		var label = range == 'week' ? day_get_by_date(dat) : month_get_by_date(dat);
 		var tmp = [];
+		console.log(d);
 		div_get('#container-selection','container-'+dat,'','check-container float_left');
 		checkbox_get('#container-'+dat,dat,'displaythis',dat+' sensor_legend',dat,1);
 		$('#container-'+dat).append(dat+' '+label);
@@ -637,7 +657,7 @@ function graph_draw_multiple( d, sensor, range, exclude){
 			
 		$.each(d, function(dat){
 			if( $.inArray(dat, selection) != -1 ){
-				var label = range == 'week' ? day_get(dat) : month_get(dat);
+				var label = range == 'week' ? day_get_by_date(dat) : month_get_by_date(dat);
 				var tmp = [];
 				$.each( d[dat], function( set ){
 					tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
@@ -696,8 +716,8 @@ function sensor_history_get( sensor, range ){
 
 function sensor_prices_set( sensor ){
 	sensor_settings_detail_clean();
-	container_get('#adminmenu','sensor_prices_container','Prices', 'sensor_settings_prices sensor_settings_detail');
-	button_get('#sensor_prices_container', 'sensor_price_date_add','Add new price','button');
+	container_get('#adminmenu','sensor_prices_container',lng.prices, 'sensor_settings_prices sensor_settings_detail');
+	button_get('#sensor_prices_container', 'sensor_price_date_add',lng.price_add,'button');
 	$('#sensor_price_date_add').click(function(){ sensor_price_date_add(sensor) });
 	
 	$.getJSON('php/measureit_functions.php', {
@@ -706,7 +726,7 @@ function sensor_prices_set( sensor ){
 	}, function( d ) {
 		$.each(d, function(date){
 			var cnt = 1;
-			div_get('#sensor_prices_container', 'sensor_price_date'+date,'Price since: '+date,'padding10 margin10 ui-widget-content ui-corner-all sensor_price_date title');
+			div_get('#sensor_prices_container', 'sensor_price_date'+date,lng.price_since+': '+date,'padding10 margin10 ui-widget-content ui-corner-all sensor_price_date title');
 			$('#sensor_price_date'+date).append( '<span id="sensor_price_date_toggle'+date+'" class="ui-icon ui-icon-arrowthick-2-n-s sensor_price_date_toggler"></span>' );
 			input_get('#sensor_price_date'+date,'sensor_price_date_value'+date,'','hidden');
 			
@@ -715,18 +735,18 @@ function sensor_prices_set( sensor ){
 			$.each(d[date], function(pos){
 				hours = hours_get();
 				div_get('#sensor_price_date_container'+date, 'sensor_price_date_container'+date+pos,'');
-				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'from'+pos,hours[this.costs_from]+' - '+hours[this.costs_to]+'<br />Price: '+this.costs_price+'<br />','price_time_range');
+				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'from'+pos,hours[this.costs_from]+' - '+hours[this.costs_to]+lng.price+'<br />: '+this.costs_price+'<br />','price_time_range');
 				var costs_id = this.costs_id;
-				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'del'+pos, 'Delete time range', '');
+				button_get('#sensor_price_date_container'+date+pos, 'sensor_price_date'+date+'del'+pos, lng.price_range_delete, '');
 				cnt++;
 				$('#sensor_price_date'+date+'del'+pos).click(function(){
 					$('#sensor_price_date_container'+date+pos).remove();
 					$.getJSON('php/measureit_functions.php', { "do" : 'sensor_price_delete', "id" : costs_id });
 				});
 			});
-			button_get('#sensor_price_date_container'+date, 'sensor_price_date_range_add'+date,'Add time range','sensor_prices_container_admin price_time_range');
+			button_get('#sensor_price_date_container'+date, 'sensor_price_date_range_add'+date,lng.price_range_add,'sensor_prices_container_admin price_time_range');
 			$('#sensor_price_date_range_add'+date).click(function(){ sensor_price_range_add(date,sensor); });
-			button_get('#sensor_price_date_container'+date, 'sensor_price_date_del'+date,'Delete date','sensor_prices_container_admin');
+			button_get('#sensor_price_date_container'+date, 'sensor_price_date_del'+date,lng.date_delete,'sensor_prices_container_admin');
 			$('#sensor_price_date_del'+date).click(function(){
 				$('#sensor_price_date'+date).remove();
 				$.getJSON('php/measureit_functions.php', { "do" : 'sensor_prices_delete', "date" : date });
@@ -751,7 +771,7 @@ function sensor_price_date_add(sensor){
 		$('.sensor_price_date').remove();
 		div_get('#sensor_prices_container', 'sensor_price_date_container'+date,'','sensor_price_date_container');
 		div_get('#sensor_price_date_container'+date, 'sensor_price_date','','padding10 margin10 ui-widget-content ui-corner-all sensor_price_date');
-		$('#sensor_price_date').append( '<input id="datepicker" class="date dateselect sensor_price_dateselect pointer" value="Price since: '+date+'" />' );
+		$('#sensor_price_date').append( '<input id="datepicker" class="date dateselect sensor_price_dateselect pointer" value="'+lng.price_since+': '+date+'" />' );
 		input_get('#sensor_price_date','sensor_price_date_value',date,'hidden');
 		$('.dateselect').datepicker({
 			maxDate: '+0D',
@@ -781,9 +801,9 @@ function sensor_price_range_add(date,sensor){
 	hour_dropdown_get(hours_get('00'), 'sensor_price_datefrom');
 	div_get('#sensor_price_range_add', 'sensor_price_dateto','');
 	hour_dropdown_get(hours_get('59'), 'sensor_price_dateto');
-	div_get('#sensor_price_range_add', 'sensor_price_datecosts','<br /><br />Price: ');
+	div_get('#sensor_price_range_add', 'sensor_price_datecosts','<br /><br />'+lng.price+': ');
 	input_get('#sensor_price_datecosts', 'sensor_price_datecosts_input');
-	button_get('#sensor_price_range_add', 'sensor_price_date_range_add','Save','sensor_prices_container_admin');
+	button_get('#sensor_price_range_add', 'sensor_price_date_range_add',lng.save,'sensor_prices_container_admin');
 	$('#sensor_price_date_range_add').click(function(){
 		sensor_price_add(date,sensor);
 	});
@@ -900,33 +920,62 @@ function container_get(parent,id,title,css){
 }
 
 function day_get(date){
-	var d=new Date(date);
 	var weekday=new Array(7);
-	weekday[0]="Sunday";
-	weekday[1]="Monday";
-	weekday[2]="Tuesday";
-	weekday[3]="Wednesday";
-	weekday[4]="Thursday";
-	weekday[5]="Friday";
-	weekday[6]="Saturday";
-	return weekday[d.getDay()];
+	weekday[0]=lng.sunday;
+	weekday[1]=lng.monday;
+	weekday[2]=lng.tuesday;
+	weekday[3]=lng.wednesday;
+	weekday[4]=lng.thursday;
+	weekday[5]=lng.friday;
+	weekday[6]=lng.saturday;
+	return weekday[date];
 }
 
 function month_get(date){
+	var month=new Array(12);
+	month[0]=lng.january;
+	month[1]=lng.february;
+	month[2]=lng.march;
+	month[3]=lng.april;
+	month[4]=lng.may;
+	month[5]=lng.june;
+	month[6]=lng.july;
+	month[7]=lng.august;
+	month[8]=lng.september;
+	month[9]=lng.october;
+	month[10]=lng.november;
+	month[11]=lng.december;
+	return month[date];
+}
+
+function day_get_by_date(date){
+	var d=new Date(date);
+	var weekday=new Array(7);
+	weekday[0]=lng.sunday;
+	weekday[1]=lng.monday;
+	weekday[2]=lng.tuesday;
+	weekday[3]=lng.wednesday;
+	weekday[4]=lng.thursday;
+	weekday[5]=lng.friday;
+	weekday[6]=lng.saturday;
+	return weekday[d.getDay()];
+}
+
+function month_get_by_date(date){
 	var d=new Date(date);
 	var month=new Array(12);
-	month[0]="January";
-	month[1]="February";
-	month[2]="March";
-	month[3]="April";
-	month[4]="May";
-	month[5]="June";
-	month[6]="July";
-	month[7]="August";
-	month[8]="September";
-	month[9]="October";
-	month[10]="November";
-	month[11]="December";
+	month[0]=lng.january;
+	month[1]=lng.february;
+	month[2]=lng.march;
+	month[3]=lng.april;
+	month[4]=lng.may;
+	month[5]=lng.june;
+	month[6]=lng.july;
+	month[7]=lng.august;
+	month[8]=lng.september;
+	month[9]=lng.october;
+	month[10]=lng.november;
+	month[11]=lng.december;
 	return month[d.getMonth()];
 }
 
@@ -936,7 +985,7 @@ function hours_get(prefix){
 	var time = timeofday = '';
 	var i = ii = 0;
 	for(i=0;i<24;i++){
-		// some countries does realy have weired settings ... :)
+		// some countries does really have weired settings ... :)
 		ii = ii == 13 ? 1 : ii;
 		timeofday = i<13 ? ii+prefix+' am' : ii+prefix+' pm';
 		ii++;
@@ -994,7 +1043,7 @@ function sensor_settings_detail_clean(){
 function sensor_positions_admin( data, sensor ){
 	sensor_settings_detail_clean();
 	div_empty_get('#adminmenu','sensor_positions_detail'+sensor,'sensor_settings_detail');
-	container_get('#sensor_positions_detail'+sensor,'positions'+sensor,'Positions');
+	container_get('#sensor_positions_detail'+sensor,'positions'+sensor,lng.positions);
 
 	$.each( data[sensor].sensor.positions, function(d){
 		if(data[sensor].sensor.positions[d].description != null){
@@ -1002,7 +1051,7 @@ function sensor_positions_admin( data, sensor ){
 			}
 		
 	});
-	button_get('#positions'+sensor, 'position_add'+sensor, 'add position');
+	button_get('#positions'+sensor, 'position_add'+sensor, lng.position_add);
 	$('#position_add'+sensor).click(function(){
 			sensor_position_add(sensor);
 		});
@@ -1049,9 +1098,9 @@ function sensor_position_delete(item,sensor){
 function sensor_position_add(sensor){
 	sensor_settings_detail_clean();
 	div_empty_get('#adminmenu','sensor_position_add'+sensor,'sensor_settings_detail');
-	container_get('#sensor_position_add'+sensor,'position_add'+sensor,'add position');
-	$('#position_add'+sensor).append(span_get('#position_add'+sensor,'Title','padding5')+'<br /><input type="text" id="sensor_position_name" />');
-	button_get('#position_add'+sensor,'sensor_position_add_action','Add','padding5');
+	container_get('#sensor_position_add'+sensor,'position_add'+sensor,lng.position_add);
+	$('#position_add'+sensor).append(span_get('#position_add'+sensor,lng.title,'padding5')+'<br /><input type="text" id="sensor_position_name" />');
+	button_get('#position_add'+sensor,'sensor_position_add_action',lng.add,'padding5');
 	$('#sensor_position_add_action').click(function(){
 			if($('#sensor_position_name').val() != ''){
 					$.get('php/measureit_functions.php',{ 'do' : 'sensor_position_add', 'sensor_id' : sensor, 'sensor_position_name' : $('#sensor_position_name').val() }, function(d){
@@ -1073,10 +1122,10 @@ function sensor_position_add(sensor){
 function sensor_list( data ){
 	sensor_settings_clean();
 	sensor_settings_detail_clean();
-	container_get('#adminmenu','sensor_admin','Sensor');
+	container_get('#adminmenu','sensor_admin',lng.sensor);
 	$.each( data, function(d){
 		if(d>9){
-			data[d].sensor.sensor_title = 'Sensor '+d.substr(1,1)+' clamp: '+d.substr(0,1);
+			data[d].sensor.sensor_title = 'Sensor '+d.substr(1,1)+' '+lng.clamp+': '+d.substr(0,1);
 		}
 		button_get('#sensor_admin','sensor_admin'+d,data[d].sensor.sensor_title);
 		$('#sensor_admin'+d).click(function() {
@@ -1085,10 +1134,10 @@ function sensor_list( data ){
 			sensor_admin_list_items(data,d);
 			});
 	});
-	button_get('#sensor_admin','sensor_add','Add Sensor');
-	button_get('#sensor_admin','clamp_add','Add Clamp');
-	button_get('#sensor_admin','backup','Backup / Export');
-	button_get('#sensor_admin','global_settings','System settings');
+	button_get('#sensor_admin','sensor_add',lng.sensor_add);
+	button_get('#sensor_admin','clamp_add',lng.clamp_add);
+	button_get('#sensor_admin','backup',lng.backup);
+	button_get('#sensor_admin','global_settings',lng.settings_system);
 	sensor_add(data);
 	clamp_add(data);
 	system_backup();
@@ -1102,10 +1151,10 @@ function sensor_list( data ){
 function sensor_admin_list_items( data, sensor ){
 	sensor_settings_clean();
 	container_get('#adminmenu','sensor_admin_list',data[sensor].sensor.sensor_title,'sensor_list_settings');
-	button_get('#sensor_admin_list','sensor_admin_positions'+sensor,'Positions');
-	button_get('#sensor_admin_list','sensor_admin_settings'+sensor,'Settings');
-	button_get('#sensor_admin_list','sensor_admin_prices'+sensor,'Prices');
-	button_get('#sensor_admin_list','sensor_admin_sensor_delete'+sensor,'Delete');
+	button_get('#sensor_admin_list','sensor_admin_positions'+sensor,lng.positions);
+	button_get('#sensor_admin_list','sensor_admin_settings'+sensor,lng.settings);
+	button_get('#sensor_admin_list','sensor_admin_prices'+sensor,lng.prices);
+	button_get('#sensor_admin_list','sensor_admin_sensor_delete'+sensor,lng.del);
 	$('#sensor_admin_positions'+sensor).click(function(){
 		sensor_positions_admin(data,sensor);
 	});
@@ -1122,15 +1171,15 @@ function sensor_admin_list_items( data, sensor ){
 
 function sensor_admin_settings(data, sensor){
 		sensor_settings_detail_clean();
-		container_get('#adminmenu','sensor_settings_container','Settings', 'sensor_settings_detail');
-		div_get('#sensor_settings_container','sensor_id','difference from GMT in hours ( 2 or -2 ):','padding5');
+		container_get('#adminmenu','sensor_settings_container',lng.settings, 'sensor_settings_detail');
+		div_get('#sensor_settings_container','sensor_id',lng.difference_gmt_hint+':','padding5');
 		input_get('#sensor_settings_container','sensor_timezone_diff',data[sensor].sensor.measure_timezone_diff);
-		div_get('#sensor_settings_container','sensor_id','currency (Euro/Pound/anything-you-want):','padding5');
+		div_get('#sensor_settings_container','sensor_id',lng.currency_hint+':','padding5');
 		input_get('#sensor_settings_container','sensor_currency',data[sensor].sensor.measure_currency === undefined ? 'Û' : data[sensor].sensor.measure_currency);
-		div_get('#sensor_settings_container','sensor_id','days keep history:','padding5 notice');
+		div_get('#sensor_settings_container','sensor_id',lng.history_hint+':','padding5 notice');
 		input_get('#sensor_settings_container','sensor_history',data[sensor].sensor.measure_history === undefined ? '365' : data[sensor].sensor.measure_history);
-		button_get('#sensor_settings_container','sensor_admin_settings_save'+sensor,'Save settings');
-		div_get('#sensor_settings_container','sensor_settings_container_notice','You had to restart the grabbing script to activate this settings','notice_box padding5');
+		button_get('#sensor_settings_container','sensor_admin_settings_save'+sensor,lng.save);
+		div_get('#sensor_settings_container','sensor_settings_container_notice',lng.grabber_restart_hint,'notice_box padding5');
 
 		$('#sensor_admin_settings_save'+sensor).click(function(){
 			if($('#sensor_price').val() !== '' && $('#sensor_currency').val() !== '' && $('#sensor_history').val() !== ''){
@@ -1157,7 +1206,7 @@ function sensor_admin_settings(data, sensor){
 
 function sensor_delete(sensor){
 	sensor_settings_detail_clean();
-	div_get('#main','delete_confirm','<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>PLEASE NOTE: delete complete will delete all data from sensor including the positions and every stored watt and temperature data. delete entry will just remove the sensor entry and keep the data</p>');
+	div_get('#main','delete_confirm','<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>'+lng.sensor_delete_hint+'</p>');
 
 	$("#delete_confirm").dialog({
 			resizable: true,
@@ -1194,8 +1243,8 @@ function sensor_add(data){
 	$('#sensor_add').click(function(){
 		sensor_settings_clean();
 		sensor_settings_detail_clean();
-		container_get('#adminmenu','sensor_add_container','Sensor', 'sensor_settings');
-		div_get('#sensor_add_container','sensor_id',span_get('sensor_id_select_text','Sensor ID: ','float_left padding5'));
+		container_get('#adminmenu','sensor_add_container',lng.sensor, 'sensor_settings');
+		div_get('#sensor_add_container','sensor_id',span_get('sensor_id_select_text',lng.sensor_id+': ','float_left padding5'));
 		for( i=0;i<10;i++){
 				if(!data[i]){
 						div_get('#sensor_id','',i,'sensor_id');
@@ -1206,8 +1255,8 @@ function sensor_add(data){
 			$(this).addClass('selected');
 		});
 
-		div_get('#sensor_add_container','sensor_title_text',span_get('sensor_title_text','Title:<br /> <input type="text" id="sensor_name" />','float_left padding5'));
-		button_get('#sensor_add_container','sensor_add_action','Add','padding5');
+		div_get('#sensor_add_container','sensor_title_text',span_get('sensor_title_text',lng.title+':<br /> <input type="text" id="sensor_name" />','float_left padding5'));
+		button_get('#sensor_add_container','sensor_add_action',lng.add,'padding5');
 		$('#sensor_add_action').click(function(){
 				if($('#sensor_name').val() != '' && $('.selected').html() != null){
 						$.get('php/measureit_functions.php',{ 'do' : 'sensor_add', 'sensor_id' : $('.selected').html(), 'sensor_name' : $('#sensor_name').val() }, function(){
@@ -1228,8 +1277,8 @@ function clamp_add(data){
 		sensor_settings_clean();
 		sensor_settings_detail_clean();
 		container_get('#adminmenu','clamp_add_container','Clamp', 'sensor_settings');
-		div_get('#clamp_add_container','sensor_id',span_get('sensor_id_select_text','Sensor: <select id="sensor_select_box" name="sensor_select_box"><option selected="selected" value="x">Please choose Sensor</option></select>','float_left padding5 block'));
-		div_get('#clamp_add_container','clamp_id',span_get('sensor_id_select_text','Clamp: ','float_left padding5 block'));
+		div_get('#clamp_add_container','sensor_id',span_get('sensor_id_select_text',lng.sensor+': <select id="sensor_select_box" name="sensor_select_box"><option selected="selected" value="x">'+lng.sensor_choose+'</option></select>','float_left padding5 block'));
+		div_get('#clamp_add_container','clamp_id',span_get('sensor_id_select_text',lng.clamp+': ','float_left padding5 block'));
 
 		for( i=0;i<10;i++){
 				if(data[i]){
@@ -1245,8 +1294,8 @@ function clamp_add(data){
 			available_clamps_get($('#sensor_select_box').val(), data);
 		});
 
-		div_get('#clamp_add_container','sensor_title_text',span_get('sensor_title_text','Title:<br /> <input type="text" id="sensor_name" />','float_left padding5'));
-		button_get('#clamp_add_container','clamp_add_action','Add','padding5');
+		div_get('#clamp_add_container','sensor_title_text',span_get('sensor_title_text',lng.title+':<br /> <input type="text" id="sensor_name" />','float_left padding5'));
+		button_get('#clamp_add_container','clamp_add_action',lng.add,'padding5');
 		$('#clamp_add_action').click(function(){
 			if( $('#sensor_select_box').val() != 'x' && $('#sensor_select_box').val() != 'null' && $('.clamp_selected').html() != null){
 					$.get('php/measureit_functions.php',{ 'do' : 'clamp_add', 'sensor_id' : $('#sensor_select_box').val(), 'clamp_id' : $('.clamp_selected').html(), 'sensor_name' : $('#sensor_name').val() }, function(){
@@ -1281,19 +1330,19 @@ function system_backup(){
 	$('#backup').click(function(){
 		sensor_settings_clean();
 		sensor_settings_detail_clean();
-		container_get('#adminmenu','admin_backup_container','Database backups', 'sensor_settings center');
+		container_get('#adminmenu','admin_backup_container',lng.backups, 'sensor_settings center');
 		div_get('#admin_backup_container','backup',span_get('sensor_id_select_text',' ','float_left padding5'));
 		
 		$.getJSON('php/measureit_functions.php', { 'do' : 'backup_list_get' }, function( data ){
 			$.each(data, function(d){
-				$('#admin_backup_container').append(span_get( data[d].file, data[d].day+' '+data[d].time+' '+data[d].size, 'padding5 button center')+span_get(data[d].time,'<a href="'+data[d].file+'" class="padding5">Download</a>  <a href="javascript: void(0);" onclick="javascript: backup_delete(\''+data[d].filename+'\')">Delete</a><hr />', 'padding5'));
+				$('#admin_backup_container').append(span_get( data[d].file, data[d].day+' '+data[d].time+' '+data[d].size, 'padding5 button center')+span_get(data[d].time,'<a href="'+data[d].file+'" class="padding5">'+lng.download+'</a>  <a href="javascript: void(0);" onclick="javascript: backup_delete(\''+data[d].filename+'\')">'+lng.del+'</a><hr />', 'padding5'));
 			});
 		});
 		
-		button_get('#admin_backup_container','backup_create','Create backup');
+		button_get('#admin_backup_container','backup_create',lng.backup_create);
 		$('#backup_create').click(function(){
 			$.get('php/measureit_functions.php', { 'do' : 'backup_create' });
-			div_get('#main','backup_create_dialog','Backup was startet. This can take some time dependent from your database size');
+			div_get('#main','backup_create_dialog',lng.backup_start_hint);
 			$("#backup_create_dialog").dialog({
 				resizable: true,
 				height:200,
@@ -1317,16 +1366,16 @@ function global_settings( ){
 	sensor_settings_clean();
 	sensor_settings_detail_clean();
 	
-	container_get('#adminmenu','admin_settings_container','System settings', 'system_settings');
+	container_get('#adminmenu','admin_settings_container',lng.settings_system, 'system_settings');
 	div_get('#admin_settings_container','system_settings_container','','padding5');
 
-	button_get('#system_settings_container','sensor_admin_prices400','Prices','button');
+	button_get('#system_settings_container','sensor_admin_prices400',lng.prices,'button');
 
 	$('#sensor_admin_prices400').click(function(){
 		sensor_prices_set(400);
 	});
 	
-	$('#system_settings_container').append(span_get('system_settings_timezone','Use global timezone settings for all sensors instead of one setting per sensor<br />difference from GMT in hours ( 2 or -2 ):<br />',''));
+	$('#system_settings_container').append(span_get('system_settings_timezone',lng.difference_gmt_global_hint+':<br />',''));
 	input_get('#system_settings_container','system_settings_timezone_value','');
 	//$('#system_settings_container').append(span_get('system_settings_cron','<br />Use global setting for data delete<br />Days to hold detail data:<br />','notice'));
 	//input_get('#system_settings_container','system_settings_cron_value','');
@@ -1334,8 +1383,10 @@ function global_settings( ){
 	//input_get('#system_settings_container','system_settings_hosting_value','');
 	//$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
 	//checkbox_get('#system_settings_container','system_settings_database_value','','','0');
-	button_get('#system_settings_container','system_settings_save','Save settings');
-	div_get('#admin_settings_container','system_settings_container_notice','You had to restart the grabbing script to activate this settings','notice_box padding5');
+	$('#system_settings_container').append(span_get('system_settings_language','<br />'+lng.language+'<br />','padding15'));
+	button_get('#system_settings_container','system_settings_save',lng.save,'margin5');
+	//div_get('#admin_settings_container','system_settings_container_notice',lng.grabber_restart_hint,'notice_box padding5');
+	
 	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
 		
 		if(system_data.global_timezone_use){
@@ -1351,6 +1402,9 @@ function global_settings( ){
 			//$('#system_settings_database_value').attr('checked', true);
 		}
 		
+		var lng_set = system_data.language_use != undefined ? system_data.language_use : 'en_EN';
+		language_dropdown_get(lng_set);
+		
 		});
 
 	$('#system_settings_save').click(function(){
@@ -1358,29 +1412,37 @@ function global_settings( ){
 		var system_item = false;
 		if( $.isNumeric( $('#system_settings_timezone_value').val() ) ){
 			system_settings['global_timezone_use'] =  $('#system_settings_timezone_value').val();
-			system_item = true;
 		}
 		if( $.isNumeric( $('#system_settings_cron_value').val() ) ){
 			system_settings['cron_delete_use'] =  $('#system_settings_cron_value').val();
-			system_item = true;
 		}
 		if( $('#system_settings_hosting_value').val() != '' ){
 			system_settings['hosting_value_use'] =  $('#system_settings_hosting_value').val();
-			system_item = true;
 		}
 		if( $('#system_settings_database_value').attr('checked') ){
 			system_settings['local_database_use'] =  0;
-			system_item = true;
 		}
+		system_settings['language_use'] =  $('#system_settings_language_value').val();
 		
-		if(system_item){
-			$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){});
-		}
-		sensor_settings_clean();
-		sensor_settings_detail_clean();
+		$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){
+			sensor_settings_clean();
+			sensor_settings_detail_clean();
+		});
+		
+		
 		
 	});
 	
+}
+
+function language_dropdown_get(cl){
+	$.getJSON('php/measureit_functions.php', { 'do' : 'languages_get' },function(lngs){
+		$('#system_settings_language').append('<select name="system_settings_language_value" id ="system_settings_language_value"></option>');
+		$.each(lngs, function(l){
+			var selected = lngs[l] == cl ? 'selected="selected"' : '';
+			$('#system_settings_language_value').append('<option value="'+lngs[l]+'" '+selected+'>'+lngs[l]+'</option>');
+		});
+	});
 }
 
 function backup_delete( file ){
