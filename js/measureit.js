@@ -362,7 +362,7 @@ function sensor_data_selection( sensor ){
 			onSelect: function() {
 				var from_str = $('#'+datepicker_from).val();
 				var to_str = $('#'+datepicker_to).val();
-				if( from_str !== 'day from' && to_str !== 'day to'){
+				if( $('#'+datepicker_to).val() !== lng.day_to && $('#'+datepicker_from).val() !== lng.day_from ){
 						var from = from_str.split('/');
 						var to = to_str.split('/');
 						var data = {
