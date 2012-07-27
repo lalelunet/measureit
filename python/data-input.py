@@ -11,6 +11,7 @@ import platform
 sensors = {}
 settings = {}
 db = {}
+err = {}
 debug = False
 
 usbport = 'COM3'
@@ -19,17 +20,25 @@ if platform.system() == 'Linux':
 
 warnings.filterwarnings("ignore")
 # mysql connection
-#mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
-mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
-db = mysql.cursor()
+try:
+    mysql = MySQLdb.connect(host="10.0.0.12",port=10001,user="measureit",passwd="nhjw_4k=0)/_rhje$$/e34%",db="measure_it" )
+    #mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
+    db = mysql.cursor()
+except MySQLdb.OperationalError, message:
+        print message[1]
+        
 
 def sensor_list_get():
-    db.execute('SELECT sensor_id FROM measure_sensors')
-    r = db.fetchall()
-    for row in r:
-        sensor = int(row[0])
-        sensors[sensor] = {'tmpr' : 0, 'watt' : 0}
-    return sensors
+    try:
+        db.execute('SELECT sensor_id FROM measure_sensors')
+        r = db.fetchall()
+        for row in r:
+            sensor = int(row[0])
+            sensors[sensor] = {'tmpr' : 0, 'watt' : 0}
+        return sensors
+    except:
+        print 'foo'
+
 
 def sensor_settings_get():
     sensors_settings = {}
@@ -82,54 +91,66 @@ def cron_timer_hourly():
         day_from = datetime.date.today() - datetime.timedelta(days=1)
     date_from = str(day_from)+' '+str(hour_from)+':00:00'
     date_to = str(day_to)+' '+str(hour_to)+':00:00'
-    for sensor in sensors:
-        usage_sum_hourly = usage_sum_count = sum = 0
-        db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
-        r = db.fetchall() 
-        for row in r:
-            usage_sum_hourly += float(row[1])
-            usage_sum_count += 1
-        if usage_sum_count != 0:
-            sum = (usage_sum_hourly/usage_sum_count)/1000
-        query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
-        db.execute(query)
+    try:
+        for sensor in sensors:
+            usage_sum_hourly = usage_sum_count = sum = 0
+            db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor))
+            r = db.fetchall()
+            for row in r:
+                usage_sum_hourly += float(row[1])
+                usage_sum_count += 1
+            if usage_sum_count != 0:
+                sum = (usage_sum_hourly/usage_sum_count)/1000
+            query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
+            db.execute(query)
         usage_sum_hourly = usage_sum_count = sum = r = 0
+    except:
+        print 'no sensor'
         
     timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
     timer_hourly.start()
         
     
 def cron_timer_daily():
-    for sensor in sensors:
-        usage_sum_daily = usage_sum_count = sum = 0
-        date_from = str(datetime.date.today() - datetime.timedelta(days=1))+' 00:00:00'
-        date_to = str(datetime.date.today())+' 00:00:00'
-        db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
-        r = db.fetchall() 
-        for row in r:
-            usage_sum_daily += float(row[1])
-            usage_sum_count += 1
-        if usage_sum_count != 0:
-            sum = ((usage_sum_daily/usage_sum_count)*24)/1000
-        query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
-        db.execute(query)
-        usage_sum_daily = usage_sum_count = sum = r = 0
-        
-        # delete old watt data
-        sensor_settings = sensor_settings_get()
-        if sensor_settings.has_key(sensor):
-            if sensor_settings[sensor] > 0:
-                query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor])+' DAY'
-                db.execute(query)
-    
     timer_daily = threading.Timer(86400.0, cron_timer_daily)
     timer_daily.start()
-
+    try:
+        for sensor in sensors:
+            usage_sum_daily = usage_sum_count = sum = 0
+            date_from = str(datetime.date.today() - datetime.timedelta(days=1))+' 00:00:00'
+            date_to = str(datetime.date.today())+' 00:00:00'
+            db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor)) 
+            r = db.fetchall() 
+            try:
+                for row in r:
+                    usage_sum_daily += float(row[1])
+                    usage_sum_count += 1
+                if usage_sum_count != 0:
+                    sum = ((usage_sum_daily/usage_sum_count)*24)/1000
+                query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
+                db.execute(query)
+                usage_sum_daily = usage_sum_count = sum = r = 0
+            except:
+                print 'scheiss python'
+            try: # delete old watt data
+                sensor_settings = sensor_settings_get()
+                if sensor_settings.has_key(sensor):
+                    if sensor_settings[sensor] > 0:
+                        query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor])+' DAY'
+                        db.execute(query)
+            except:
+                print 'muh'
+    except:
+        print 'python...'
+                
 def date_hour_get( hours ):
-    db.execute('SELECT NOW() - INTERVAL '+hours+' HOUR')
-    date = db.fetchone()
-    r = re.search(r"(\d+-\d+-\d+) (\d+):.+", str(date[0]) )
-    return (r.group(1), r.group(2))
+    try:
+        db.execute('SELECT NOW() - INTERVAL '+hours+' HOUR')
+        date = db.fetchone()
+        r = re.search(r"(\d+-\d+-\d+) (\d+):.+", str(date[0]) )
+        return (r.group(1), r.group(2))
+    except:
+        print 'maeh'
 
 def sensor_data_check( sensor, watt, tmpr ):
     sensor = int(sensor)
