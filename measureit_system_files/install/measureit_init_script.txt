@@ -1,0 +1,14 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          rsyncd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Should-Start:      $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      
+# Short-Description: measureit data grabber
+# Description:       starts the listening process on /dev/ttyUSB0 to grab sensor data from currentcost device
+### END INIT INFO
+
+/usr/bin/python /var/www/python/data-input.py &
