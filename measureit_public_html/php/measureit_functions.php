@@ -657,10 +657,10 @@ function sensor_add( $params = array() ){
 	return true;
 }
 
-function clamp_add( $_REQUEST ){
+function clamp_add( $params ){
 	# a clamp is internal just a sensor :)
-	$_REQUEST['sensor_id'] = $_REQUEST['clamp_id'].$_REQUEST['sensor_id'];
-	sensor_add( $_REQUEST );
+	$params['sensor_id'] = $params['clamp_id'].$params['sensor_id'];
+	sensor_add( $params );
 }
 
 function global_settings_get( ){
@@ -673,10 +673,10 @@ function global_settings_get( ){
 	print json_encode( $r );
 }
 
-function global_settings_set( $_REQUEST ){
+function global_settings_set( $params ){
 	$db = new mydb;
 	$db->query("DELETE FROM measure_system");
-	foreach( $_REQUEST['data'] as $k => $v ){
+	foreach( $params['data'] as $k => $v ){
 		$db->query("INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) VALUES ('$k', '$v' )");
 	}
 }
