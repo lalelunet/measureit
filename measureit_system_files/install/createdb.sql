@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `measure_costs` (
   `costs_price` float NOT NULL,
   `costs_since` date NOT NULL,
   PRIMARY KEY (`costs_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `measure_data_now` (
   `sensor_id` tinyint(2) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `measure_system` (
   `measure_system_setting_name` varchar(256) NOT NULL,
   `measure_system_setting_value` varchar(256) NOT NULL,
   PRIMARY KEY (`measure_system_setting_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `measure_tmpr` (
   `tmpr_id` int(128) NOT NULL AUTO_INCREMENT,
