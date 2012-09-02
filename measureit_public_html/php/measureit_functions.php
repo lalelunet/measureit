@@ -1,6 +1,5 @@
 <?php 
-
-require_once( 'class.db.php' );
+require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
 $demo = false;
@@ -160,8 +159,8 @@ function sensor_detail_statistic( $params = array( ) ){
 		$db = new mydb;
 		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
-			$r['yeardays'][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			$r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			@$r['yeardays'][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
+			@$r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
 			ksort($r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
 		}
 		
@@ -169,10 +168,11 @@ function sensor_detail_statistic( $params = array( ) ){
 		$q = data_query_build( $params );
 		$db = new mydb;
 		$query = $db->query( $q );
+		
 		while( $d = $db->fetch_array( $query ) ){
-			$r['yearhours'][$d['hour']] += $d['data'];
+			@$r['yearhours'][$d['hour']] += $d['data'];
 			ksort($r['yearhours']);
-			$r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][$d['hour']] += $d['data'];
+			@$r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][$d['hour']] += $d['data'];
 			ksort($r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
 		}
 		print json_encode($r);
@@ -246,7 +246,7 @@ function sensor_history_year( $params = array( ) ){
 	$query = $db->query( $q );
 	while( $d = $db->fetch_array( $query ) ){
 		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
-		$r[$ret[1].'-'.$ret[2]][$ret[3]]['data'] += $d['data'];
+		@$r[$ret[1].'-'.$ret[2]][$ret[3]]['data'] += $d['data'];
 	}
 	print json_encode($r);
 	return true;
@@ -360,7 +360,7 @@ function sensor_data_raw_get( $params = array( ) ){
 		$query = $db->query( $q );
 		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
-			$r[$d['hour']] += $d['data'];
+			@$r[$d['hour']] += $d['data'];
 		}
 	}
 	return $r;
@@ -374,7 +374,7 @@ function sensor_statistic_get( $params = array( ) ){
 		$query = $db->query( $q );
 		
 		while( $d = $db->fetch_array( $query ) ){
-			$tmp[$d['time']][$d['hour']] += $d['data'];
+			@$tmp[$d['time']][$d['hour']] += $d['data'];
 		}
 		
 		foreach( $tmp as $day => $usage ){
@@ -382,9 +382,9 @@ function sensor_statistic_get( $params = array( ) ){
 			$ts = @strtotime( $day );
 			$month = @date( 'n', $ts )-1;
 			$get_day_data = price_sum_statistic( array( 'sensor'=>$params['sensor'], 'data'=>$tmp[$day], 'day'=>( $ts -1 ), 'prices'=>$prices ) );
-			$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
-			$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
-			$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'w', $ts );
+			@$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
+			@$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
+			@$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'w', $ts );
 		}
 		
 		print json_encode($r);
@@ -421,7 +421,7 @@ function lng_str_get( $language = false, $lng_str = array( ) ){
 		$lng = explode( ',', $lng );
 		foreach( $lng as $k => $v ){
 			$r = explode( ':', $v );
-			$lng_str[$r[0]] = $r[1];
+			@$lng_str[$r[0]] = $r[1];
 		}
 	}
 	
@@ -484,6 +484,7 @@ function data_query_build( $params = array( ) ){
 }
 
 function price_sum( $params ){
+	$prices = array();
 	if( array_key_exists( $params['sensor'], $params['prices'] ) ){
 		$prices = array_shift(  $params['prices'][$params['sensor']] );
 	}elseif( array_key_exists( 400, $params['prices'] ) ){
@@ -492,7 +493,9 @@ function price_sum( $params ){
 	$sum = $price = 0;
 	foreach( $params['data'] as $k=>$v ){
 		$sum += $v;
-		$price += $v * $prices[$k];
+		if( isset( $prices[$k] ) ){
+			$price += $v * $prices[$k];
+		}
 	}
 	
 	return round( $sum, 3 ).' Kwh<br />'.round( $price, 2 );
@@ -506,7 +509,7 @@ function price_sum_statistic( $params ){
 		$prices = $params['prices'][400];
 	}
 	
-	$last_date = ''; $cnt = 0;
+	$last_date = ''; $sum = $price = $cnt = 0;
 	foreach( $prices as $k => $v ){
 		if( $cnt == 0 ){
 			$to = @strtotime( @date( 'Y-m-d' ) );
