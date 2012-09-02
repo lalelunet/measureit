@@ -8,22 +8,13 @@ import threading
 import sys
 import platform
 import simplemail
+import urllib2
 
-# configure this settings
-database_host = 'localhost'
-database_port = 3306
-database_name = 'measure_it'
-database_user = 'measureit'
-database_passwd = 'measureitpasswd'
-# email settings to send you emails when there a problems
-email_address = 'your-email@address.xx'
-email_smtp_server = 'YOUR-SMTP-SERVER' # something like smtp.google.com if you are using gmail f.e
-email_smtp_user = 'YOUR-USER-NAME'
-email_smtp_passwd = 'YOUR-PASSWORD'
-email_smtp_tls = True
-
+config = {}
 sensors = {}
 settings = {}
+sensor_settings = {}
+system_settings = {}
 db = {}
 err_critical = 0
 debug = False
@@ -31,14 +22,6 @@ debug = False
 usbport = 'COM3'
 if platform.system() == 'Linux':
     usbport = '/dev/ttyUSB0'
-    
-try:
-    mysql = MySQLdb.connect(host=database_host,port=database_port,user=database_user,passwd=database_passwd,db=database_name,reconnect=1)
-    #mysql = MySQLdb.connect(host="localhost",port=3306,user="measureit",passwd="measureitpasswd",db="measure_it" )
-    db = mysql.cursor()
-
-except:
-    error_handle('Can not connect to database. Is the database on and are the database settings ok?')
 
 def sensor_list_get():
     try:
@@ -53,28 +36,12 @@ def sensor_list_get():
         err_critical_count()
 
 
-def sensor_settings_get():
-    try:
-        sensors_settings = {}
-        db.execute('SELECT sensor_id, measure_history FROM measure_sensors LEFT JOIN measure_settings ON measure_settings.measure_sensor = measure_sensors.sensor_id')
-        r = db.fetchall()
-        for row in r:
-            sensor = int(row[0])
-            sensors_settings[sensor] = row[1]
-        return sensors_settings
-    except:
-        error_handle('Error in sensor_settings_get. No sensors or broken database connection?')
-        err_critical_count()
-
 def system_settings_get():
-    try:
-        system_settings = {}
-        db.execute('SELECT measure_system_setting_name, measure_system_setting_value FROM measure_system')
-        r = db.fetchall()
-        return r
-    except:
-        error_handle('Error in system_settings_get. No sensors or broken database connection?')
-        err_critical_count()
+    db.execute('SELECT measure_system_setting_name, measure_system_setting_value FROM measure_system')
+    r = db.fetchall()
+    for row in r:
+        system_settings[row[0]] = row[1]
+    return True
 
 def sensor_data_change( coloum, sensor, data):
     try:
@@ -119,7 +86,6 @@ def history_update( sensor, hist ):
         err_critical_count()
 
 def cron_timer_hourly():
-    global mysql
     now = datetime.datetime.now()
     day_from = datetime.date.today()
     day_to = datetime.date.today()
@@ -130,22 +96,22 @@ def cron_timer_hourly():
         day_from = datetime.date.today() - datetime.timedelta(days=1)
     date_from = str(day_from)+' '+str(hour_from)+':00:00'
     date_to = str(day_to)+' '+str(hour_to)+':00:00'
-    try:
-        for sensor in sensors:
-            usage_sum_hourly = usage_sum_count = sum = 0
-            db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor))
-            r = db.fetchall()
-            for row in r:
-                usage_sum_hourly += float(row[1])
-                usage_sum_count += 1
-            if usage_sum_count != 0:
-                sum = (usage_sum_hourly/usage_sum_count)/1000
-            query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
-            db.execute(query)
-        usage_sum_hourly = usage_sum_count = sum = r = 0
-    except:
-        error_handle('Error in cron_timer_hourly. No sensors or broken database connection?')
-        err_critical_count()
+    #try:
+    for sensor in sensors:
+        usage_sum_hourly = usage_sum_count = sum = 0
+        db.execute("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor))
+        r = db.fetchall()
+        for row in r:
+            usage_sum_hourly += float(row[1])
+            usage_sum_count += 1
+        if usage_sum_count != 0:
+            sum = (usage_sum_hourly/usage_sum_count)/1000
+        query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
+        db.execute(query)
+    usage_sum_hourly = usage_sum_count = sum = r = 0
+    #except:
+        #error_handle('Error in cron_timer_hourly. No sensors or broken database connection?')
+        #err_critical_count()
         
     timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
     timer_hourly.start()
@@ -176,7 +142,6 @@ def cron_timer_daily():
                 error_handle('Error in cron_timer_daily. No sensors or broken database connection?')
                 err_critical_count()
             try: # delete old watt data
-                sensor_settings = sensor_settings_get()
                 if sensor_settings.has_key(sensor):
                     if sensor_settings[sensor] > 0:
                         query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor])+' DAY'
@@ -187,6 +152,37 @@ def cron_timer_daily():
     except:
         error_handle('Error in cron_timer_daily. No sensors or broken database connection?')
         err_critical_count()
+        
+def cron_timer_weekly():
+    timer_weekly = threading.Timer(604800.0, cron_timer_weekly)
+    timer_weekly.start()
+    update_check()
+
+def update_check():
+    if system_settings.has_key('current_version'):
+        nv = int(system_settings['current_version'])+1
+        try:
+            r = urllib2.urlopen('https://measureit.googlecode.com/files/measureit-'+int(nv)+'.zip')
+            db.execute('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "next_version", "'+str(nv)+'" )')
+        except:
+            print 'Update: No new version found'
+
+    else:
+        db.execute('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 113 )')
+
+def system_settings_get():
+    db.execute('SELECT measure_system_setting_name, measure_system_setting_value FROM measure_system')
+    r = db.fetchall()
+    for row in r:
+        system_settings[row[0]] = row[1]
+    return True
+
+def sensor_settings_get():
+    db.execute('SELECT measure_sensor, measure_history FROM measure_settings')
+    r = db.fetchall()
+    for row in r:
+        sensor_settings[row[0]] = row[1]
+    return True
                 
 def date_hour_get( hours ):
     try:
@@ -237,8 +233,29 @@ def err_critical_count():
         except:
             error_handle('Can not send email. Please check your settings!')
 
+def config_parse():
+    file_name = "/usr/local/measureit/measureit.cfg.php"
+    try:
+        config_file = open(file_name, 'r')
+    except:
+        print file_name+' could not be opened or read. Please check if file exists and that that the permissions are ok'
+    
+    for line in config_file:
+        line = line.rstrip()
+    
+        if not line:
+            continue
+        
+        if line.startswith("#"):
+            continue
+        
+        r = re.search(r".?\$(.+) ?= ?'(.+)';", line)
+        if r:
+            if r.group(1) and r.group(2):
+                config[r.group(1).rstrip()] = r.group(2).rstrip()
+    return True
+
 warnings.filterwarnings("ignore")
-sensors = sensor_list_get()
 
 try:
     ser = serial.Serial(port=usbport, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=3)
@@ -248,8 +265,23 @@ except:
 if 'test' in sys.argv:
     debug = True
 
+config_parse()
+
+try:
+    mysql = MySQLdb.connect(host=config['database_host'],port=int(config['database_port']),user=config['database_user'],passwd=config['database_passwd'],db=config['database_name'])
+    mysql.ping(True)
+    db = mysql.cursor()
+
+except:
+    error_handle('Can not connect to database. Is the database on and are the database settings ok?')
+
+
+sensors = sensor_list_get()
+system_settings_get()
+sensor_settings_get()
 cron_timer_hourly()
 cron_timer_daily()
+cron_timer_weekly()
 
 while True:
     line = ser.readline()
