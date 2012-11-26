@@ -105,6 +105,9 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'languages_get':
 			languages_get( );
 		break;
+		case 'update_information_get':
+			update_information_get( );
+		break;
 		default:
 			echo 'this is not a valid request';
 		break;
@@ -723,6 +726,16 @@ function languages_get( ){
 	    }
 	    print json_encode( $lng );
 	}
+}
+
+function update_information_get( ){
+	$db = new mydb;
+	$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'next_version'");
+	$v = $db->fetch_array( $query );
+	if( is_array( $v ) ){
+		print json_encode( $v );
+	}
+	return false;
 }
 
 function timezone_diff_get( $params = array( ) ){

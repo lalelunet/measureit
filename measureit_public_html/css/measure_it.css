@@ -94,6 +94,10 @@ div.clamp_id {
 	color: darkred;
 }
 
+.notice_box a{
+	color: darkred;
+}
+
 .spacer {
 	height: 15px;
 }
