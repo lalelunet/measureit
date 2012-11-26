@@ -13,7 +13,7 @@ if( pc === 1 ){
 	});
 	
 	$.getJSON('php/measureit_functions.php', { 'do' : 'update_information_get' }, function(data){
-		if( data.measure_system_setting_value ){
+		if( data && data.measure_system_setting_value ){
 			div_get('body','update_information','New version available <a href="https://code.google.com/p/measureit/downloads/list" target="_blank">more information</a>','notice_box margin5');
 		}
 	});
