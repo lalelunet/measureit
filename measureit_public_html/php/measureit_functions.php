@@ -18,6 +18,9 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'summary_sensor':
 			sensor_data_get( $_REQUEST );
 		break;
+		case 'summary_sensor_history_short':
+			sensor_data_get_sorted( $_REQUEST );
+		break;
 		case 'sensor_detail_statistic':
 			sensor_detail_statistic( $_REQUEST );
 		break;
@@ -32,6 +35,9 @@ if( isset( $_REQUEST['do'] ) ){
 		break;
 		case 'sensor_statistic':
 			sensor_statistic( $_REQUEST );
+		break;
+		case 'sensors_get_json':
+			sensors_get_json( $_REQUEST );
 		break;
 		case 'sensor_add':
 			if($demo){ return true; }
@@ -276,6 +282,132 @@ function sensor_data_get( $params = array( ) ){
 	}
 }
 
+function sensor_data_get_sorted( $params = array( ) ){
+	$q = !strpos( $params['table'], 'tmpr' ) ? data_query_build( $params ) : tmpr_get_query( $params );
+	if( $q ){
+		$t = ''; $use_diff = false; $cnt_data = $ts_start = 0; $cum = array( );
+		$db = new mydb;
+		$query = $db->query( $q );
+		if( $diff = timezone_diff_get( $params ) ) $use_diff = false;
+		while( $d = $db->fetch_array( $query ) ){
+			$time =  $ts = $d['time'];
+			if( isset( $use_diff ) ){
+				$ts = isset( $diff['prefix'] ) ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+			}
+			if( $cnt_data == 0 ){
+				$ts_start = $ts;
+			}
+			if( $ts <= $ts_start + 21600 ){
+				@$cum[6][$ts] = $d['data'];
+				@$cum[9][$ts] = $d['data'];
+				@$cum[12][$ts] = $d['data'];
+				@$cum[15][$ts] = $d['data'];
+				@$cum[18][$ts] = $d['data'];
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 32400 ){
+				@$cum[9][$ts] = $d['data'];
+				@$cum[12][$ts] = $d['data'];
+				@$cum[15][$ts] = $d['data'];
+				@$cum[18][$ts] = $d['data'];
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 43200 ){
+				@$cum[12][$ts] = $d['data'];
+				@$cum[15][$ts] = $d['data'];
+				@$cum[18][$ts] = $d['data'];
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 54000 ){
+				@$cum[15][$ts] = $d['data'];
+				@$cum[18][$ts] = $d['data'];
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 64800 ){
+				@$cum[18][$ts] = $d['data'];
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 75600 ){
+				@$cum[21][$ts] = $d['data'];
+				@$cum[24][$ts] = $d['data'];
+			}elseif( $ts <= $ts_start + 86400 ){
+				@$cum[24][$ts] = $d['data'];
+			}
+			
+			$cnt_data++;
+		}
+		
+		foreach ( $cum as $k => $v){
+			$tc = 1;
+			foreach( $v as $kv => $vv ){
+				$tstp = $kv * 1000; 
+				if( $tc == 1 ){
+					$tts = $tstp;
+				}
+				
+				if( $k == 6 ){
+					if( $tc == 3 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 3 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 9 ){
+					if( $tc == 4 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 4 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 12 ){
+					if( $tc == 6 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 6 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 15 ){
+					if( $tc == 7 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 7 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 18 ){
+					if( $tc == 9 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 9 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 21 ){
+					if( $tc == 10 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 10 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}elseif( $k == 24 ){
+					if( $tc == 11 ){
+						$tc = 0;
+						$r[$k][$tts] = round( $r[$k][$tts] / 11 );
+						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
+					}
+					@$r[$k][$tts] += $vv;
+				}
+				$tc++;
+			}
+		}
+		
+		# remove last colon from arrays
+		foreach( $pr as $k=>$v ){
+			$pr[$k] = preg_replace( '/(.+),$/', '['."$1".']', $v );
+		}
+		
+		json_encode( $pr );
+	}
+}
+
 function sensor_values_now_get( $sensor ){
 	if( is_numeric( $sensor ) ){
 		$db = new mydb;
@@ -383,13 +515,13 @@ function sensor_statistic_get( $params = array( ) ){
 		foreach( $tmp as $day => $usage ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $day, $t);
 			$ts = @strtotime( $day );
-			$month = @date( 'n', $ts )-1;
+			$month = @date( 'n', $ts );
 			$get_day_data = price_sum_statistic( array( 'sensor'=>$params['sensor'], 'data'=>$tmp[$day], 'day'=>( $ts -1 ), 'prices'=>$prices ) );
 			@$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
 			@$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
 			@$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'w', $ts );
 		}
-		
+
 		print json_encode($r);
 	}
 }
@@ -607,6 +739,16 @@ function sensors_get( ){
 	}
 	#echo '<pre>'; var_dump($r);
 	return $r;
+}
+
+function sensors_get_json( ){
+	$db = new mydb;
+	$query = $db->query( "SELECT * FROM measure_sensors" );
+	$r = array();
+	while( $d = $db->fetch_array( $query ) ){
+		$r[] = $d['sensor_id'];
+	}
+	print json_encode( $r );
 }
 
 function sensor_position_add( $params = array() ){
