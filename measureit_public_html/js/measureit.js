@@ -290,7 +290,7 @@ function sensor_statistic_generate( data, sensor, position ){
 		}, function(d) {
 			$.each( d, function( v ){
 				div_get('#sensor_position'+position, 'sensor_statistic_table'+v, v+span_get('sensor_statistic_year_watt'+v, '', 'float_right statistic_year_watt statistic_data'), 'sensor_statistic_table level1');
-				
+
 				// year
 				$.each( $(d[v]), function( y ){
 					var kwh_year = costs_year = 0;
@@ -937,19 +937,19 @@ function day_get(date){
 }
 
 function month_get(date){
-	var month=new Array(12);
-	month[0]=lng.january;
-	month[1]=lng.february;
-	month[2]=lng.march;
-	month[3]=lng.april;
-	month[4]=lng.may;
-	month[5]=lng.june;
-	month[6]=lng.july;
-	month[7]=lng.august;
-	month[8]=lng.september;
-	month[9]=lng.october;
-	month[10]=lng.november;
-	month[11]=lng.december;
+	var month=new Array(13);
+	month[1]=lng.january;
+	month[2]=lng.february;
+	month[3]=lng.march;
+	month[4]=lng.april;
+	month[5]=lng.may;
+	month[6]=lng.june;
+	month[7]=lng.july;
+	month[8]=lng.august;
+	month[9]=lng.september;
+	month[10]=lng.october;
+	month[11]=lng.november;
+	month[12]=lng.december;
 	return month[date];
 }
 
