@@ -938,6 +938,7 @@ function day_get(date){
 
 function month_get(date){
 	var month=new Array(13);
+	month[0]=lng.january;
 	month[1]=lng.january;
 	month[2]=lng.february;
 	month[3]=lng.march;
@@ -968,19 +969,20 @@ function day_get_by_date(date){
 
 function month_get_by_date(date){
 	var d=new Date(date);
-	var month=new Array(12);
+	var month=new Array(13);
 	month[0]=lng.january;
-	month[1]=lng.february;
-	month[2]=lng.march;
-	month[3]=lng.april;
-	month[4]=lng.may;
-	month[5]=lng.june;
-	month[6]=lng.july;
-	month[7]=lng.august;
-	month[8]=lng.september;
-	month[9]=lng.october;
-	month[10]=lng.november;
-	month[11]=lng.december;
+	month[1]=lng.january;
+	month[2]=lng.february;
+	month[3]=lng.march;
+	month[4]=lng.april;
+	month[5]=lng.may;
+	month[6]=lng.june;
+	month[7]=lng.july;
+	month[8]=lng.august;
+	month[9]=lng.september;
+	month[10]=lng.october;
+	month[11]=lng.november;
+	month[12]=lng.december;
 	return month[d.getMonth()];
 }
 
