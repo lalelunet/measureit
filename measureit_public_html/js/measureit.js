@@ -156,12 +156,13 @@ function sensor_statistic_comparison( sensor ){
     });
 }
 
-function sensor_statistic_datetime( sensor ){
+function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
+	$('#overview'+sensor).empty();
+	$('#container-legend').remove();
+	$('.sensor_legend').remove();
+	div_get('#placeholder'+sensor, 'loading_main'+sensor,'','loader');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail_statistic', 'sensor' : sensor }, function(d){
-	    $('#placeholder'+sensor).empty();
-	    $('#overview'+sensor).empty();
-	    $('#container-legend').remove();
-	    $('.sensor_legend').remove();
+	    
 	    
 	    $.each( d, function(dat){
 			var dataset = []; var cnt = 0;
@@ -235,6 +236,7 @@ function sensor_statistic_datetime( sensor ){
 				});
 			} 
 		});
+		$('.loader').fadeOut();
 	    div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
 		$('#data-container'+sensor).css('height','100%');div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
 		
@@ -490,11 +492,13 @@ function sensor_data_selected( data, sensor, info ){
 }
 
 function sensor_detail(data){
+	div_get('#placeholder'+data, 'loading_main'+data,'','loader');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail', 'sensor' : data }, function(d){
 		if(  d === null ){ return true; }
 		sensor_data_selected(false, data);
 		sensor_statistic( d.sensor[data].positions, data );
 		sensor_data_selection( data, lng.hour_last_2 );
+		$('.loader').fadeOut();
 	});
 };
 
