@@ -11,4 +11,4 @@
 # Description:       starts the listening process on /dev/ttyUSB0 to grab sensor data from currentcost device
 ### END INIT INFO
 
-/usr/bin/python /var/www/python/data-input.py &
+/usr/bin/python /usr/local/measureit/data-input.py &
