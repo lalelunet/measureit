@@ -12,6 +12,7 @@ import urllib2
 import logging
 import traceback
 import os
+import subprocess
 
 config = {}
 sensors = {}
@@ -391,7 +392,8 @@ except (KeyboardInterrupt, SystemExit):
     print 'You can not stop this process with pressing CTRL + C.'
     print 'On Windows you can close the CMD window'
     if platform.system() == 'Linux':
-        print 'On *nix OS you can kill it with this command: kill -9 '+str(os.getpid())
+        killstr = 'kill -9 '+str(os.getpid())
+        subprocess.call(killstr, shell=True)
     if platform.system() == '':
         print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
 
