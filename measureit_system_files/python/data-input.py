@@ -389,7 +389,7 @@ try:
             sensor_data_check( r.group(2), watt_sum, tmpr )
 
 except (KeyboardInterrupt, SystemExit):
-    print 'You can not stop this process with pressing CTRL + C.'
+    print 'Stop this process with pressing CTRL + C.'
     print 'On Windows you can close the CMD window'
     if platform.system() == 'Linux':
         killstr = 'kill -9 '+str(os.getpid())
