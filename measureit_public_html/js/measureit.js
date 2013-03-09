@@ -224,7 +224,7 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 					var cnt = 1;
 					$.each(datasetdetail, function(set){
 						div_get('#data-container'+sensor,dat+''+cnt+'containerset'+sensor,'','ui-widget-content ui-corner-all');
-						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+'title'+cnt+'container'+sensor,month_get(datasetdetail[set][0]['lb']),'padding5 ui-state-default ui-corner-all');
+						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+'title'+cnt+'container'+sensor,month_get(parseInt(datasetdetail[set][0]['lb'])+1),'padding5 ui-state-default ui-corner-all');
 						div_get('#'+dat+''+cnt+'containerset'+sensor,dat+''+cnt+'container'+sensor,'','padding15');
 						$('#'+dat+''+cnt+'container'+sensor).css('height','100%');
 						div_get('#data-container'+sensor,dat+''+cnt+'container'+sensor,'','spacer');
@@ -302,9 +302,9 @@ function sensor_statistic_generate( data, sensor, position ){
 					$.each( this, function( m ){
 						var statistics_val_month = button_get();
 						div_get('#sensor_statistic_year'+v, 'sensor_statistic_month'+v+m, '', 'level3 pointer');
-						div_get('#sensor_statistic_month'+v+m,'','> '+month_get(m)+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
+						div_get('#sensor_statistic_month'+v+m,'','> '+month_get(parseInt(m))+span_get('sensor_statistic_month_watt'+v+m, '', 'float_right statistic_month_watt statistic_data'), 'month_header');
 						div_get('#sensor_statistic_month'+v+m, 'sensor_statistic_month_container'+v+m, '', 'level3 hidden');
-						
+
 						var kwh_month = cost_month = 0;
 						$('#sensor_statistic_month'+v+m).click(function(){
 							$('#sensor_statistic_month_container'+v+m).toggle('slow');
@@ -617,7 +617,6 @@ function graph_draw_multiple( d, sensor, range, exclude){
 	$.each(d, function(dat){
 		var label = range == 'week' ? day_get_by_date(dat) : month_get_by_date(dat);
 		var tmp = [];
-		console.log(d);
 		div_get('#container-selection','container-'+dat,'','check-container float_left');
 		checkbox_get('#container-'+dat,dat,'displaythis',dat+' sensor_legend',dat,1);
 		$('#container-'+dat).append(dat+' '+label);
@@ -941,8 +940,7 @@ function day_get(date){
 }
 
 function month_get(date){
-	var month=new Array(13);
-	month[0]=lng.january;
+	var month=new Array(12);
 	month[1]=lng.january;
 	month[2]=lng.february;
 	month[3]=lng.march;
@@ -973,8 +971,7 @@ function day_get_by_date(date){
 
 function month_get_by_date(date){
 	var d=new Date(date);
-	var month=new Array(13);
-	month[0]=lng.january;
+	var month=new Array(12);
 	month[1]=lng.january;
 	month[2]=lng.february;
 	month[3]=lng.march;
@@ -987,7 +984,7 @@ function month_get_by_date(date){
 	month[10]=lng.october;
 	month[11]=lng.november;
 	month[12]=lng.december;
-	return month[d.getMonth()];
+	return month[parseInt(d.getMonth())+1];
 }
 
 function hours_get(prefix){
