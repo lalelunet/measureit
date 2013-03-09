@@ -28,7 +28,7 @@ function hist_update(stop){
 	if( stop == '1'){ return true; }
 	$.getJSON('php/measureit_functions.php', { 'do' : 'summary_start' }, function(data) {
 		$.each(data, function(d){
-			if(data[d].sensor.sensor_id < 9){
+			if(data[d].sensor.sensor_id < 10){
 				$('#'+data[d].sensor.sensor_id).remove();
 				$('#summary').append('<div id="'+data[d].sensor.sensor_id+'">');
 				$('#'+data[d].sensor.sensor_id).addClass('ui-widget-content ui-corner-all sensor').append('<h5 class="ui-widget-header ui-corner-all">' + data[d].sensor.position_description + '</h5>');
@@ -51,7 +51,7 @@ function navigation_main( data ) {
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1000"><a href="#tabs-1000" name="1000">Home</a></li>');
 	
 	$.each( data, function(d){
-		if( data[d].sensor.sensor_id < 9 ){
+		if( data[d].sensor.sensor_id < 10 ){
 			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'" id="submenu'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
 			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 			sensor_clamps(data[d].sensor.clamps,d);
