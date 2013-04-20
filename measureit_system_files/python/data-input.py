@@ -212,7 +212,7 @@ def update_check():
             logger.info('Update: No new version found')
 
     else:
-        mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 113 )')
+        mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 115 )')
 
 def sensor_settings_get():
     try:
@@ -360,26 +360,28 @@ try:
         #           if d:
         #                for f in d:
         #                    history_update(s,f)
-        
+
         r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
         if r:
-            #print mysql
+            #print r
             tmpr = r.group(1)
             watt_sum = int(r.group(3))
             # more than 1 clamp
             if r.group(5):
                 sensor = '2'+r.group(2)
-                watt = int(r.group(5))
-                watt_sum += watt
-                sensor_data_check( sensor, watt, tmpr )
-                clamps = True
+                if sensors and sensors.has_key(sensor):
+                    watt = int(r.group(5))
+                    watt_sum += watt
+                    sensor_data_check( sensor, watt, tmpr )
+                    clamps = True
     
             if r.group(7):
                 sensor = '3'+r.group(2)
-                watt = int(r.group(7))
-                watt_sum += watt
-                sensor_data_check( sensor, watt, tmpr )
-                clamps = True
+                if sensors and sensors.has_key(sensor):
+                    watt = int(r.group(7))
+                    watt_sum += watt
+                    sensor_data_check( sensor, watt, tmpr )
+                    clamps = True
                 
             if clamps:
                 sensor = '1'+r.group(2)
