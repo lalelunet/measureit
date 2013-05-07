@@ -37,6 +37,9 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 
+#clear logfile
+subprocess.call('echo "" > /tmp/measureit.log', shell=True)
+
 if 'test' in sys.argv:
     debug = True
     logger.setLevel(logging.INFO)
@@ -51,7 +54,7 @@ def sensor_list_get():
         for row in r:
             logger.info('Get sensor in sensor_list_get Sensor: '+str(row[0]))
             sensor = int(row[0]) 
-            sensors[sensor] = {'tmpr' : 0, 'watt' : 0}
+            sensors[sensor] = {'tmpr' : 0, 'watt' : 0, 'counter' :0, 'pvoutput_watt_sum' : {}, 'pvoutput_batch_string' : {} }
         logger.info('Get sensor list successful')
         logger.info(sensors)
         return sensors
@@ -105,11 +108,11 @@ def history_update( sensor, hist ):
         logger.info('Try to update history in history_update')
         date_hour = date_hour_get(hist[1])
         if hist[0] == 'm':
-            query = 'INSERT IGNORE INTO measure_watt_monthly ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[0]+'" )'
+            query = 'INSERT IGNORE INTO measure_watt_monthly_histrory ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[0]+'" )'
         if hist[0] == 'd':
-            query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[0]+'" )'
+            query = 'INSERT IGNORE INTO measure_watt_daily_histrory ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[0]+'" )'
         if hist[0] == 'h':
-            query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[1]+'", "'+date_hour[0]+'" )'
+            query = 'INSERT IGNORE INTO measure_watt_hourly_histrory ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[1]+'", "'+date_hour[0]+'" )'
         mysql_query(query)
         logger.info('update history successful')
     except:
@@ -182,8 +185,8 @@ def cron_timer_daily():
                 logger.info('Try to delete old data from sensor: ')
                 logger.info(sensor)
                 if sensor_settings.has_key(sensor):
-                    if sensor_settings[sensor] > 0:
-                        query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor])+' DAY'
+                    if sensor_settings[sensor]['history'] > 0:
+                        query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
                         mysql_query(query)
                         logger.info('Delete successful from old data from sensor: ')
                         logger.info(sensor)
@@ -212,14 +215,23 @@ def update_check():
             logger.info('Update: No new version found')
 
     else:
-        mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 115 )')
+        mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 114 )')
 
 def sensor_settings_get():
     try:
         logger.info('Try to get sensor settings from sensor_settings_get')
-        r = mysql_query('SELECT measure_sensor, measure_history FROM measure_settings','fetchall')
+        r = mysql_query('SELECT * FROM measure_settings','fetchall')
         for row in r:
-            sensor_settings[row[0]] = row[1]
+            #print row;
+            sensor_settings[row[2]] = {}
+            sensor_settings[row[2]]['history'] = row[0]
+            sensor_settings[row[2]]['timezone_diff'] = row[6]
+            sensor_settings[row[2]]['type'] = row[7]
+            sensor_settings[row[2]]['pvoutput'] = False
+            sensor_settings[row[2]]['pvoutput_id'] = int(row[8])
+            sensor_settings[row[2]]['pvoutput_api'] = row[9]
+            logger.info('Check if there are any PVOutput settings for this sensor')
+            sensor_data_pvoutput_init(row[2])
         logger.info('Get sensor settings successful')
         logger.info(sensor_settings)
         return True
@@ -248,7 +260,101 @@ def sensor_data_check( sensor, watt, tmpr ):
             sensors[sensor]['watt'] = watt
             sensor_data_change( 'watt', sensor, watt )
             sensor_watt_insert( sensor, watt )
+            if sensor_settings[sensor]['pvoutput']:
+                sensor_data_pvoutput_status( sensor, watt, tmpr )
         return True    
+
+def sensor_data_pvoutput_init( sensor ):
+    if sensor_settings[sensor]['pvoutput_id'] > 0:
+        logger.info('Sensor has a PVOutput ID')
+        logger.info(sensor_settings[sensor]['pvoutput_id'])
+        if sensor_settings[sensor]['pvoutput_api'] == '':
+            logger.info('Sensor has no PVOutput API. Next check if there is a global API key')
+            
+            if system_settings['system_settings_pvoutput_api'] != '':
+                sensor_settings[sensor]['pvoutput_api'] = system_settings['system_settings_pvoutput_api']
+                sensor_settings[sensor]['pvoutput'] = True
+                sensor_settings[sensor]['pvoutput_cnt'] = 0
+                sensor_settings[sensor]['pvoutput_batch_str'] = ''
+                sensor_settings[sensor]['timezone_diff_value'] = 0
+                sensor_settings[sensor]['timezone_diff_prefix'] = False
+                
+                if sensor_settings[sensor]['timezone_diff'] != 0:
+                    time_offset = sensor_settings[sensor]['timezone_diff']
+                elif system_settings['global_timezone_use'] != 0:
+                    time_offset = system_settings['global_timezone_use']
+                else:
+                    time_offset = 0
+                
+                r = re.search(r"(-?)(\d+)", time_offset)
+                if r:
+                    if r.group(1) and r.group(2):
+                        sensor_settings[sensor]['timezone_diff_prefix'] = r.group(1)
+                        sensor_settings[sensor]['timezone_diff_value'] = r.group(2)
+                    if r.group(2):
+                        sensor_settings[sensor]['timezone_diff_value'] = r.group(2)
+
+
+                logger.info('Using PVOutput for this sensor')
+                logger.info(sensor_settings[sensor])
+    else:
+        logger.info('Sensor has no PVOutput settings')
+        logger.info(sensor_settings[sensor])
+        return True
+
+def sensor_data_pvoutput_status( sensor, watt, tmpr ):
+
+    diff = int(sensor_settings[sensor]['timezone_diff_value'])
+    if sensor_settings[sensor]['timezone_diff_prefix']:
+        d = datetime.datetime.now() - datetime.timedelta(hours=diff)
+    else:
+        d = datetime.datetime.now() + datetime.timedelta(hours=diff)
+    
+    day = d.strftime("%Y%m%d")
+    time = str(d.strftime('%H'))+'%3A'+str(d.strftime('%M'))
+    time_str = int(d.strftime("%H%M"))
+    
+    if 'time_str' not in sensors[sensor]['pvoutput_watt_sum']:
+        sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
+    if 'watt_sum' not in sensors[sensor]['pvoutput_watt_sum']:
+        sensors[sensor]['pvoutput_watt_sum']['watt_sum'] = 0
+    if 'day' not in sensors[sensor]['pvoutput_watt_sum']:
+        sensors[sensor]['pvoutput_watt_sum']['day'] = day
+    if 'time' not in sensors[sensor]['pvoutput_watt_sum']:
+        sensors[sensor]['pvoutput_watt_sum']['time'] = time
+    
+    sensors[sensor]['pvoutput_watt_sum']['watt_sum'] += watt
+    sensors[sensor]['pvoutput_watt_sum']['time'] = time
+    sensors[sensor]['pvoutput_watt_sum']['day'] = day
+    
+    if time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] < 5:
+        sensor_settings[sensor]['pvoutput_cnt']+=1
+        
+    elif time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] >= 5:
+        #next minute start
+        sensor_data_pvoutput_status_generate( sensor )
+        sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
+        sensor_settings[sensor]['pvoutput_cnt'] = 1
+        sensors[sensor]['pvoutput_watt_sum']['watt_sum'] = watt
+        
+
+def sensor_data_pvoutput_status_generate( sensor ):
+    type = 'v2=0&v4' if sensor_settings[sensor]['type'] == 0 else 'v4=0&v2'
+    sum = str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt'])
+    url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+sum+'&v5='+str(sensors[sensor]['tmpr']);
+    r = urllib2.urlopen(url)
+    print url
+    logger.info('Try to update PVOutput: '+str(r.read()))
+    r = re.search(r"(OK 200)", str(r.read()))
+    if r:
+        if r.group(1):
+            logger.info('PVOutput update sucessful: '+str(r.read()))
+        else:
+            logger.error('Error while update PVOutput: '+str(r.read()))
+
+    sensors[sensor]['pvoutput_watt_sum']['day'] = False
+    sensors[sensor]['pvoutput_watt_sum']['time'] = False
+
 
 def mail_send(email_subject, email_body):
     simplemail.Email(
@@ -347,19 +453,22 @@ try:
         line = ser.readline()
         line = line.rstrip('\r\n')
         clamps = False
-        if debug:
-            print line
+        
+        #if debug:
+            #print line
         
         # parsing from history_output 
+        # data will not be used because of the data is buggy and not detailed enough :)
+        # but saving them is not an error. maybe we can use the data later
         #r = re.search(r"<hist>", line)
         #if r:
         #    for s in sensors:
         #        r = re.search(r"<data><sensor>"+str(s)+"</sensor>(.+?)</data>", line)
         #        if r:
         #            d = re.findall(r"<(d|m|h)(\d+)>(.+?)</.+?>", r.group(1) )
-        #           if d:
-        #                for f in d:
-        #                    history_update(s,f)
+        #            if d:
+        #             for f in d:
+        #                 history_update(s,f)
 
         r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
         if r:
@@ -391,12 +500,11 @@ try:
             sensor_data_check( r.group(2), watt_sum, tmpr )
 
 except (KeyboardInterrupt, SystemExit):
-    print 'Stop this process with pressing CTRL + C.'
-    print 'On Windows you can close the CMD window'
     if platform.system() == 'Linux':
         killstr = 'kill -9 '+str(os.getpid())
         subprocess.call(killstr, shell=True)
     if platform.system() == '':
+        print 'On Windows you can close the CMD window'
         print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
 
 
