@@ -313,7 +313,7 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
     day = d.strftime("%Y%m%d")
     time = str(d.strftime('%H'))+'%3A'+str(d.strftime('%M'))
     time_str = int(d.strftime("%H%M"))
-    
+    #print time_str
     if 'time_str' not in sensors[sensor]['pvoutput_watt_sum']:
         sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
     if 'watt_sum' not in sensors[sensor]['pvoutput_watt_sum']:
@@ -327,11 +327,15 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
     sensors[sensor]['pvoutput_watt_sum']['time'] = time
     sensors[sensor]['pvoutput_watt_sum']['day'] = day
     
+    # midnight
+    if time_str <= 1:
+        sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
+    
     if time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] < 5:
         sensor_settings[sensor]['pvoutput_cnt']+=1
         
     elif time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] >= 5:
-        #next minute start
+        #next 5 minutes block
         sensor_data_pvoutput_status_generate( sensor )
         sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
         sensor_settings[sensor]['pvoutput_cnt'] = 1
@@ -342,16 +346,20 @@ def sensor_data_pvoutput_status_generate( sensor ):
     type = 'v2=0&v4' if sensor_settings[sensor]['type'] == 0 else 'v4=0&v2'
     sum = str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt'])
     url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+sum+'&v5='+str(sensors[sensor]['tmpr']);
-    r = urllib2.urlopen(url)
-    print url
-    logger.info('Try to update PVOutput: '+str(r.read()))
-    r = re.search(r"(OK 200)", str(r.read()))
-    if r:
-        if r.group(1):
-            logger.info('PVOutput update sucessful: '+str(r.read()))
-        else:
-            logger.error('Error while update PVOutput: '+str(r.read()))
+    #return
+    try:
+        r = urllib2.urlopen(url)
+        logger.info('Try to update PVOutput: '+str(r.read()))
+        r = re.search(r"(OK 200)", str(r.read()))
+        if r:
+            if r.group(1):
+                logger.info('PVOutput update sucessful: '+str(r.read()))
+    except urllib2.HTTPError, error:
+        logger.warning('Error while update PVOutput: '+str(error.read()))
 
+    if debug:
+        logger.info(url)
+        
     sensors[sensor]['pvoutput_watt_sum']['day'] = False
     sensors[sensor]['pvoutput_watt_sum']['time'] = False
 
@@ -396,7 +404,7 @@ def config_parse():
             if r:
                 if r.group(1) and r.group(2):
                     config[r.group(1).rstrip()] = r.group(2).rstrip()
-        logger.info('Pasing config file successful')
+        logger.info('Parsing config file successful')
         logger.info(config)
         return True
     except:
@@ -409,8 +417,8 @@ def mysql_query(query, type = False):
             mysql = MySQLdb.connect(host=config['database_host'],port=int(config['database_port']),user=config['database_user'],passwd=config['database_passwd'],db=config['database_name'])
             db = mysql.cursor()
             try:
-                if debug:
-                    logger.info('Try to execute query: '+query)
+                #if debug:
+                    #logger.info('Try to execute query: '+query)
                 db.execute(query)
                 if type:
                     if type == 'fetchone':
@@ -418,8 +426,8 @@ def mysql_query(query, type = False):
                     if type == 'fetchall':
                         return db.fetchall()
                 db.close()
-                if debug:
-                    logger.info('Execute query successful')
+                #if debug:
+                    #logger.info('Execute query successful')
             except:
                 logger.error('Can not execute query. Error: '+traceback.format_exc())
                 err_critical_count()
@@ -454,8 +462,8 @@ try:
         line = line.rstrip('\r\n')
         clamps = False
         
-        #if debug:
-            #print line
+        if debug:
+            print line
         
         # parsing from history_output 
         # data will not be used because of the data is buggy and not detailed enough :)
@@ -506,7 +514,3 @@ except (KeyboardInterrupt, SystemExit):
     if platform.system() == '':
         print 'On Windows you can close the CMD window'
         print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
-
-
-
-            
