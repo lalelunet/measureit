@@ -208,14 +208,14 @@ def update_check():
 	if system_settings.has_key('current_version'):
 		nv = int(system_settings['current_version'])+1
 		try:
-			r = urllib2.urlopen('https://measureit.googlecode.com/files/measureit-'+int(nv)+'.zip')
+			r = urllib2.urlopen('https://measureit.googlecode.com/files/measureit-'+str(nv)+'.zip')
 			mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "next_version", "'+str(nv)+'" )')
 			logger.info('Update: New version found')
 		except:
 			logger.info('Update: No new version found')
 
 	else:
-		mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 114 )')
+		mysql_query('INSERT IGNORE INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 115 )')
 
 def sensor_settings_get():
 	try:
