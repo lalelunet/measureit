@@ -474,7 +474,7 @@ try:
 	cron_timer_hourly()
 	cron_timer_daily()
 	cron_timer_weekly()
-
+	logger.info('Start parsing XML')
 	while True:
 		line = ser.readline()
 		line = line.rstrip('\r\n')
@@ -495,7 +495,7 @@ try:
 					if d:
 					 for f in d:
 						 history_update(s,f)
-
+		
 		r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
 		if r:
 			#print r
@@ -503,25 +503,36 @@ try:
 			watt_sum = int(r.group(3))
 			# more than 1 clamp
 			if r.group(5):
-				sensor = '2'+r.group(2)
+				logger.info('Found clamp 2 on sensor '+r.group(2))
+				sensor = int('2'+r.group(2))
 				if sensors and sensors.has_key(sensor):
+					logger.info('Clamp 2 is in the sensor list')
 					watt = int(r.group(5))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
+				else:
+					logger.info('Clamp 2 is NOT in the sensor list')
 	
 			if r.group(7):
-				sensor = '3'+r.group(2)
+				logger.info('Found clamp 3 on sensor '+r.group(2))
+				sensor = int('3'+r.group(2))
 				if sensors and sensors.has_key(sensor):
+					logger.info('Clamp 3 is in the sensor list')
 					watt = int(r.group(7))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
+				else:
+					logger.info('Clamp 3 is NOT in the sensor list')
 				
 			if clamps:
-				sensor = '1'+r.group(2)
+				logger.info('Clamps found. Add data to clamps')
+				sensor = int('1'+r.group(2))
 				watt = int(r.group(3))
 				sensor_data_check( sensor, watt, tmpr )
+			else:
+				logger.info('No clamps found on sensor '+r.group(2))
 			   
 			sensor_data_check( r.group(2), watt_sum, tmpr )
 
