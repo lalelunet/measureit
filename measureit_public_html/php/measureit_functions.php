@@ -2,8 +2,7 @@
 require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = false;
-
+$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -197,6 +196,7 @@ function summary_start( ){
 	foreach( $sensors as $k=>$v ){
 		$p = end( $v['positions'] );
 		$vn = sensor_values_now_get( $k );
+		
 		$r[$k]['sensor'] = $v;
 		$r[$k]['tmpr'] = $vn['tmpr'];
 		$r[$k]['watt'] = $vn['watt'];
@@ -204,6 +204,7 @@ function summary_start( ){
 		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 1, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
 		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 168, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
 		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
+
 	}
 	print json_encode($r);
 	return true;
@@ -884,14 +885,20 @@ function update_information_get( ){
 
 function timezone_diff_get( $params = array( ) ){
 	$sensor = sensor_get( $params['sensor'] );
-	$db = new mydb;
-	$r = array();
-	$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'global_timezone_use'");
-	$d = $db->fetch_array( $query );
 	
-	$timezone_diff = ( isset( $d['measure_system_setting_value'] ) && is_numeric( $d['measure_system_setting_value'] ) ) ? $d['measure_system_setting_value'] : $sensor[$params['sensor']]['measure_timezone_diff'];
+	if( isset( $sensor[$params['sensor']]['measure_timezone_diff'] ) && is_numeric( $sensor[$params['sensor']]['measure_timezone_diff'] ) ){
+		$timezone_diff =  $sensor[$params['sensor']]['measure_timezone_diff'];
+	}else{
+		$db = new mydb;
+		$r = array();
+		$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'global_timezone_use'");
+		$d = $db->fetch_array( $query );
+		
+		$timezone_diff = $d['measure_system_setting_value'];
+	}
 	
-	if( $timezone_diff == 0 ){
+	
+	if( !isset( $timezone_diff ) || $timezone_diff == 0 ){
 		return false;
 	}
 	preg_match( '/(-)?(\d+)/', $timezone_diff, $r );
