@@ -40,8 +40,11 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 
 if 'test' in sys.argv:
-	debug = True
 	logger.setLevel(logging.INFO)
+	info = True
+elif 'debug' in sys.argv:
+	debug = True
+	logger.setLevel(logging.DEBUG)
 else:
 	logger.setLevel(logging.WARNING)
 
@@ -55,7 +58,7 @@ def sensor_list_get():
 			sensor = int(row[0]) 
 			sensors[sensor] = {'tmpr' : 0, 'watt' : 0, 'counter' :0, 'pvoutput_watt_sum' : {}, 'pvoutput_batch_string' : {} }
 		logger.info('Get sensor list successful')
-		logger.info(sensors)
+		logger.debug(sensors)
 		return sensors
 	except:
 		logger.error('Error in sensor_list_get. Error: '+traceback.format_exc())
@@ -68,7 +71,7 @@ def system_settings_get():
 		for row in r:
 			system_settings[row[0]] = row[1]
 		logger.info('Get system settings successful')
-		logger.info(system_settings)
+		logger.debug(system_settings)
 		return True
 	except:
 		logger.warning('Error in system_settings_get Error: '+traceback.format_exc())
@@ -164,7 +167,7 @@ def cron_timer_daily():
 			date_to = str(datetime.date.today())+' 00:00:00'
 			r = mysql_query("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
 			logger.info('Read data from sensor: ')
-			logger.info(sensor)
+			logger.debug(sensor)
 			try:
 				for row in r:
 					usage_sum_daily += float(row[1])
@@ -175,20 +178,17 @@ def cron_timer_daily():
 				query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
 				mysql_query(query)
 				usage_sum_daily = usage_sum_count = sum = r = 0
-				logger.info('Sensor data successful collected from sensor: ')
-				logger.info(sensor)
+				logger.info('Sensor data successful collected from sensor: '+str(sensor))
 			except:
 				logger.warning('Error in cron_timer_daily. Error: '+traceback.format_exc())
 				err_critical_count()
 			try: # delete old watt data
-				logger.info('Try to delete old data from sensor: ')
-				logger.info(sensor)
+				logger.info('Try to delete old data from sensor: '+str(sensor))
 				if sensor_settings.has_key(sensor):
 					if sensor_settings[sensor]['history'] > 0:
 						query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
 						mysql_query(query)
-						logger.info('Delete successful from old data from sensor: ')
-						logger.info(sensor)
+						logger.info('Delete successful from old data from sensor: '+str(sensor))
 			except:
 				logger.warning('Error in cron_timer_hourly while deleting old data Error: '+traceback.format_exc())
 				err_critical_count()
@@ -233,7 +233,7 @@ def sensor_settings_get():
 			logger.info('Sensor '+str(row[2])+' Check if there are any PVOutput settings for this sensor')
 			sensor_data_pvoutput_init(row[2])
 		logger.info('Get sensor settings successful')
-		logger.info(sensor_settings)
+		logger.debug(sensor_settings)
 		return True
 	except:
 		logger.warning('Error in sensor_settings_get Error: '+traceback.format_exc())
@@ -310,7 +310,7 @@ def sensor_data_pvoutput_init( sensor ):
 
 		if sensor_settings[sensor]['pvoutput']:
 			logger.info('Using PVOutput for this sensor')
-			logger.info(sensor_settings[sensor])
+			logger.debug(sensor_settings[sensor])
 		else:
 			logger.info('Sensor '+str(sensor)+' has no PVOutput API key settings. Set PVOutput system id to 0')
 	else:
@@ -374,9 +374,7 @@ def sensor_data_pvoutput_status_generate( sensor ):
 	except:
 		logger.warning('Sensor '+str(sensor)+'sensor_data_pvoutput_status_generate. Error: '+traceback.format_exc())
 		logger.info(url)
-		logger.info(traceback)
-	if debug:
-		logger.info(url)
+		logger.debug(traceback)
 
 	sensors[sensor]['pvoutput_watt_sum']['day'] = False
 	sensors[sensor]['pvoutput_watt_sum']['time'] = False
@@ -423,7 +421,7 @@ def config_parse():
 				if r.group(1) and r.group(2):
 					config[r.group(1).rstrip()] = r.group(2).rstrip()
 		logger.info('Parsing config file successful')
-		logger.info(config)
+		logger.debug(config)
 		return True
 	except:
 		logger.error('Error in config_parse. '+config_file_name+' could not be opened or read. Please check if file exists and that that the permissions are ok Error: '+traceback.format_exc())
@@ -435,8 +433,7 @@ def mysql_query(query, type = False):
 			mysql = MySQLdb.connect(host=config['database_host'],port=int(config['database_port']),user=config['database_user'],passwd=config['database_passwd'],db=config['database_name'])
 			db = mysql.cursor()
 			try:
-				#if debug:
-					#logger.info('Try to execute query: '+query)
+				logger.debug('Try to execute query: '+query)
 				db.execute(query)
 				if type:
 					if type == 'fetchone':
@@ -444,8 +441,7 @@ def mysql_query(query, type = False):
 					if type == 'fetchall':
 						return db.fetchall()
 				db.close()
-				#if debug:
-					#logger.info('Execute query successful')
+				logger.debug('Execute query successful')
 			except:
 				logger.error('Can not execute query. Error: '+traceback.format_exc())
 				err_critical_count()
@@ -503,36 +499,36 @@ try:
 			watt_sum = int(r.group(3))
 			# more than 1 clamp
 			if r.group(5):
-				logger.info('Found clamp 2 on sensor '+r.group(2))
+				logger.debug('Found clamp 2 on sensor '+r.group(2))
 				sensor = int('2'+r.group(2))
 				if sensors and sensors.has_key(sensor):
-					logger.info('Clamp 2 is in the sensor list')
+					logger.debug('Clamp 2 is in the sensor list')
 					watt = int(r.group(5))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
 				else:
-					logger.info('Clamp 2 is NOT in the sensor list')
+					logger.debug('Clamp 2 is NOT in the sensor list')
 	
 			if r.group(7):
 				logger.info('Found clamp 3 on sensor '+r.group(2))
 				sensor = int('3'+r.group(2))
 				if sensors and sensors.has_key(sensor):
-					logger.info('Clamp 3 is in the sensor list')
+					logger.debug('Clamp 3 is in the sensor list')
 					watt = int(r.group(7))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
 				else:
-					logger.info('Clamp 3 is NOT in the sensor list')
+					logger.debug('Clamp 3 is NOT in the sensor list')
 				
 			if clamps:
-				logger.info('Clamps found. Add data to clamps')
+				logger.debug('Clamps found on sensor '+r.group(2)+'. Add data to clamps')
 				sensor = int('1'+r.group(2))
 				watt = int(r.group(3))
 				sensor_data_check( sensor, watt, tmpr )
 			else:
-				logger.info('No clamps found on sensor '+r.group(2))
+				logger.debug('No clamps found on sensor '+r.group(2))
 			   
 			sensor_data_check( r.group(2), watt_sum, tmpr )
 
