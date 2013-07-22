@@ -21,7 +21,9 @@ sensor_settings = {}
 system_settings = {}
 db = {}
 err_critical = 0
+info = False
 debug = False
+annouying = False
 logger = logging.getLogger('MeasureIt')
 
 usbport = 'COM3'
@@ -44,6 +46,8 @@ if 'test' in sys.argv:
 	info = True
 elif 'debug' in sys.argv:
 	debug = True
+	if 'v' in sys.argv:
+		annouying = True
 	logger.setLevel(logging.DEBUG)
 else:
 	logger.setLevel(logging.WARNING)
@@ -107,7 +111,8 @@ def tmpr_insert( tmpr ):
 
 def history_update( sensor, hist ):
 	try:
-		logger.info('Try to update history in history_update')
+		logger.info('Try to update history in history_update from sensor '+str(sensor))
+		logger.debug(hist)
 		date_hour = date_hour_get(hist[1])
 		if hist[0] == 'm':
 			query = 'INSERT IGNORE INTO measure_watt_monthly ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "NOW( ) - INTERVAL '+date_hour[0]+'" )'
@@ -116,7 +121,7 @@ def history_update( sensor, hist ):
 		#if hist[0] == 'h':
 			#query = 'INSERT IGNORE INTO measure_watt_hourly_histrory ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[1]+'", "'+date_hour[0]+'" )'
 		mysql_query(query)
-		logger.info('update history successful')
+		logger.info('update history successful from sensor '+str(sensor))
 	except:
 		logger.warning('Error in history_update. Error: '+traceback.format_exc())
 		err_critical_count()
@@ -160,14 +165,12 @@ def cron_timer_daily():
 	try:
 		logger.info('Try to run about all sensors')
 		for sensor in sensors:
-			logger.info('Found Sensor')
-			logger.info(sensor)
+			logger.info('Found Sensor '+str(sensor))
 			usage_sum_daily = usage_sum_count = sum = 0
 			date_from = str(datetime.date.today() - datetime.timedelta(days=1))+' 00:00:00'
 			date_to = str(datetime.date.today())+' 00:00:00'
 			r = mysql_query("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
-			logger.info('Read data from sensor: ')
-			logger.debug(sensor)
+			logger.info('Read data from sensor: '+str(sensor))
 			try:
 				for row in r:
 					usage_sum_daily += float(row[1])
@@ -263,6 +266,7 @@ def sensor_data_check( sensor, watt, tmpr ):
 
 			if sensor_settings[sensor]['pvoutput']:
 				sensor_data_pvoutput_status( sensor, watt, tmpr )
+			
 		return True
 
 def sensor_data_pvoutput_init( sensor ):
@@ -281,14 +285,14 @@ def sensor_data_pvoutput_init( sensor ):
 			
 		elif sensor_settings[sensor]['pvoutput_api'] != '':
 			logger.info('Sensor '+str(sensor)+' has PVOutput API.')
-			logger.info(sensor_settings[sensor]['pvoutput_api'])
+			logger.debug(sensor_settings[sensor]['pvoutput_api'])
 			
 			sensor_settings[sensor]['pvoutput_api'] = sensor_settings[sensor]['pvoutput_api']
 			sensor_settings[sensor]['pvoutput'] = True
 		
 		if system_settings.has_key('system_settings_pvoutput_api') and system_settings['system_settings_pvoutput_api'] != '':
 			logger.info('Found PVOutput API key in the system settings.')
-			logger.info(system_settings['system_settings_pvoutput_api'])
+			logger.debug(system_settings['system_settings_pvoutput_api'])
 			
 			sensor_settings[sensor]['pvoutput_api'] = system_settings['system_settings_pvoutput_api']
 			sensor_settings[sensor]['pvoutput'] = True
@@ -300,7 +304,7 @@ def sensor_data_pvoutput_init( sensor ):
 		else:
 			time_offset = 0
 		
-		r = re.search(r"(-?)(\d+)", str(time_offset))
+		r = re.search(r"(-?)(.+)", str(time_offset))
 		if r:
 			if r.group(1) and r.group(2):
 				sensor_settings[sensor]['timezone_diff_prefix'] = r.group(1)
@@ -316,21 +320,23 @@ def sensor_data_pvoutput_init( sensor ):
 	else:
 		logger.info('Sensor '+str(sensor)+' has no PVOutput settings. Set PVOutput system id to 0')
 		sensor_settings[sensor]['pvoutput_id'] = 0
-		logger.info(sensor_settings[sensor])
+		logger.debug(sensor_settings[sensor])
 		return True
 
 def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 
-	diff = int(sensor_settings[sensor]['timezone_diff_value'])
+	diff = float(sensor_settings[sensor]['timezone_diff_value'])
 	if sensor_settings[sensor]['timezone_diff_prefix']:
 		d = datetime.datetime.now() - datetime.timedelta(hours=diff)
 	else:
 		d = datetime.datetime.now() + datetime.timedelta(hours=diff)
 	
 	day = d.strftime("%Y%m%d")
+	#print sensor
+	#print day
 	time = str(d.strftime('%H'))+'%3A'+str(d.strftime('%M'))
 	time_str = int(d.strftime("%H%M"))
-	#print time_str
+
 	if 'time_str' not in sensors[sensor]['pvoutput_watt_sum']:
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
 	if 'watt_sum' not in sensors[sensor]['pvoutput_watt_sum']:
@@ -365,17 +371,18 @@ def sensor_data_pvoutput_status_generate( sensor ):
 
 	try:
 		r = urllib2.urlopen(url)
-		logger.info('Try to update PVOutput: '+str(r.read()))
+		logger.info('Try to update PVOutput from sensor : '+str(sensor)+' Output: '+str(r.read()))
 		r = re.search(r"(OK 200)", str(r.read()))
 		if r:
 			if r.group(1):
-				logger.info('Sensor '+str(sensor)+'PVOutput update sucessful: '+str(r.read()))
+				logger.info('Sensor '+str(sensor)+'PVOutput update sucessful from sensor : '+str(sensor)+' Output: '+str(r.read()))
 	
 	except:
 		logger.warning('Sensor '+str(sensor)+'sensor_data_pvoutput_status_generate. Error: '+traceback.format_exc())
 		logger.info(url)
 		logger.debug(traceback)
 
+	logger.debug(url)
 	sensors[sensor]['pvoutput_watt_sum']['day'] = False
 	sensors[sensor]['pvoutput_watt_sum']['time'] = False
 
@@ -433,7 +440,8 @@ def mysql_query(query, type = False):
 			mysql = MySQLdb.connect(host=config['database_host'],port=int(config['database_port']),user=config['database_user'],passwd=config['database_passwd'],db=config['database_name'])
 			db = mysql.cursor()
 			try:
-				logger.debug('Try to execute query: '+query)
+				if annouying:
+					logger.debug('Try to execute query: '+query)
 				db.execute(query)
 				if type:
 					if type == 'fetchone':
@@ -441,7 +449,8 @@ def mysql_query(query, type = False):
 					if type == 'fetchall':
 						return db.fetchall()
 				db.close()
-				logger.debug('Execute query successful')
+				if annouying:
+					logger.debug('Execute query successful')
 			except:
 				logger.error('Can not execute query. Error: '+traceback.format_exc())
 				err_critical_count()
@@ -476,7 +485,7 @@ try:
 		line = line.rstrip('\r\n')
 		clamps = False
 		
-		if debug:
+		if info:
 			print line
 		
 		# parsing from history_output 
@@ -499,36 +508,44 @@ try:
 			watt_sum = int(r.group(3))
 			# more than 1 clamp
 			if r.group(5):
-				logger.debug('Found clamp 2 on sensor '+r.group(2))
+				if annouying:
+					logger.debug('Found clamp 2 on sensor '+r.group(2))
 				sensor = int('2'+r.group(2))
 				if sensors and sensors.has_key(sensor):
-					logger.debug('Clamp 2 is in the sensor list')
+					if annouying:
+						logger.debug('Clamp 2 is in the sensor list')
 					watt = int(r.group(5))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
 				else:
-					logger.debug('Clamp 2 is NOT in the sensor list')
+					if annouying:
+						logger.debug('Clamp 2 is NOT in the sensor list')
 	
 			if r.group(7):
-				logger.info('Found clamp 3 on sensor '+r.group(2))
+				if annouying:
+					logger.info('Found clamp 3 on sensor '+r.group(2))
 				sensor = int('3'+r.group(2))
 				if sensors and sensors.has_key(sensor):
-					logger.debug('Clamp 3 is in the sensor list')
+					if annouying:
+						logger.debug('Clamp 3 is in the sensor list')
 					watt = int(r.group(7))
 					watt_sum += watt
 					sensor_data_check( sensor, watt, tmpr )
 					clamps = True
 				else:
-					logger.debug('Clamp 3 is NOT in the sensor list')
+					if annouying:
+						logger.debug('Clamp 3 is NOT in the sensor list')
 				
 			if clamps:
-				logger.debug('Clamps found on sensor '+r.group(2)+'. Add data to clamps')
+				if annouying:
+					logger.debug('Clamps found on sensor '+r.group(2)+'. Add data to clamps')
 				sensor = int('1'+r.group(2))
 				watt = int(r.group(3))
 				sensor_data_check( sensor, watt, tmpr )
 			else:
-				logger.debug('No clamps found on sensor '+r.group(2))
+				if annouying:
+					logger.debug('No clamps found on sensor '+r.group(2))
 			   
 			sensor_data_check( r.group(2), watt_sum, tmpr )
 
