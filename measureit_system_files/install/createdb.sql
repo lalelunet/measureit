@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `measure_sensors` (
   `sensor_clamp` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`sensor_id`),
   UNIQUE KEY `sensor_id` (`sensor_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `measure_settings` (
   `measure_history` smallint(6) NOT NULL DEFAULT '365',
@@ -45,7 +45,10 @@ CREATE TABLE IF NOT EXISTS `measure_settings` (
   `measure_range` varchar(5) NOT NULL,
   `measure_timeframe` smallint(4) NOT NULL,
   `measure_timezone` varchar(128) NOT NULL DEFAULT 'GMT0',
-  `measure_timezone_diff` smallint(4) NOT NULL DEFAULT '0'
+  `measure_timezone_diff` float(4) NOT NULL DEFAULT '0',
+  `measure_type` tinyint(1) NOT NULL DEFAULT '0',
+  `measure_pvoutput_id` int(12) NOT NULL,
+  `measure_pvoutput_api` varchar(256) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `measure_system` (
