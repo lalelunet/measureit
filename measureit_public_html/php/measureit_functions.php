@@ -897,11 +897,10 @@ function timezone_diff_get( $params = array( ) ){
 		$timezone_diff = $d['measure_system_setting_value'];
 	}
 	
-	
 	if( !isset( $timezone_diff ) || $timezone_diff == 0 ){
 		return false;
 	}
-	preg_match( '/(-)?(\d+)/', $timezone_diff, $r );
+	preg_match( '/(-)?(.+)/', $timezone_diff, $r );
 	$diff['prefix'] = $r[1] != '' ? $r[1] : false;
 	$diff['diff'] = ( $r[2] * 60 ) * 60;
 	return $diff;
