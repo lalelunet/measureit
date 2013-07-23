@@ -13,6 +13,7 @@ import logging
 import traceback
 import os
 import subprocess
+from twython import Twython
 
 config = {}
 sensors = {}
@@ -263,7 +264,6 @@ def sensor_data_check( sensor, watt, tmpr ):
 			sensors[sensor]['watt'] = watt
 			sensor_data_change( 'watt', sensor, watt )
 			sensor_watt_insert( sensor, watt )
-
 			if sensor_settings[sensor]['pvoutput']:
 				sensor_data_pvoutput_status( sensor, watt, tmpr )
 			
@@ -331,14 +331,22 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 	else:
 		d = datetime.datetime.now() + datetime.timedelta(hours=diff)
 	
+	if annouying:
+		logger.debug('sensor: '+str(sensor))
+		logger.debug('current local datetime: '+str(datetime.datetime.now()))
+		logger.debug('current local datetime delta: '+str(datetime.timedelta(hours=diff)))
+		logger.debug('current usage: '+str(datetime.datetime.now() + datetime.timedelta(hours=diff)))
+		logger.debug('current time_str: '+str(d.strftime("%Y%m%d")))
+
 	day = d.strftime("%Y%m%d")
-	#print sensor
-	#print day
 	time = str(d.strftime('%H'))+'%3A'+str(d.strftime('%M'))
 	time_str = int(d.strftime("%H%M"))
 
 	if 'time_str' not in sensors[sensor]['pvoutput_watt_sum']:
+		#logger.debug('sensor: '+str(sensor)+'time_str not in sensors[sensor][pvoutput_watt_sum]')
+		#logger.debug('current time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
+		#logger.debug('new time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
 	if 'watt_sum' not in sensors[sensor]['pvoutput_watt_sum']:
 		sensors[sensor]['pvoutput_watt_sum']['watt_sum'] = 0
 	if 'day' not in sensors[sensor]['pvoutput_watt_sum']:
@@ -352,10 +360,19 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 	
 	# midnight
 	if time_str <= 1:
+		if annouying:
+			logger.debug('sensor: '+str(sensor)+'time_str is <= 0')
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
+		if annouying:
+			logger.debug('new time_str: '+str(time_str))
 	
 	if time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] < 5:
+		if annouying:
+			logger.debug('sensor: '+str(sensor)+' time_str is < 5')
+			logger.debug('current value: '+str(time_str - sensors[sensor]['pvoutput_watt_sum']['time_str']))
 		sensor_settings[sensor]['pvoutput_cnt']+=1
+		if annouying:
+			logger.debug('new time_str: '+str(sensor_settings[sensor]['pvoutput_cnt']))
 	
 	elif time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] >= 5:
 		#next 5 minutes block
@@ -558,6 +575,3 @@ except (KeyboardInterrupt, SystemExit):
 		print 'On Windows you can close the CMD window'
 		print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
 
-
-
-			
