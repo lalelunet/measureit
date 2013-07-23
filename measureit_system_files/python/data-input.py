@@ -13,7 +13,7 @@ import logging
 import traceback
 import os
 import subprocess
-from twython import Twython
+#from twython import Twython
 
 config = {}
 sensors = {}
