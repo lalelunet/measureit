@@ -716,6 +716,11 @@ function sensor_get( $sensor = '' ){
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
+		$r[$d['sensor_id']]['measure_pvoutput_api'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ app_key'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ app_secret'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ oauth_token'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ oauth_token_secret'] = '*************';
 	}
 	#echo '<pre>'; var_dump($r);
 	return $r;
@@ -736,6 +741,12 @@ function sensors_get( ){
 			$item = !is_numeric( $k ) ? $k : 'x';
 			$r[$d['sensor_id']][$item] = $d[$k];
 		}
+
+		$r[$d['sensor_id']]['measure_pvoutput_api'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ app_key'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ app_secret'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ oauth_token'] = '*************';
+		$r[$d['sensor_id']]['measure_twitter_ oauth_token_secret'] = '*************';
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
