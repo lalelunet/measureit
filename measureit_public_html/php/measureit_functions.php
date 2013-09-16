@@ -2,7 +2,7 @@
 require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
-$demo = true;
+$demo = false;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
