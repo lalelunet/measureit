@@ -75,8 +75,8 @@ september:september,
 october:oktober,
 november:november,
 december:december,
-consumer:sensor verbruikt energie
-producer:sensor produceert energie
+consumer:sensor verbruikt energie,
+producer:sensor produceert energie,
 alert_add:Add alert,
 alert:alert,
 system:device,
