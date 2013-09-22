@@ -87,6 +87,18 @@ div.clamp_id {
 	margin: 10px;
 }
 
+.width20 {
+	width: 20px;
+}
+
+.width35 {
+	width: 35px;
+}
+
+.width60 {
+	width: 60px;
+}
+
 .notice{
 	color: darkred;
 }
@@ -280,7 +292,8 @@ div.date {
 	width: 500px;
 }
 input,
-.button {
+.button,
+.textarea {
 	margin: 3px;
 }
 #adminmenu {
