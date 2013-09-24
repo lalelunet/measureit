@@ -3,8 +3,8 @@ require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
 global $demo;
-#$demo = false;
-$demo = true;
+$demo = false;
+#$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
