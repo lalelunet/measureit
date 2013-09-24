@@ -3,8 +3,8 @@ require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
 global $demo;
-$demo = false;
-#$demo = true;
+#$demo = false;
+$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
 	switch( $_REQUEST['do'] ){
@@ -287,7 +287,7 @@ function sensor_data_get( $params = array( ) ){
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			if( isset( $use_diff ) ){
-				$ts = isset( $diff['prefix'] ) ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+				$ts = $diff['prefix'] ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
 			}
 			$u = $params['unit_return'] == 'timeframe' ? $ts*1000 : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
@@ -308,7 +308,7 @@ function sensor_data_get_sorted( $params = array( ) ){
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = $d['time'];
 			if( isset( $use_diff ) ){
-				$ts = isset( $diff['prefix'] ) ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+				$ts = $diff['prefix'] ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
 			}
 			if( $cnt_data == 0 ){
 				$ts_start = $ts;
@@ -795,6 +795,7 @@ function sensors_get( ){
 		}
 		if( $demo ){
 			$r[$d['sensor_id']]['measure_pvoutput_api'] = '';
+			$r[$d['sensor_id']]['measure_pvoutput_id'] = '';
 		}
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
 		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
@@ -969,7 +970,6 @@ function timezone_diff_get( $params = array( ) ){
 		
 		$timezone_diff = $d['measure_system_setting_value'];
 	}
-	
 	if( !isset( $timezone_diff ) || $timezone_diff == 0 ){
 		return false;
 	}
