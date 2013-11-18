@@ -42,7 +42,8 @@ class mydb{
 		global $database_host, $database_name, $database_port, $database_user, $database_passwd;
 		set_time_limit(0);
 		#var_dump('mysqldump --opt -h'.$database_host.':'.$database_port.' -u'.$database_user.' -p'.$database_passwd.' '.$database_name.' | gzip > ../backup/measureit_backup_'.@date('Ymd-His').'.gz');
-		system( 'mysqldump --opt -h'.$database_host.' -u'.$database_user.' -p'.$database_passwd.' '.$database_name.' | gzip > ../backup/measureit_backup_'.date('Ymd-His').'.gz' );
+		system( 'mysqldump --opt -h'.$database_host.' -u'.$database_user.' -p'.$database_passwd.' '.$database_name.' | gzip > ../backup/measureit_backup_'.@date('Ymd-His').'.gz &' );
+		return true;
 	}
 
 }
