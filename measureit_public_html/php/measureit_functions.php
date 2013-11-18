@@ -178,13 +178,21 @@ function sensor_detail_statistic( $params = array( ) ){
 		$params['table'] = 'measure_watt_daily';
 		$params['unit_value'] = '1';
 		$params['unit'] = 'YEAR';
+		if( $diff = timezone_diff_get( $params ) ){
+			$use_diff = true;
+			$diff = timezone_diff_get( $params );
+		}
 		$q = data_query_build( $params );
 		$db = new mydb;
 		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
-			@$r['yeardays'][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			@$r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][@date( w, @strtotime( $d['time'].' 00:00' ) )] += $d['data'];
-			ksort($r['yearsdaysdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
+			$date = @strtotime( $d['time'].' 00:00' );
+			if( $use_diff ){
+				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+			}
+			@$r['yeardays'][@date( w, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )] += $d['data'];
+			@$r['yearsdaysdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1][@date( w, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )] += $d['data'];
+			ksort($r['yearsdaysdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1]);
 		}
 		
 		$params['table'] = 'measure_watt_hourly';
@@ -193,10 +201,14 @@ function sensor_detail_statistic( $params = array( ) ){
 		$query = $db->query( $q );
 		
 		while( $d = $db->fetch_array( $query ) ){
-			@$r['yearhours'][$d['hour']] += $d['data'];
+			$date = @strtotime( $d['time'].' '.$d['hour'].':00' );
+			if( $use_diff ){
+				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+			}
+			@$r['yearhours'][@date( 'G', $date )] += $d['data'];
 			ksort($r['yearhours']);
-			@$r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1][$d['hour']] += $d['data'];
-			ksort($r['monthshoursdetail'][@date( n, @strtotime( $d['time'].' 00:00' ) )-1]);
+			@$r['monthshoursdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1][@date( 'G', $date )] += $d['data'];
+			ksort($r['monthshoursdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1]);
 		}
 		print json_encode($r);
 		return true;
@@ -226,12 +238,20 @@ function summary_start( ){
 
 function sensor_history_week( $params = array( ) ){
 	$ret = '';
+	if( $diff = timezone_diff_get( $params ) ){
+		$use_diff = true;
+		$diff = timezone_diff_get( $params );
+	}
 	$q = data_query_build( $params );
 	$db = new mydb;
 	$query = $db->query( $q );
 	while( $d = $db->fetch_array( $query ) ){
-		$r[$d['time']][$d['hour']]['data'] = $d['data'];
-		ksort($r[$d['time']]);
+		$date = @strtotime( $d['time'].' '.$d['hour'].':00' );
+		if( $use_diff ){
+			$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+		}
+		$r[@date( 'Y-m-d', $date )][@date( 'G', $date )]['data'] = $d['data'];
+		ksort($r[@date( 'Y-m-d', $date )]);
 	}
 	print json_encode($r);
 	return true;
@@ -266,11 +286,19 @@ function sensor_statistic_comparison( $params ){
 
 function sensor_history_year( $params = array( ) ){
 	$ret = '';
+	if( $diff = timezone_diff_get( $params ) ){
+		$use_diff = true;
+		$diff = timezone_diff_get( $params );
+	}
 	$q = data_query_build( $params );
 	$db = new mydb;
 	$query = $db->query( $q );
 	while( $d = $db->fetch_array( $query ) ){
-		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
+		$date = @strtotime( $d['time'].' 00:00' );
+		if( $use_diff ){
+			$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+		}
+		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', @date( 'Y-m-d', $date ), $ret );
 		@$r[$ret[1].'-'.$ret[2]][$ret[3]]['data'] += $d['data'];
 	}
 	print json_encode($r);
@@ -283,13 +311,17 @@ function sensor_data_get( $params = array( ) ){
 		$t = ''; $use_diff = false;
 		$db = new mydb;
 		$query = $db->query( $q );
-		if( $diff = timezone_diff_get( $params ) ) $use_diff = false;
+		if( $diff = timezone_diff_get( $params ) ){
+			$use_diff = true;
+			$diff = timezone_diff_get( $params );
+		}
+		
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
-			if( isset( $use_diff ) ){
-				$ts = $diff['prefix'] ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+			if( $use_diff ){
+				$ts = $diff['prefix'] == '-' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
 			}
-			$u = $params['unit_return'] == 'timeframe' ? $ts*1000 : $time;
+			$u = $params['unit_return'] == 'timeframe' ? ( $use_diff ? $ts*1000 : @strtotime( $ts )*1000 ) : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
@@ -304,11 +336,14 @@ function sensor_data_get_sorted( $params = array( ) ){
 		$t = ''; $use_diff = false; $cnt_data = $ts_start = 0; $cum = $pr = array( );
 		$db = new mydb;
 		$query = $db->query( $q );
-		if( $diff = timezone_diff_get( $params ) ) $use_diff = false;
+		if( $diff = timezone_diff_get( $params ) ){
+			$use_diff = true;
+			$diff = timezone_diff_get( $params );
+		}
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = $d['time'];
-			if( isset( $use_diff ) ){
-				$ts = $diff['prefix'] ? @strtotime( $time ) + $diff['diff'] : @strtotime( $time ) - $diff['diff'];
+			if( $use_diff ){
+				$ts = $diff['prefix'] == '+' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
 			}
 			if( $cnt_data == 0 ){
 				$ts_start = $ts;
@@ -533,6 +568,10 @@ function sensor_price_add( $params = array( ) ){
 	preg_match( '/\d{4,4}-\d{2,2}-\d{2,2}/', $params['date'], $r );
 	$params['price'] = preg_replace(  '/,/', '.', $params['price'] );
 	if( !is_numeric( $params['price'] ) || !is_numeric( $params['from'] ) || !is_numeric( $params['to'] ) || strlen( $r['0'] ) != 10 ) return true;
+	if( $params['from'] == 0 && $params['to'] == 0 ){
+		#1 price the whole day
+		$params['to'] = 23;
+	}
 	$q = 'INSERT INTO measure_costs (costs_sensor, costs_from, costs_to, costs_price, costs_since) VALUES ( '.$params['sensor'].', '.$params['from'].', '.$params['to'].', '.$params['price'].', "'.$params['date'].'")';
 	$db = new mydb;
 	$query = $db->query( $q );
