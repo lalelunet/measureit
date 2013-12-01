@@ -2,9 +2,8 @@
 require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
-global $demo, $debug;
+global $demo;
 $demo = false;
-$debug = isset( $_REQUEST['debug'] ) ? true : false;
 #$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
