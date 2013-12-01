@@ -2,8 +2,9 @@
 require_once dirname(__FILE__).( '/class.db.php' );
 
 # in demo mode no sensor actions please
-global $demo;
+global $demo, $debug;
 $demo = false;
+$debug = isset( $_REQUEST['debug'] ) ? true : false;
 #$demo = true;
 
 if( isset( $_REQUEST['do'] ) ){
@@ -312,20 +313,23 @@ function sensor_data_get( $params = array( ) ){
 		$db = new mydb;
 		$query = $db->query( $q );
 		if( $diff = timezone_diff_get( $params ) ){
+			if( isset( $params['debug'] ) ) debug( 'Found timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 			$use_diff = true;
 			$diff = timezone_diff_get( $params );
 		}
-		
+		$dgb = array( );
 		while( $d = $db->fetch_array( $query ) ){
 			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			if( $use_diff ){
 				$ts = $diff['prefix'] == '-' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
+				if( isset( $params['debug'] ) ) $dbg[$time] = @date( 'Y-m-d H:i:s', $ts );
 			}
 			$u = $params['unit_return'] == 'timeframe' ? ( $use_diff ? $ts*1000 : @strtotime( $ts )*1000 ) : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
 		$r = '['.$r.']';
+		if( isset( $params['debug'] ) ) debug( 'Values in sensor_data_get', false, $dbg );
 		print $r;
 	}
 }
@@ -708,7 +712,7 @@ function data_query_build( $params = array( ) ){
 		break;
 	}
 	$query = "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
-	#print "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe<br />";
+	if( isset( $params['debug'] ) ) debug( $query, $params );
 	return $query;
 }
 
@@ -1022,6 +1026,18 @@ function format_bytes($size) {
     $units = array(' B', ' KB', ' MB', ' GB', ' TB');
     for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
     return round($size, 2).$units[$i];
+}
+
+function debug( $info, $request = false, $dump = false ){
+	print $info.'<br />'; 
+	if( $dump ){
+		var_dump( '<pre>', $dump );
+	}
+	print '<hr />';
+	if( $request ){
+		var_dump( '<pre>', $request );
+	}
+	print '<hr />';
 }
 
 function error( $error = 'unknown' ){
