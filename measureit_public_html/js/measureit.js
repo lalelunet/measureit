@@ -36,7 +36,7 @@ function hist_update(stop){
 				$('#'+data[d].sensor.sensor_id).remove();
 				$('#summary').append('<div id="'+data[d].sensor.sensor_id+'">');
 				$('#'+data[d].sensor.sensor_id).addClass('ui-widget-content ui-corner-all sensor').append('<h5 class="ui-widget-header ui-corner-all">' + data[d].sensor.position_description + '</h5>');
-				$('#'+data[d].sensor.sensor_id).append( '<div id="tmpr'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.temperature+'</h5></div><div class="data refresh">'+data[d].tmpr+' C</div></div>' );
+				$('#'+data[d].sensor.sensor_id).append( '<div id="tmpr'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.temperature+'</h5></div><div class="data refresh">'+data[d].tmpr+'</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="watt'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.watt_current+'</h5></div><div class="data refresh">'+data[d].watt + 'W</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="hourly"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.hour_last+'</h5></div><div class="data">'+data[d].hourly+' '+data[d].sensor.measure_currency+'</div></div>' );
 				$('#'+data[d].sensor.sensor_id).append( '<div id="daily"'+data[d].sensor.sensor_id+'" class="ui-widget-content ui-corner-all sensor-inner"><div class="title"><h5 class="ui-widget-header ui-corner-all inner">'+lng.day_last+'</h5></div><div class="data">'+data[d].daily+' '+data[d].sensor.measure_currency+'</div></div>' );
@@ -66,7 +66,7 @@ function navigation_main( data ) {
 		});
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1011"><a href="#tabs-1011" name="1011">Setup</a></li>');
 	$('#tabs,#foo').tabs({
-	    select: function(event, ui){
+		select: function(event, ui){
 			$('.tooltip').hide();
 			if($(ui.tab).attr('name') != '1000' && $(ui.tab).attr('name') != '1011' ){
 				sensor_detail($(ui.tab).attr('name'));
@@ -82,7 +82,7 @@ function navigation_main( data ) {
 				hist_update('1');
 				return true;
 			}
-	    }
+		}
 	});
 };
 
@@ -129,7 +129,6 @@ function sensor_statistic_small_get( sensor ){
 			console.log(data);
 			history_small[sensor]=data;
 			return true;
-			//div_get('body','update_information','New version available <a href="https://code.google.com/p/measureit/downloads/list" target="_blank">more information</a>','notice_box margin5');
 		}
 	});
 }
@@ -154,22 +153,22 @@ function sensor_clamps( data, sensor ){
 }
 
 function sensor_statistic_comparison( sensor ){
-    $.getJSON('php/measureit_functions.php', { 'do' : 'sensor_statistic_comparison', 'sensor' : sensor, 'timeframe' : 'all' }, function(d){
-    	//graph_draw_comparison( d, sensor);
-    	var dataset = []; var tmp=[]; var cnt = 0;
-    	$.each(d, function(dat){
-    		//console.log('1',d[dat]);
-    		$.each(d[dat], function(f){
-    			if(typeof(d[dat][f]) == 'object'){
-    				//console.log(d[dat][f]);
-        			tmp.push({ label: dat+'-'+f,  data: d[dat][f]['data'] });
-    			} 
+	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_statistic_comparison', 'sensor' : sensor, 'timeframe' : 'all' }, function(d){
+		//graph_draw_comparison( d, sensor);
+		var dataset = []; var tmp=[]; var cnt = 0;
+		$.each(d, function(dat){
+			//console.log('1',d[dat]);
+			$.each(d[dat], function(f){
+				if(typeof(d[dat][f]) == 'object'){
+					//console.log(d[dat][f]);
+					tmp.push({ label: dat+'-'+f,  data: d[dat][f]['data'] });
+				} 
 			});
 			dataset[cnt] = tmp;
 			cnt = cnt+1;
-    	});
-    	console.log(dataset);
-    });
+		});
+		console.log(dataset);
+	});
 }
 
 function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
@@ -178,9 +177,7 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 	$('.sensor_legend').remove();
 	div_get('#placeholder'+sensor, 'loading_main'+sensor,'','loader');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail_statistic', 'sensor' : sensor }, function(d){
-	    
-	    
-	    $.each( d, function(dat){
+		$.each( d, function(dat){
 			var dataset = []; var cnt = 0;
 			
 			div_get('#placeholder'+sensor,dat+''+cnt+'containerset'+sensor,'','ui-corner-all');
@@ -253,7 +250,7 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 			} 
 		});
 		$('.loader').fadeOut();
-	    div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
+		div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
 		$('#data-container'+sensor).css('height','100%');div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
 		
 	});
@@ -263,30 +260,30 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 function sensor_detail_statistic_draw( placeholder, data){
 	$.plot($(placeholder), data,{
 		 series: {
-           pie: {
-               show: true,
-               radius: 1,
-               tilt: 0.5,
+			pie: {
+				show: true,
+				radius: 1,
+				tilt: 0.5,
 				stroke: {
 					color: '#D8D8D8',
 					width: 1
 				},
-               label: {
-                   show: true,
-                   radius: 1,
-                   formatter: function(label, series){
-                       return '<div style="font-size:8pt;text-align:center;padding:2px;color:#000;background-color:#E6E6E6; border: 1px solid #585858;">'+label+'<br/>'+parseFloat( series.data[0][1] ).toFixed(2)+'</div>';
-                   },
-                   background: { opacity: 0.8 }
-               },
-               combine: {
-                   threshold: -1
-               }
-           }
-       },
-       legend: {
-           show: false
-       }
+				label: {
+					show: true,
+					radius: 1,
+					formatter: function(label, series){
+						return '<div style="font-size:8pt;text-align:center;padding:2px;color:#000;background-color:#E6E6E6; border: 1px solid #585858;">'+label+'<br/>'+parseFloat( series.data[0][1] ).toFixed(2)+'</div>';
+					},
+					background: { opacity: 0.8 }
+				},
+				combine: {
+					threshold: -1
+				}
+			}
+		},
+		legend: {
+			show: false
+		}
 	});
 }
 
@@ -494,14 +491,14 @@ function sensor_data_selected( data, sensor, info ){
 	}
 	
 	var options = {
-        xaxis: { mode: xaxis },
-        selection: { mode: selection },
-        lines: { show: lines, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
-        points: { show: points, radius: 2 },
-        select : select,
-        grid: { hoverable: hoverable,
-            	clickable: clickable,
-            	backgroundColor: { colors: ["#fff", "#888"] } }
+		xaxis: { mode: xaxis },
+		selection: { mode: selection },
+		lines: { show: lines, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
+		points: { show: points, radius: 2 },
+		select : select,
+		grid: { hoverable: hoverable,
+				clickable: clickable,
+				backgroundColor: { colors: ["#fff", "#888"] } }
 	};
 	graph_draw(sensor,query,options, info);
 	$('#placeholder'+sensor).unbind();
@@ -532,52 +529,52 @@ function graph_draw(sensor, query, options, info){
 	$('#overview'+sensor).css('display','inline');
 	$.getJSON('php/measureit_functions.php', query, function(d) {
 				var plot = false;
-	    		var placeholder = '#placeholder'+sensor;
-			    var timeline = '#overview'+sensor;
-			    var overview = '#overview'+sensor;
-			    $(placeholder).empty();
-			    $(timeline).empty();
-			    var plot = $.plot($(placeholder), [d], options);
-			    var overview = $.plot($(timeline), [d], {
-			        series: {
-			            lines: { show: true, lineWidth: 1, steps: true },
-			            shadowSize: 0
-			        },
-			        xaxis: { ticks: [], mode: "time" },
-			        yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
-			        selection: { mode: "x" },
-			        legend: { show: true, position: 'no' },
-			        grid: { hoverable: true, clickable: true }
-			    });
+				var placeholder = '#placeholder'+sensor;
+				var timeline = '#overview'+sensor;
+				var overview = '#overview'+sensor;
+				$(placeholder).empty();
+				$(timeline).empty();
+				var plot = $.plot($(placeholder), [d], options);
+				var overview = $.plot($(timeline), [d], {
+					series: {
+						lines: { show: true, lineWidth: 1, steps: true },
+						shadowSize: 0
+					},
+					xaxis: { ticks: [], mode: "time" },
+					yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
+					selection: { mode: "x" },
+					legend: { show: true, position: 'no' },
+					grid: { hoverable: true, clickable: true }
+				});
 
-			    $(placeholder).bind("plothover", function (e, pos, item) {
-			        $("#x").text(pos.x.toFixed(2));
-			        $("#y").text(pos.y.toFixed(2));
-			            if (item) {
-		                    $("#tooltip"+sensor).remove();
-		                    var x = item.datapoint[0].toFixed(2),
-		                        y = item.datapoint[1].toFixed(2);
-		                    showTooltip(item.pageX, item.pageY, y, sensor);
-			            }
-			    });
+				$(placeholder).bind("plothover", function (e, pos, item) {
+					$("#x").text(pos.x.toFixed(2));
+					$("#y").text(pos.y.toFixed(2));
+						if (item) {
+							$("#tooltip"+sensor).remove();
+							var x = item.datapoint[0].toFixed(2),
+								y = item.datapoint[1].toFixed(2);
+							showTooltip(item.pageX, item.pageY, y, sensor);
+						}
+				});
 
-			    date_switch_generate(sensor, query, options);
-			    
-			    if( $('#show'+sensor).val() !== 't' ){
-				    	$(placeholder).bind("plotclick", function (e, pos, item) {
-					        if (item) {
+				date_switch_generate(sensor, query, options);
+				
+				if( $('#show'+sensor).val() !== 't' ){
+						$(placeholder).bind("plotclick", function (e, pos, item) {
+							if (item) {
 								$("#tooltip"+sensor).remove();
 								if(options.select !== 'time'){
-					        		var d = new Date(item.datapoint[0]);
-						        	var hour_from = d.getHours()-2;
-						        	var hour_to = d.getHours()-1;
+									var d = new Date(item.datapoint[0]);
+									var hour_from = d.getHours()-2;
+									var hour_to = d.getHours()-1;
 									var dat = {
 											"range_from" : options.select+'_'+hour_from,
 											"range_to" : options.select+'_'+hour_to
 										}
 									var info = options.select+' '+hour_from+'-'+hour_to;
 								}else if(options.select === 'time'){
-					        		var d = new Date(item.datapoint[0]);
+									var d = new Date(item.datapoint[0]);
 									var dat = {
 											"selectedDay" : d.getDate(),
 											"selectedMonth" : d.getMonth(),
@@ -586,88 +583,88 @@ function graph_draw(sensor, query, options, info){
 								}
 								sensor_data_selected( dat, sensor, info );
 								$(placeholder).unbind();
-					        }
-					    });
-				    }
-			    
-			    $(placeholder).bind("plotselected", function (event, ranges) {
-			        plot = $.plot($(placeholder), [d],
-			                      $.extend(true, {}, options, {
-			                          xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
-			                      }));
-			        overview.setSelection(ranges, true);
-			    });
-			    
-			    $(timeline).bind("plotselected", function (event, ranges) {
-			        plot.setSelection(ranges);
-			    });
+							}
+						});
+					}
+				
+				$(placeholder).bind("plotselected", function (event, ranges) {
+					plot = $.plot($(placeholder), [d],
+								  $.extend(true, {}, options, {
+									  xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+								  }));
+					overview.setSelection(ranges, true);
+				});
+				
+				$(timeline).bind("plotselected", function (event, ranges) {
+					plot.setSelection(ranges);
+				});
 
-			    infobox(placeholder, info);
-			    //console.log(typeof([d]),[d]);
+				infobox(placeholder, info);
+				//console.log(typeof([d]),[d]);
 		});
 }
 
 function graph_draw_data(sensor, d){
-	console.log([d]);
+	//console.log([d]);
 	$('.tooltip').remove();
 	$('#switch-placeholder'+sensor).remove();
 	$('.sensor_legend').empty();
 	$('#overview'+sensor).css('display','inline');
 	var options = {
-	        xaxis: { mode: 'time' },
-	        lines: { show: true, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
-	        points: { show: true, radius: 2 },
-	        select : 'time',
-	        grid: { hoverable: true,
-	            	clickable: true,
-	            	backgroundColor: { colors: ["#fff", "#888"] } }
+			xaxis: { mode: 'time' },
+			lines: { show: true, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
+			points: { show: true, radius: 2 },
+			select : 'time',
+			grid: { hoverable: true,
+					clickable: true,
+					backgroundColor: { colors: ["#fff", "#888"] } }
 		};
 	//$.getJSON('php/measureit_functions.php', query, function(d) {
 				var plot = false;
-	    		var placeholder = '#placeholder'+sensor;
-			    var timeline = '#overview'+sensor;
-			    var overview = '#overview'+sensor;
-			    $(placeholder).empty();
-			    $(timeline).empty();
-			    var plot = $.plot($(placeholder), [d], options);
-			    var overview = $.plot($(timeline), [d], {
-			        series: {
-			            lines: { show: true, lineWidth: 1, steps: true },
-			            shadowSize: 0
-			        },
-			        xaxis: { ticks: [], mode: "time" },
-			        yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
-			        selection: { mode: "x" },
-			        legend: { show: true, position: 'no' },
-			        grid: { hoverable: true, clickable: true }
-			    });
+				var placeholder = '#placeholder'+sensor;
+				var timeline = '#overview'+sensor;
+				var overview = '#overview'+sensor;
+				$(placeholder).empty();
+				$(timeline).empty();
+				var plot = $.plot($(placeholder), [d], options);
+				var overview = $.plot($(timeline), [d], {
+					series: {
+						lines: { show: true, lineWidth: 1, steps: true },
+						shadowSize: 0
+					},
+					xaxis: { ticks: [], mode: "time" },
+					yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
+					selection: { mode: "x" },
+					legend: { show: true, position: 'no' },
+					grid: { hoverable: true, clickable: true }
+				});
 
-			    $(placeholder).bind("plothover", function (e, pos, item) {
-			        $("#x").text(pos.x.toFixed(2));
-			        $("#y").text(pos.y.toFixed(2));
-			            if (item) {
-		                    $("#tooltip"+sensor).remove();
-		                    var x = item.datapoint[0].toFixed(2),
-		                        y = item.datapoint[1].toFixed(2);
-		                    showTooltip(item.pageX, item.pageY, y, sensor);
-			            }
-			    });
+				$(placeholder).bind("plothover", function (e, pos, item) {
+					$("#x").text(pos.x.toFixed(2));
+					$("#y").text(pos.y.toFixed(2));
+						if (item) {
+							$("#tooltip"+sensor).remove();
+							var x = item.datapoint[0].toFixed(2),
+								y = item.datapoint[1].toFixed(2);
+							showTooltip(item.pageX, item.pageY, y, sensor);
+						}
+				});
 
-			    
-			    
-			    $(placeholder).bind("plotselected", function (event, ranges) {
-			        plot = $.plot($(placeholder), [d],
-			                      $.extend(true, {}, options, {
-			                          xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
-			                      }));
-			        overview.setSelection(ranges, true);
-			    });
-			    
-			    $(timeline).bind("plotselected", function (event, ranges) {
-			        plot.setSelection(ranges);
-			    });
+				
+				
+				$(placeholder).bind("plotselected", function (event, ranges) {
+					plot = $.plot($(placeholder), [d],
+								  $.extend(true, {}, options, {
+									  xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+								  }));
+					overview.setSelection(ranges, true);
+				});
+				
+				$(timeline).bind("plotselected", function (event, ranges) {
+					plot.setSelection(ranges);
+				});
 
-			    //infobox(placeholder, info);
+				//infobox(placeholder, info);
 		//});
 }
 
@@ -713,33 +710,33 @@ function graph_draw_multiple( d, sensor, range, exclude){
 			tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
 		});
 		var day = {
-            label: dat+' '+label,
-            id: dat,
-            data: tmp,
-            yaxes: cnt
-        };
+			label: dat+' '+label,
+			id: dat,
+			data: tmp,
+			yaxes: cnt
+		};
 		dataset.push(day);
 		cnt++;
 	});
 
 	$("#placeholder"+sensor).bind("plothover", function (e, pos, item, sensor) {
-        $("#x").text(pos.x.toFixed(2));
-        $("#y").text(pos.y.toFixed(2));
-            if (item) {
-            	var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
-                $("#tooltip"+sensor).remove();
-                var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
-                showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
-            }
-    });
+		$("#x").text(pos.x.toFixed(2));
+		$("#y").text(pos.y.toFixed(2));
+			if (item) {
+				var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
+				$("#tooltip"+sensor).remove();
+				var x = item.datapoint[0].toFixed(2),
+					y = item.datapoint[1].toFixed(2);
+				showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
+			}
+	});
 	$.plot($("#placeholder"+sensor), dataset, {
-        selection: { mode: "x" },
-        grid: { hoverable: true },
-        lines: { show: true, lineWidth: 1 },
-        points: { show: true, radius: 2 },
-        legend: { show: true, container: $('#container-legend') }
-    });
+		selection: { mode: "x" },
+		grid: { hoverable: true },
+		lines: { show: true, lineWidth: 1 },
+		points: { show: true, radius: 2 },
+		legend: { show: true, container: $('#container-legend') }
+	});
 	
 	$('#tabs').css('height','100%');
 	
@@ -760,11 +757,11 @@ function graph_draw_multiple( d, sensor, range, exclude){
 					tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
 				});
 				var day = {
-		            label: dat+' '+label,
-		            id: dat,
-		            data: tmp,
-		            yaxes: cnt
-		        };
+					label: dat+' '+label,
+					id: dat,
+					data: tmp,
+					yaxes: cnt
+				};
 				dataset.push(day);
 				cnt++;
 			}
@@ -772,23 +769,23 @@ function graph_draw_multiple( d, sensor, range, exclude){
 		});
 		
 		$("#placeholder"+sensor).bind("plothover", function (e, pos, item, sensor, range) {
-	        $("#x").text(pos.x.toFixed(2));
-	        $("#y").text(pos.y.toFixed(2));
-	            if (item) {
-	            	var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
-	                $("#tooltip"+sensor).remove();
-	                var x = item.datapoint[0].toFixed(2),
-	                    y = item.datapoint[1].toFixed(2);
-	                showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
-	            }
-	    });
+			$("#x").text(pos.x.toFixed(2));
+			$("#y").text(pos.y.toFixed(2));
+				if (item) {
+					var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
+					$("#tooltip"+sensor).remove();
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+					showTooltip(item.pageX, item.pageY, description+' '+y+' kwh', sensor);
+				}
+		});
 		$.plot($("#placeholder"+sensor), dataset, {
-	        selection: { mode: "x" },
-	        grid: { hoverable: true },
-	        lines: { show: true, lineWidth: 1 },
-	        points: { show: true, radius: 2 },
-	        legend: { show: true, container: $('#container-legend') }
-	    });
+			selection: { mode: "x" },
+			grid: { hoverable: true },
+			lines: { show: true, lineWidth: 1 },
+			points: { show: true, radius: 2 },
+			legend: { show: true, container: $('#container-legend') }
+		});
 	});
 }
 
@@ -861,8 +858,8 @@ function sensor_price_date_add(sensor){
 		// js is broken by design... 
 		var m = d.getMonth() + 1;
 		var day = d.getDate();
-		m = m < 10 ? '0'+m : 0;
-		day = day < 10 ? '0'+day : 0;
+		m = m < 10 ? '0'+m : m;
+		day = day < 10 ? '0'+day : day;
 		var date = d.getFullYear()+'-'+m+'-'+day;
 		
 		$('.sensor_price_date').remove();
@@ -980,6 +977,10 @@ function div_empty_get(parent,id,css){
 
 function div_get(parent,id,value,css){
 	$(parent).append('<div id="'+id+'" class="'+css+'">'+value+'</div>');
+}
+
+function textarea_get(parent,id,value,css){
+	$(parent).append('<textarea id="'+id+'" class="'+css+'">'+value+'</textarea>');
 }
 
 function input_get(parent,id,value,css){
@@ -1131,10 +1132,12 @@ function sensor_settings_clean(){
 	$('.sensor_settings').remove();
 	$('.sensor_list_settings').remove();
 	$('.system_settings').remove();
+	$('.sensor_tweet_container').remove();
 }
 
 function sensor_settings_detail_clean(){
 	$('.sensor_settings_detail').remove();
+	$('.sensor_tweet_container').remove();
 }
 
 function sensor_positions_admin( data, sensor ){
@@ -1154,6 +1157,122 @@ function sensor_positions_admin( data, sensor ){
 		});
 	$('.sensor_position_select').click(function(){
 		sensor_position_delete(this,sensor);
+	});
+}
+
+function sensor_admin_twitter_tweets(sensor){
+	sensor_settings_detail_clean();
+	container_get('#adminmenu','sensor_tweet_container'+sensor,'tweets','sensor_tweet_container');
+	button_get('#sensor_tweet_container'+sensor, 'notification_add'+sensor, lng.alert_add);
+	$('#notification_add'+sensor).click(function(){
+		sensor_notifications_add(sensor);
+	});
+	sensor_notifications_get(sensor);
+	
+}
+
+function sensor_notifications_get(sensor){
+	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_notifications_get', 'sensor': sensor}, function(data){
+		$.each(data, function(d){
+			notification_form_get(sensor, d, data);
+		});
+	}).promise().done(function(){
+		div_get('#sensor_tweet_container'+sensor,'sensor_settings_container_notice'+sensor,lng.grabber_restart_hint,'notice_box padding5');
+	});
+}
+
+function sensor_notifications_add(sensor){
+	$('.sensor_tweet_container_add').remove();
+	$('.sensor_tweet_container_edit').css('display', 'none');
+	div_empty_get('#sensor_tweet_container'+sensor,'sensor_tweet_container_tweet'+sensor,'sensor_tweet_container_add padding5 margin10 ui-widget-content ui-corner-all','sensor_tweet_container_tweet');
+	div_get('#sensor_tweet_container_tweet'+sensor,'',lng.title,'');
+	input_get('#sensor_tweet_container_tweet'+sensor, 'sensor_tweet_container_tweet_name'+sensor, '');
+	textarea_get('#sensor_tweet_container_tweet'+sensor,'sensor_tweet_container_tweet_notification'+sensor, '','textarea');
+	div_get('#sensor_tweet_container_tweet'+sensor,'sensor_tweet_container_tweet_notification_email_container'+sensor,'Email','padding5');
+	checkbox_get('#sensor_tweet_container_tweet_notification_email_container'+sensor,'sensor_tweet_container_tweet_notification_email'+sensor,'sensor_tweet_container_tweet_notification_email'+sensor,'',1,0);
+	div_get('#sensor_tweet_container_tweet'+sensor,'sensor_tweet_container_tweet_notification_twitter_container'+sensor,'Twitter','padding5');
+	checkbox_get('#sensor_tweet_container_tweet_notification_twitter_container'+sensor,'sensor_tweet_container_tweet_notification_twitter'+sensor,'sensor_tweet_container_tweet_notification_twitter'+sensor,'',1,0);
+	notification_criteria_dropdown_get('#sensor_tweet_container_tweet'+sensor,'sensor_tweet_container_criteria_container'+sensor, {0:{}}, sensor,'padding5');
+	input_get('#sensor_tweet_container_tweet'+sensor, 'sensor_tweet_container_tweet_id'+sensor, false, 'hidden');
+	input_get('#sensor_tweet_container_tweet'+sensor, 'sensor_tweet_container_tweet_sensor'+sensor, sensor, 'hidden');
+	button_get('#sensor_tweet_container_tweet'+sensor, 'tweet_save'+sensor, lng.save);
+	$('#tweet_save'+sensor).click(function(){
+		sensor_notification_save(sensor);
+	});
+}
+
+function sensor_notification_save(sensor){
+	$.getJSON('php/measureit_functions.php', { 
+		"do" : 'sensor_notification_save',
+		"measure_notifications_sensor" : $('#sensor_tweet_container_tweet_sensor'+sensor).val(),
+		"measure_notifications_name" : $('#sensor_tweet_container_tweet_name'+sensor).val(),
+		"measure_notifications_unit" : $('#notification_unit_selector'+sensor).val(),
+		"measure_notifications_check_email" : $('#sensor_tweet_container_tweet_notification_email'+sensor).is(':checked') ? 1:0,
+		"measure_notifications_check_twitter" : $('#sensor_tweet_container_tweet_notification_twitter'+sensor).is(':checked') ? 1:0,
+		"measure_notifications_notification" : $('#sensor_tweet_container_tweet_notification'+sensor).val(),
+		"measure_notifications_items" : $('#notification_value_items'+sensor).val(),
+		"measure_notifications_criteria" : $('#notification_criteria'+sensor).val(),
+		"measure_notifications_value" : $('#notification_value'+sensor).val(),
+		"measure_notifications_id" : $.isNumeric(parseFloat($('#sensor_tweet_container_tweet_id'+sensor).val())) ? $('#sensor_tweet_container_tweet_id'+sensor).val() : 0
+		});
+	sensor_settings_detail_clean();
+}
+
+function notification_form_get(sensor, d, data){
+	$('.sensor_tweet_container_add').remove();
+	button_get('#sensor_tweet_container'+sensor, 'tweet_edit'+sensor+d, data[d].measure_notifications_name);
+	div_empty_get('#sensor_tweet_container'+sensor,'sensor_tweet_container_tweet'+sensor+d,'hidden sensor_tweet_container_edit padding5 margin10 ui-widget-content ui-corner-all','sensor_tweet_container_tweet');
+	div_get('#sensor_tweet_container_tweet'+sensor+d,'',lng.title,'');
+	input_get('#sensor_tweet_container_tweet'+sensor+d, 'sensor_tweet_container_tweet_name'+sensor+d, data[d].measure_notifications_name);
+	textarea_get('#sensor_tweet_container_tweet'+sensor+d,'sensor_tweet_container_tweet_notification'+sensor+d, data[d].measure_notifications_notification,'textarea');
+	div_get('#sensor_tweet_container_tweet'+sensor+d,'sensor_tweet_container_tweet_notification_email_container'+sensor+d,'Email','padding5');
+	checkbox_get('#sensor_tweet_container_tweet_notification_email_container'+sensor+d,'sensor_tweet_container_tweet_notification_email'+sensor+d,'sensor_tweet_container_tweet_notification_email'+sensor+d,'',data[d].measure_notifications_check_email,data[d].measure_notifications_check_email == 1 ? 1: 0);
+	div_get('#sensor_tweet_container_tweet'+sensor+d,'sensor_tweet_container_tweet_notification_twitter_container'+sensor+d,'Twitter','padding5');
+	checkbox_get('#sensor_tweet_container_tweet_notification_twitter_container'+sensor+d,'sensor_tweet_container_tweet_notification_twitter'+sensor+d,'sensor_tweet_container_tweet_notification_twitter'+sensor+d,'',data[d].measure_notifications_check_twitter,data[d].measure_notifications_check_twitter == 1 ? 1: 0);
+	notification_criteria_dropdown_get('#sensor_tweet_container_tweet'+sensor+d,'sensor_tweet_container_criteria_container'+sensor+d, data[d], sensor+d,'');
+	input_get('#sensor_tweet_container_tweet'+sensor+d, 'sensor_tweet_container_tweet_id'+sensor+d, d, 'hidden');
+	input_get('#sensor_tweet_container_tweet'+sensor+d, 'sensor_tweet_container_tweet_sensor'+sensor+d, sensor, 'hidden');
+	button_get('#sensor_tweet_container_tweet'+sensor+d, 'tweet_save'+sensor+d, lng.save);
+	button_get('#sensor_tweet_container_tweet'+sensor+d, 'tweet_delete'+sensor+d, lng.del);
+	
+	$('#tweet_edit'+sensor+d).click(function(){
+		$('.sensor_tweet_container_edit').css('display', 'none');
+		$('#sensor_tweet_container_tweet'+sensor+d).toggle('slow');
+		$('.sensor_tweet_container_add').empty();
+	});
+	$('#tweet_save'+sensor+d).click(function(){
+		sensor_notification_save(sensor+d);
+	});
+	$('#tweet_delete'+sensor+d).click(function(){
+		$.getJSON('php/measureit_functions.php', { 
+			"do" : 'sensor_notification_delete',
+			"sensor" : $('#sensor_tweet_container_tweet_sensor'+sensor+d).val(),
+			"measure_notifications_id" : $('#sensor_tweet_container_tweet_id'+sensor+d).val()
+			});
+		sensor_settings_detail_clean();
+	});
+}
+
+function notification_criteria_dropdown_get(parent,id,data,sensor,css){
+	div_get(parent,id,'','');
+	$('#'+id).append('When: <select name="notification_unit_selector'+sensor+'" id="notification_unit_selector'+sensor+'" />');
+	$('#notification_unit_selector'+sensor).append('<option value="0"></option>');
+	$('#notification_unit_selector'+sensor).append('<option value="n">'+lng.watt_current+'</option>');
+	$('#notification_unit_selector'+sensor).append('<option value="h">Last hours</option>');
+	$('#notification_unit_selector'+sensor).append('<option value="d">Last days</option>');
+	$('#notification_unit_selector'+sensor).append('<option value="m">Last month</option>');
+	$('#notification_unit_selector'+sensor+' option[value='+data.measure_notifications_unit+']').attr('selected',true);
+	input_get('#'+id,'notification_value_items'+sensor,data.measure_notifications_items,'width35');
+	$('#'+id).append('<br />W usage <select name="notification_criteria'+sensor+'" id="notification_criteria'+sensor+'" />');
+	var selected = data.measure_notifications_criteria == 2 ? 'selected':'';
+	$('#notification_criteria'+sensor).append('<option value="2" '+selected+'>></option>');
+	var selected = data.measure_notifications_criteria == 1 ? 'selected':'';
+	$('#notification_criteria'+sensor).append('<option value="1" '+selected+'><</option>');
+	input_get('#'+id,'notification_value'+sensor,data.measure_notifications_value,'width60');
+	if(data.measure_notifications_unit == 'n'){$('#notification_value_items'+sensor).css('display', 'none');}
+	$('#notification_unit_selector'+sensor).change(function(){
+		$('#notification_value_items'+sensor).css('display', $('#notification_unit_selector'+sensor+' option:selected').val() == 'n' ? 'none' : 'inline');
+		$('#notification_value_items'+sensor).val($('#notification_unit_selector'+sensor+' option:selected').val() == 'n' ? 0 : $('#notification_value_items'+sensor).val());
 	});
 }
 
@@ -1231,13 +1350,18 @@ function sensor_list( data ){
 			sensor_admin_list_items(data,d);
 			});
 	});
-	button_get('#sensor_admin','sensor_add',lng.sensor_add);
-	button_get('#sensor_admin','clamp_add',lng.clamp_add);
-	button_get('#sensor_admin','backup',lng.backup);
+	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
+		if(system_data.system_settings_demo == 0){
+			button_get('#sensor_admin','sensor_add',lng.sensor_add);
+			button_get('#sensor_admin','clamp_add',lng.clamp_add);
+			button_get('#sensor_admin','backup',lng.backup);
+			sensor_add(data);
+			clamp_add(data);
+			system_backup();
+		}
+	});
+	
 	button_get('#sensor_admin','global_settings',lng.settings_system);
-	sensor_add(data);
-	clamp_add(data);
-	system_backup();
 	
 	$('#global_settings').click(function(){
 		global_settings();
@@ -1248,22 +1372,33 @@ function sensor_list( data ){
 function sensor_admin_list_items( data, sensor ){
 	sensor_settings_clean();
 	container_get('#adminmenu','sensor_admin_list',data[sensor].sensor.sensor_title,'sensor_list_settings');
-	button_get('#sensor_admin_list','sensor_admin_positions'+sensor,lng.positions);
-	button_get('#sensor_admin_list','sensor_admin_settings'+sensor,lng.settings);
-	button_get('#sensor_admin_list','sensor_admin_prices'+sensor,lng.prices);
-	button_get('#sensor_admin_list','sensor_admin_sensor_delete'+sensor,lng.del);
-	$('#sensor_admin_positions'+sensor).click(function(){
-		sensor_positions_admin(data,sensor);
+	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
+		if(system_data.system_settings_demo == 0){
+			button_get('#sensor_admin_list','sensor_admin_positions'+sensor,lng.positions);
+			button_get('#sensor_admin_list','sensor_admin_settings'+sensor,lng.settings);
+			button_get('#sensor_admin_list','sensor_admin_prices'+sensor,lng.prices);
+			button_get('#sensor_admin_list','sensor_admin_notifications'+sensor,lng.alert);
+			button_get('#sensor_admin_list','sensor_admin_sensor_delete'+sensor,lng.del);
+			$('#sensor_admin_positions'+sensor).click(function(){
+				sensor_positions_admin(data,sensor);
+			});
+			$('#sensor_admin_settings'+sensor).click(function(){
+				sensor_admin_settings(data, sensor);
+			});
+			$('#sensor_admin_prices'+sensor).click(function(){
+				sensor_prices_set(sensor);
+			});
+			$('#sensor_admin_notifications'+sensor).click(function(){
+				sensor_admin_twitter_tweets(sensor);
+			});
+			$('#sensor_admin_sensor_delete'+sensor).click(function(){
+				sensor_delete(sensor);
+			});
+		}else{
+			div_get('#sensor_admin_list','sensor_settings_container_notice',lng.demo,'notice_box padding5');
+		}
 	});
-	$('#sensor_admin_settings'+sensor).click(function(){
-		sensor_admin_settings(data, sensor);
-	});
-	$('#sensor_admin_prices'+sensor).click(function(){
-		sensor_prices_set(sensor);
-	});
-	$('#sensor_admin_sensor_delete'+sensor).click(function(){
-		sensor_delete(sensor);
-	});
+	
 }
 
 function sensor_admin_settings(data, sensor){
@@ -1479,72 +1614,154 @@ function global_settings( ){
 	
 	container_get('#adminmenu','admin_settings_container',lng.settings_system, 'system_settings');
 	div_get('#admin_settings_container','system_settings_container','','padding5');
-
-	button_get('#system_settings_container','sensor_admin_prices400',lng.prices,'button');
-
-	$('#sensor_admin_prices400').click(function(){
-		sensor_prices_set(400);
-	});
 	
-	$('#system_settings_container').append(span_get('system_settings_timezone',lng.difference_gmt_global_hint+':<br />',''));
-	input_get('#system_settings_container','system_settings_timezone_value','');
-	$('#system_settings_container').append(span_get('system_settings_pvoutput_api','<br />PVOutput API Key:<br />','notice'));
-	input_get('#system_settings_container','system_settings_pvoutput_api_value','');
-	//$('#system_settings_container').append(span_get('system_settings_hosting','<br /><br />Push data to a external hosting provider<br />http://www.domain.tld','notice'));
-	//input_get('#system_settings_container','system_settings_hosting_value','');
-	//$('#system_settings_container').append(span_get('system_settings_database','<br /><br />Stop local data storing (f.e. if you are using a remote provider to store the data)<br />No local data: ','notice'));
-	//checkbox_get('#system_settings_container','system_settings_database_value','','','0');
-	$('#system_settings_container').append(span_get('system_settings_language','<br />'+lng.language+'<br />','padding15'));
-	button_get('#system_settings_container','system_settings_save',lng.save,'margin5');
-	//div_get('#admin_settings_container','system_settings_container_notice',lng.grabber_restart_hint,'notice_box padding5');
-
-	div_get('#system_settings_container','sensor_settings_container_notice',lng.grabber_restart_hint,'notice_box padding5');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_get' }, function(system_data) {
 		
-		if(system_data.global_timezone_use){
-			$('#system_settings_timezone_value').val(system_data.global_timezone_use);
-		}
-		if(system_data.system_settings_pvoutput_api){
-			$('#system_settings_pvoutput_api_value').val(system_data.system_settings_pvoutput_api);
-		}
-		if(system_data.hosting_value_use){
-			//$('#system_settings_hosting_value').val(system_data.hosting_value_use);
-		}
-		if(system_data.local_database_use){
-			//$('#system_settings_database_value').attr('checked', true);
-		}
-		
-		var lng_set = system_data.language_use != undefined ? system_data.language_use : 'en_EN';
-		language_dropdown_get(lng_set);
-		
-		});
+		if(system_data.system_settings_demo == 0){
+			
+			div_get('#system_settings_container','sensor_settings_container_notice',lng.grabber_restart_hint,'notice_box padding5');
 
-	$('#system_settings_save').click(function(){
-		var system_settings = {};
-		var system_item = false;
-		if( $.isNumeric( $('#system_settings_timezone_value').val() ) ){
-			system_settings['global_timezone_use'] =  $('#system_settings_timezone_value').val();
-		}
-		if( $('#system_settings_pvoutput_api_value').val() != '' ){
-			system_settings['system_settings_pvoutput_api'] =  $('#system_settings_pvoutput_api_value').val();
-		}
-		if( $('#system_settings_hosting_value').val() != '' ){
-			system_settings['hosting_value_use'] =  $('#system_settings_hosting_value').val();
-		}
-		if( $('#system_settings_database_value').attr('checked') ){
-			system_settings['local_database_use'] =  0;
-		}
-		system_settings['language_use'] =  $('#system_settings_language_value').val();
+			button_get('#system_settings_container','sensor_admin_prices400',lng.prices,'button');
 
-		$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){
-			sensor_settings_clean();
-			sensor_settings_detail_clean();
-		});
-		
-		
-		
+			$('#sensor_admin_prices400').click(function(){
+				sensor_prices_set(400);
+			});
+			
+			$('#system_settings_container').append(span_get('system_settings_timezone',lng.difference_gmt_global_hint+':<br />',''));
+			input_get('#system_settings_container','system_settings_timezone_value','');
+			
+			button_get('#system_settings_container','sensor_admin_pvoutput_account','PVOutput','button');
+			div_get('#system_settings_container','pvoutput_account_container','', 'hidden toggle');
+			$('#pvoutput_account_container').append(span_get('system_settings_pvoutput_api','<br />PVOutput API Key:<br />','notice'));
+			input_get('#pvoutput_account_container','system_settings_pvoutput_api_value','');
+			
+			//button_get('#system_settings_container','sensor_admin_twitter_tweets',lng.alert,'button');
+			button_get('#system_settings_container','sensor_admin_twitter_account','Twitter','button');
+			div_get('#system_settings_container','twitter_account_container','', 'hidden');
+
+			button_get('#system_settings_container','sensor_admin_email_account','Email','button');
+			div_get('#system_settings_container','email_account_container','', 'hidden');
+			
+			$('#twitter_account_container').append(span_get('system_settings_twitter_app_key','<br />Twitter Consumer key:<br />','notice'));
+			input_get('#twitter_account_container','system_settings_twitter_app_key_value','');
+			
+			$('#twitter_account_container').append(span_get('system_settings_twitter_app_secret','<br />Twitter Consumer key secret:<br />','notice'));
+			input_get('#twitter_account_container','system_settings_twitter_app_secret_value','');
+			
+			$('#twitter_account_container').append(span_get('system_settings_twitter_oauth_token','<br />Twitter Access token:<br />','notice'));
+			input_get('#twitter_account_container','system_settings_twitter_oauth_token_value','');
+			
+			$('#twitter_account_container').append(span_get('system_settings_twitter_oauth_token_secret','<br />Twitter Access token secret:<br />','notice'));
+			input_get('#twitter_account_container','system_settings_twitter_oauth_token_secret_value','');
+			
+			$('#email_account_container').append(span_get('system_settings_email_address','<br />'+lng.gmail+':<br />','notice'));
+			input_get('#email_account_container','system_settings_email_address_value','');
+			
+			$('#email_account_container').append(span_get('system_settings_email_pass','<br />'+lng.password+':<br />','notice'));
+			input_get('#email_account_container','system_settings_email_pass_value','');
+			
+			$('#sensor_admin_pvoutput_account').click(function(){
+				$('#pvoutput_account_container').toggle('slow')
+			})
+			
+			$('#sensor_admin_twitter_account').click(function(){
+				$('#twitter_account_container').toggle('slow')
+			})
+			
+			$('#sensor_admin_email_account').click(function(){
+				$('#email_account_container').toggle('slow')
+			})
+			
+			$('#sensor_admin_twitter_tweets').click(function(){
+				sensor_admin_twitter_tweets(400)
+			})
+			
+			$('#system_settings_container').append(span_get('system_settings_language','<br />'+lng.language+'<br />','padding15'));
+			
+			$('#system_settings_container').append(span_get('system_settings_system','<br />'+lng.system+'<br />','padding15'));
+			system_dropdown_get(system_data);
+			
+			$('#system_settings_container').append(span_get('system_settings_tmpr','<br />'+lng.temperature+'<br />','padding15'));
+			tmpr_dropdown_get(system_data);
+			
+			system_settings_display(system_data);
+			
+			button_get('#system_settings_container','system_settings_save',lng.save,'margin5');
+			$('#system_settings_save').click(function(){
+				system_settings_save()
+			});
+			
+		}else{
+			div_get('#system_settings_container','sensor_settings_container_notice',lng.demo,'notice_box padding5');
+		}
+			
+
+	});	
+}
+
+function system_settings_save(){
+	var system_settings = {};
+	var system_item = false;
+	if( $.isNumeric( $('#system_settings_timezone_value').val() ) ){
+		system_settings['global_timezone_use'] =  $('#system_settings_timezone_value').val();
+	}
+	if( $('#system_settings_pvoutput_api_value').val() != '' ){
+		system_settings['system_settings_pvoutput_api'] =  $('#system_settings_pvoutput_api_value').val();
+	}
+	if( $('#system_settings_twitter_app_key_value').val() != '' ){
+		system_settings['system_settings_twitter_app_key'] =  $('#system_settings_twitter_app_key_value').val();
+	}
+	if( $('#system_settings_twitter_app_secret_value').val() != '' ){
+		system_settings['system_settings_twitter_app_secret'] =  $('#system_settings_twitter_app_secret_value').val();
+	}
+	if( $('#system_settings_twitter_oauth_token_value').val() != '' ){
+		system_settings['system_settings_twitter_oauth_token'] =  $('#system_settings_twitter_oauth_token_value').val();
+	}
+	if( $('#system_settings_twitter_oauth_token_secret_value').val() != '' ){
+		system_settings['system_settings_twitter_oauth_token_secret'] =  $('#system_settings_twitter_oauth_token_secret_value').val();
+	}
+	if( $('#system_settings_email_address_value').val() != '' ){
+		system_settings['system_settings_email_address'] =  $('#system_settings_email_address_value').val();
+	}
+	if( $('#system_settings_email_pass_value').val() != '' ){
+		system_settings['system_settings_email_pass'] =  $('#system_settings_email_pass_value').val();
+	}
+	system_settings['language_use'] =  $('#system_settings_language_value').val();
+	system_settings['system_settings_system'] =  $('#system_settings_system_value').val();
+	system_settings['system_settings_tmpr'] =  $('#system_settings_tmpr_value').val();
+	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){
+		sensor_settings_clean();
+		sensor_settings_detail_clean();
 	});
-	
+}
+
+function system_settings_display( system_data ){
+	if(system_data.global_timezone_use){
+		$('#system_settings_timezone_value').val(system_data.global_timezone_use);
+	}
+	if(system_data.system_settings_pvoutput_api){
+		$('#system_settings_pvoutput_api_value').val(system_data.system_settings_pvoutput_api);
+	}
+	if(system_data.system_settings_twitter_app_key){
+		$('#system_settings_twitter_app_key_value').val(system_data.system_settings_twitter_app_key);
+	}
+	if(system_data.system_settings_twitter_app_secret){
+		$('#system_settings_twitter_app_secret_value').val(system_data.system_settings_twitter_app_secret);
+	}
+	if(system_data.system_settings_twitter_oauth_token){
+		$('#system_settings_twitter_oauth_token_value').val(system_data.system_settings_twitter_oauth_token);
+	}
+	if(system_data.system_settings_twitter_oauth_token_secret){
+		$('#system_settings_twitter_oauth_token_secret_value').val(system_data.system_settings_twitter_oauth_token_secret);
+	}
+	if(system_data.system_settings_email_address){
+		$('#system_settings_email_address_value').val(system_data.system_settings_email_address);
+	}
+	if(system_data.system_settings_email_pass){
+		$('#system_settings_email_pass_value').val(system_data.system_settings_email_pass);
+	}
+	var lng_set = system_data.language_use != undefined ? system_data.language_use : 'en_EN';
+	language_dropdown_get(lng_set);
 }
 
 function language_dropdown_get(cl){
@@ -1555,6 +1772,28 @@ function language_dropdown_get(cl){
 			$('#system_settings_language_value').append('<option value="'+lngs[l]+'" '+selected+'>'+lngs[l]+'</option>');
 		});
 	});
+}
+
+function system_dropdown_get(d){
+	$('#system_settings_system').append('<select name="system_settings_system_value" id ="system_settings_system_value"></option>');
+	if( d['system_settings_system'] && d['system_settings_system'] == 'classic' ){
+		$('#system_settings_system_value').append('<option value="classic" selected="selected">Classic</option>');
+		$('#system_settings_system_value').append('<option value="envi">Envi / EnviR</option>');
+	}else{
+		$('#system_settings_system_value').append('<option value="classic">Classic</option>');
+		$('#system_settings_system_value').append('<option value="envi" selected="selected">Envi / EnviR</option>');
+	}
+}
+
+function tmpr_dropdown_get(d){
+	$('#system_settings_tmpr').append('<select name="system_settings_tmpr_value" id ="system_settings_tmpr_value"></option>');
+	if( d['system_settings_tmpr'] && d['system_settings_tmpr'] == 'f' ){
+		$('#system_settings_tmpr_value').append('<option value="f" selected="selected">Fahrenheit</option>');
+		$('#system_settings_tmpr_value').append('<option value="c">Celsius</option>');
+	}else{
+		$('#system_settings_tmpr_value').append('<option value="f">Fahrenheit</option>');
+		$('#system_settings_tmpr_value').append('<option value="c" selected="selected">Celsius</option>');
+	}
 }
 
 function backup_delete( file ){
