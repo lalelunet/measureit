@@ -190,25 +190,29 @@ function sensor_detail_statistic( $params = array( ) ){
 			if( $use_diff ){
 				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
 			}
-			@$r['yeardays'][@date( w, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )] += $d['data'];
-			@$r['yearsdaysdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1][@date( w, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )] += $d['data'];
-			ksort($r['yearsdaysdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1]);
+			
+			$datew = @date( w, $date );
+			$daten= @date( n, $date );
+			@$r['yeardays'][$datew] += $d['data'];
+			@$r['yearsdaysdetail'][$daten-1][$datew] += $d['data'];
+			ksort($r['yearsdaysdetail'][$daten-1]);
 		}
-		
+
 		$params['table'] = 'measure_watt_hourly';
 		$q = data_query_build( $params );
 		$db = new mydb;
 		$query = $db->query( $q );
-		
+
 		while( $d = $db->fetch_array( $query ) ){
 			$date = @strtotime( $d['time'].' '.$d['hour'].':00' );
 			if( $use_diff ){
 				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
 			}
-			@$r['yearhours'][@date( 'G', $date )] += $d['data'];
+			$daten = @date( n, $date );
+			@$r['yearhours'][$d['hour']] += $d['data'];
 			ksort($r['yearhours']);
-			@$r['monthshoursdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1][@date( 'G', $date )] += $d['data'];
-			ksort($r['monthshoursdetail'][@date( n, @strtotime( @date( 'Y-m-d', $date ).' 00:00' ) )-1]);
+			@$r['monthshoursdetail'][$daten-1][$d['hour']] += $d['data'];
+			ksort($r['monthshoursdetail'][$daten-1]);
 		}
 		print json_encode($r);
 		return true;
@@ -237,7 +241,7 @@ function summary_start( ){
 }
 
 function sensor_history_week( $params = array( ) ){
-	$ret = '';
+	$ret = ''; $use_diff = false;
 	if( $diff = timezone_diff_get( $params ) ){
 		$use_diff = true;
 		$diff = timezone_diff_get( $params );
@@ -285,7 +289,7 @@ function sensor_statistic_comparison( $params ){
 }
 
 function sensor_history_year( $params = array( ) ){
-	$ret = '';
+	$ret = ''; $use_diff = false;
 	if( $diff = timezone_diff_get( $params ) ){
 		$use_diff = true;
 		$diff = timezone_diff_get( $params );
@@ -315,6 +319,8 @@ function sensor_data_get( $params = array( ) ){
 			if( isset( $params['debug'] ) ) debug( 'Found timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 			$use_diff = true;
 			$diff = timezone_diff_get( $params );
+		}else{
+			if( isset( $params['debug'] ) ) debug( 'NO timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 		}
 		$dgb = array( );
 		while( $d = $db->fetch_array( $query ) ){
@@ -322,6 +328,8 @@ function sensor_data_get( $params = array( ) ){
 			if( $use_diff ){
 				$ts = $diff['prefix'] == '-' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
 				if( isset( $params['debug'] ) ) $dbg[$time] = @date( 'Y-m-d H:i:s', $ts );
+			}else{
+				if( isset( $params['debug'] ) ) $dbg[$time] = @date( 'Y-m-d H:i:s', $time );
 			}
 			$u = $params['unit_return'] == 'timeframe' ? ( $use_diff ? $ts*1000 : @strtotime( $ts )*1000 ) : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
@@ -710,7 +718,8 @@ function data_query_build( $params = array( ) ){
 			error('No timeframe to get data from');
 		break;
 	}
-	$query = "SELECT * FROM $table WHERE sensor = '$sensor' $timeframe";
+	$selection = isset( $params['selection'] ) ? mysql_real_escape_string( $params['selection'] ) : '*';
+	$query = "SELECT $selection FROM $table WHERE sensor = '$sensor' $timeframe";
 	if( isset( $params['debug'] ) ) debug( $query, $params );
 	return $query;
 }
@@ -735,10 +744,13 @@ function price_sum( $params ){
 
 function price_sum_statistic( $params ){
 	global $to;
+	if( isset( $_REQUEST['debug'] ) ) debug( 'function price_sum_statistic', $params );
 	if( array_key_exists( $params['sensor'], $params['prices'] ) ){
 		$prices = $params['prices'][$params['sensor']];
+		if( isset( $_REQUEST['debug'] ) ) debug( 'prices and sensor found', $params['prices'] );
 	}elseif( array_key_exists( 400, $params['prices'] ) ){
 		$prices = $params['prices'][400];
+		if( isset( $_REQUEST['debug'] ) ) debug( 'no sensor found. using system prices', $params['prices'] );
 	}
 	
 	$last_date = ''; $sum = $price = $cnt = 0;
@@ -760,7 +772,7 @@ function price_sum_statistic( $params ){
 	
 	foreach( $params['data'] as $k=>$v ){
 		$sum += $v;
-		$price += $v * $prices[$k];
+		@$price += $v * $prices[$k];
 	}
 	return array( 'sum'=>round( $sum, 3 ), 'price'=>round( $price, 2 ) );
 }
@@ -1028,7 +1040,7 @@ function format_bytes($size) {
 }
 
 function debug( $info, $request = false, $dump = false ){
-	print $info.'<br />'; 
+	print $info.'<hr />'; 
 	if( $dump ){
 		var_dump( '<pre>', $dump );
 	}
