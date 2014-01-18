@@ -12,7 +12,7 @@ if( isset( $_REQUEST['do'] ) ){
 			navigation_main();
 		break;
 		case 'summary_start':
-			summary_start();
+			summary_start( $_REQUEST );
 		break;
 		case 'sensor_detail':
 			sensor_detail( $_REQUEST );
@@ -220,7 +220,8 @@ function sensor_detail_statistic( $params = array( ) ){
 	return true;
 }
 
-function summary_start( ){
+function summary_start( $request = array( ) ){
+	$debug = isset( $_REQUEST['debug'] ) ? true : false;
 	$sensors = sensors_get();
 	$prices = sensor_prices_all_get( );
 	foreach( $sensors as $k=>$v ){
@@ -230,10 +231,12 @@ function summary_start( ){
 		$r[$k]['sensor'] = $v;
 		$r[$k]['tmpr'] = $vn['tmpr'];
 		$r[$k]['watt'] = $vn['watt'];
-		$r[$k]['daily'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 24, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
-		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 1, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
-		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 168, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
-		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour' ) ), 'prices'=>$prices ) );
+		$data = sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', 'debug' => $debug ) );
+
+		$r[$k]['daily'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 24 ), 'prices'=>$prices ) );
+		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 1 ), 'prices'=>$prices ) );
+		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 168 ), 'prices'=>$prices ) );
+		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>$data, 'prices'=>$prices ) );
 
 	}
 	print json_encode($r);
@@ -600,7 +603,7 @@ function sensor_data_raw_get( $params = array( ) ){
 		$query = $db->query( $q );
 		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
-			@$r[$d['hour']] += $d['data'];
+			@$r[] = $d['data'];
 		}
 	}
 	return $r;
