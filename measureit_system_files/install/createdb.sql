@@ -154,6 +154,20 @@ INSERT INTO measure_data_now (sensor_id, watt, tmpr) VALUES
 (29, 0, 0),
 (39, 0, 0);
 
+CREATE TABLE IF NOT EXISTS measure_notifications (
+  measure_notifications_id smallint(10) NOT NULL AUTO_INCREMENT,
+  measure_notifications_sensor smallint(3) NOT NULL,
+  measure_notifications_name varchar(256) NOT NULL,
+  measure_notifications_check_email smallint(1) NOT NULL,
+  measure_notifications_check_twitter smallint(1) NOT NULL,
+  measure_notifications_notification text NOT NULL,
+  measure_notifications_unit varchar(1) NOT NULL,
+  measure_notifications_value int(12) NOT NULL,
+  measure_notifications_items int(12) NOT NULL,
+  measure_notifications_criteria tinyint(1) NOT NULL,
+  PRIMARY KEY (measure_notifications_id)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
+
 INSERT INTO measure_it.measure_positions (position_time, position_description, position_sensor) VALUES (now(), 'start position', '0');
 INSERT INTO measure_it.measure_sensors (sensor_id, sensor_title) VALUES ('0', 'Sensor 0');
 INSERT INTO measure_it.measure_settings (measure_history, measure_currency, measure_sensor) VALUES ('365', 'Euro', '0');
