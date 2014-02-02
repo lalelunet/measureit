@@ -7,13 +7,13 @@ import time
 import threading
 import sys
 import platform
-import simplemail
+import smtplib
 import urllib2
 import logging
 import traceback
 import os
 import subprocess
-#from twython import Twython
+from twython import Twython
 
 config = {}
 sensors = {}
@@ -25,13 +25,15 @@ err_critical = 0
 info = False
 debug = False
 annouying = False
+system = 'envi'
 logger = logging.getLogger('MeasureIt')
 
 usbport = 'COM3'
 config_file_name = "C:\measureit\measureit.cfg.php"
 hdlr = logging.FileHandler('C:\measureit.log')
 
-if platform.system() == 'Linux':
+r = re.search(r"Linux", platform.system())
+if r:
 	usbport = '/dev/ttyUSB0'
 	config_file_name = "/usr/local/measureit/measureit.cfg.php"
 	hdlr = logging.FileHandler('/tmp/measureit.log')
@@ -95,16 +97,16 @@ def sensor_watt_insert( sensor, watt ):
 	try:
 		sensor = str(sensor)
 		watt = str(watt)
-		mysql_query('INSERT INTO measure_watt ( sensor, data, time) values( '+sensor+', '+watt+', NOW() ) ')
+		mysql_query('INSERT INTO measure_watt ( sensor, data, time) values( '+sensor+', '+watt+', UTC_TIMESTAMP( ) ) ')
 	except:
 		logger.warning('Error in sensor_watt_insert while inserting watt into database Error: '+traceback.format_exc())
 		err_critical_count()
 
 def tmpr_insert( tmpr ):
 	try:
-		now = datetime.datetime.now()
-		mysql_query('INSERT INTO measure_tmpr ( data, time ) values( "'+str(tmpr)+'", NOW() ) ')
-		mysql_query('INSERT IGNORE INTO measure_tmpr_hourly ( data, time, hour ) VALUES ( "'+str(tmpr)+'", NOW(), "'+str(now.hour)+'" )')
+		now = datetime.datetime.utcnow( )
+		mysql_query('INSERT INTO measure_tmpr ( data, time ) values( "'+str(tmpr)+'", UTC_TIMESTAMP( ) ) ')
+		mysql_query('INSERT IGNORE INTO measure_tmpr_hourly ( data, time, hour ) VALUES ( "'+str(tmpr)+'", UTC_TIMESTAMP( ), "'+str(now.hour)+'" )')
 	
 	except:
 		logger.warning('Error in tmpr_insert while insert tmpr. Error: '+traceback.format_exc())
@@ -116,7 +118,7 @@ def history_update( sensor, hist ):
 		logger.debug(hist)
 		date_hour = date_hour_get(hist[1])
 		if hist[0] == 'm':
-			query = 'INSERT IGNORE INTO measure_watt_monthly ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "NOW( ) - INTERVAL '+date_hour[0]+'" )'
+			query = 'INSERT IGNORE INTO measure_watt_monthly ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "UTC_TIMESTAMP( ) - INTERVAL '+date_hour[0]+'" )'
 		#if hist[0] == 'd':
 			#query = 'INSERT IGNORE INTO measure_watt_daily_histrory ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(hist[2])+'", "'+date_hour[0]+'" )'
 		#if hist[0] == 'h':
@@ -129,14 +131,22 @@ def history_update( sensor, hist ):
 
 def cron_timer_hourly():
 	logger.info('Try to run hourly job in cron_timer_hourly')
-	now = datetime.datetime.now()
-	day_from = datetime.date.today()
-	day_to = datetime.date.today()
+	now = datetime.datetime.utcnow( )
+	day_from = day_to = str(now.year)+'-'+str(now.month)+'-'+str(now.day)
+
+	logger.debug('Make hourly usage from day_from to day_to: '+str(day_from) )
 	hour_from = now.hour-1
 	hour_to = now.hour
+	if now.hour != 0:
+		logger.debug('Make hourly usage from hour_from_from to hour_to in utc time: '+str(hour_from)+' - '+str(hour_to) )
+
 	if now.hour == 0:
+		logger.debug('Make hourly usage. It is Midnight in utc time: ' )
 		hour_from = 23
-		day_from = datetime.date.today() - datetime.timedelta(days=1)
+		n = datetime.datetime.utcnow( ) - datetime.timedelta(days=1)
+		day_from = str(n.year)+'-'+str(n.month)+'-'+str(n.day)
+		logger.debug('Make hourly usage from day_from to day_to in utc time: '+str(day_from)+' - '+str(day_to) )
+		logger.debug('Make hourly usage from hour_from_from to hour_to  in utc time: '+str(hour_from)+' - '+str(hour_to) )
 	date_from = str(day_from)+' '+str(hour_from)+':00:00'
 	date_to = str(day_to)+' '+str(hour_to)+':00:00'
 	try:
@@ -150,11 +160,13 @@ def cron_timer_hourly():
 				sum = (usage_sum_hourly/usage_sum_count)/1000
 			query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
 			mysql_query(query)
+			if system_settings['use_twitter']:
+				sensor_notifications_cron_check(sensor, sensor_settings[sensor]['notifications'])
 		usage_sum_hourly = usage_sum_count = sum = r = 0
 	except:
 		logger.warning('Error in cron_timer_hourly. Error: '+traceback.format_exc())
 		err_critical_count()
-		
+	
 	timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
 	timer_hourly.start()
 		
@@ -190,7 +202,7 @@ def cron_timer_daily():
 				logger.info('Try to delete old data from sensor: '+str(sensor))
 				if sensor_settings.has_key(sensor):
 					if sensor_settings[sensor]['history'] > 0:
-						query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < NOW( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
+						query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < UTC_TIMESTAMP( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
 						mysql_query(query)
 						logger.info('Delete successful from old data from sensor: '+str(sensor))
 			except:
@@ -219,14 +231,13 @@ def update_check():
 			logger.info('Update: No new version found')
 
 	else:
-		mysql_query('INSERT INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 115 )')
+		mysql_query('INSERT IGNORE INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 116 )')
 
 def sensor_settings_get():
 	try:
 		logger.info('Try to get sensor settings from sensor_settings_get')
 		r = mysql_query('SELECT * FROM measure_settings','fetchall')
 		for row in r:
-			#print row;
 			sensor_settings[row[2]] = {}
 			sensor_settings[row[2]]['history'] = row[0]
 			sensor_settings[row[2]]['timezone_diff'] = row[6]
@@ -234,6 +245,8 @@ def sensor_settings_get():
 			sensor_settings[row[2]]['pvoutput'] = False
 			sensor_settings[row[2]]['pvoutput_id'] = int(row[8])
 			sensor_settings[row[2]]['pvoutput_api'] = row[9]
+			sensor_settings[row[2]]['notifications'] = {}
+			sensor_settings[row[2]]['notifications_realtime'] = {}
 			logger.info('Sensor '+str(row[2])+' Check if there are any PVOutput settings for this sensor')
 			sensor_data_pvoutput_init(row[2])
 		logger.info('Get sensor settings successful')
@@ -243,9 +256,175 @@ def sensor_settings_get():
 		logger.warning('Error in sensor_settings_get Error: '+traceback.format_exc())
 		err_critical_count()
 
+def sensor_notifications_get():
+	if system_settings.has_key('system_settings_twitter_app_key') and system_settings['system_settings_twitter_app_key'] != '':
+		logger.debug('Found system_settings_twitter_app_key in the system settings so twitter will be enabled')
+		system_settings['use_twitter'] = True
+	else:
+		system_settings['use_twitter'] = False
+		logger.debug('No twitter settings found. Twitter notifications will not be used')
+		return True
+
+	try:
+		logger.info('Try to get notification settings from sensor_notifications_get')
+		r = mysql_query('SELECT * FROM measure_notifications','fetchall')
+		cnt = 1
+		for row in r:
+			unit = 'notifications_realtime' if row[6] == 'n' else 'notifications'
+			sensor_settings[row[1]][unit][cnt] = {}
+			sensor_settings[row[1]][unit][cnt]['notification_name'] = row[2]
+			sensor_settings[row[1]][unit][cnt]['notification_email'] = row[3]
+			sensor_settings[row[1]][unit][cnt]['notification_twitter'] = row[4]
+			sensor_settings[row[1]][unit][cnt]['notification_notification'] = row[5]
+			sensor_settings[row[1]][unit][cnt]['notification_unit'] = row[6]
+			sensor_settings[row[1]][unit][cnt]['notification_value'] = row[7]
+			sensor_settings[row[1]][unit][cnt]['notification_items'] = row[8]
+			sensor_settings[row[1]][unit][cnt]['notification_criteria'] = row[9]
+			cnt+=1
+
+		logger.info('Get sensor notifications successful')
+		logger.debug(sensor_settings)
+		return True
+	except:
+		logger.warning('Error in sensor_notifications_get Error: '+traceback.format_exc())
+		err_critical_count()
+
+def sensor_notifications_check(sensor, data, notifications):
+	for notification in notifications:
+		notify = False
+		if notifications[notification]['notification_criteria'] == 1:
+			if annouying:
+				logger.debug('Found notification smaller than on sensor' +str(sensor))
+				logger.debug(notifications[notification])
+			criteria = '<'
+			if  sensor_notification_data_compare( data, notifications[notification]['notification_value'] , '<' ):
+				if annouying:
+					logger.debug('Notification is true on sensor' +str(sensor))
+					logger.debug(str(data)+' is smaller than '+str(notifications[notification]['notification_value']))
+				notify = True
+			else:
+				if annouying:
+					logger.debug('Notification is false on sensor' +str(sensor))
+					logger.debug(str(data)+' is  not bigger than '+str(notifications[notification]['notification_value']))
+				
+		if notifications[notification]['notification_criteria'] == 2:
+			if annouying:
+				logger.debug('Found notification bigger than on sensor' +str(sensor))
+				logger.debug(notifications[notification])
+			criteria = '>'
+			if sensor_notification_data_compare( data, notifications[notification]['notification_value'],'>'):
+				if annouying:
+					logger.debug('Notification is true on sensor' +str(sensor))
+					logger.debug(str(data)+' is bigger than '+str(notifications[notification]['notification_value']))
+				notify = True
+			else:
+				if annouying:
+					logger.debug('Notification is false on sensor' +str(sensor))
+					logger.debug(str(data)+' is  not bigger than '+str(notifications[notification]['notification_value']))
+		if notify:
+			sensor_notification_send( 'Current usage '+criteria+' '+str(notifications[notification]['notification_value'])+' Watt ('+str(notifications[notification]['notification_value']/1000)+' kwh)'+' Usage: '+str(data)+' Watt ('+str(data/1000)+' kwh) '+notifications[notification]['notification_notification'], notifications[notification]['notification_email'], notifications[notification]['notification_twitter'] )
+
+
+def sensor_notifications_cron_check(sensor, notifications):
+	d = sensor_notifications_data_get( sensor, notifications )
+	for notification in notifications:
+		notify = False
+		sum = 0
+		cnt = 1
+		for data in d[notifications[notification]['notification_unit']]:
+			if cnt <= notifications[notification]['notification_items']:
+				sum += d[notifications[notification]['notification_unit']][data]
+			cnt += 1
+		if notifications[notification]['notification_criteria'] == 1:
+			logger.debug('Found notification smaller than on sensor' +str(sensor))
+			logger.debug(notifications[notification])
+			criteria = '<'
+			if  sensor_notification_data_compare( sum*1000, notifications[notification]['notification_value'] , '<' ):
+				logger.debug('Notification is true on sensor' +str(sensor))
+				logger.debug(str(sum*1000)+' is smaller than '+str(notifications[notification]['notification_value']))
+				notify = True
+			else:
+				logger.debug('Notification is false on sensor' +str(sensor))
+				logger.debug(str(sum*1000)+' is  not smaller than '+str(notifications[notification]['notification_value']))
+				
+		if notifications[notification]['notification_criteria'] == 2:
+			criteria = '>'
+			if sensor_notification_data_compare( sum*1000, notifications[notification]['notification_value'],'>'):
+				logger.debug('Notification is true on sensor' +str(sensor))
+				logger.debug(str(sum*1000)+' is bigger than '+str(notifications[notification]['notification_value']))
+				notify = True
+			else:
+				logger.debug('Notification is false on sensor' +str(sensor))
+				logger.debug(str(sum*1000)+' is  not bigger than '+str(notifications[notification]['notification_value']))
+		if notify:
+			sensor_notification_send( 'Usage last '+str(notifications[notification]['notification_items'])+' '+notifications[notification]['notification_unit']+' '+criteria+' '+str(notifications[notification]['notification_value'])+' Watt ('+str(notifications[notification]['notification_value']/1000)+' kwh)'+' Usage: '+str(sum*1000)+' Watt ('+str(sum)+' kwh) '+notifications[notification]['notification_notification'], notifications[notification]['notification_email'], notifications[notification]['notification_twitter'] )
+
+def sensor_notification_send( notification, email, twitter ):
+	if email == 1:
+		try:
+			logger.debug('Try to send notification per email')
+			logger.debug(notification)
+			mail_send('Notification from your measureit installation', notification)
+			logger.debug('Notification sending successfully')
+		except:
+			logger.warning('Error in sensor_notification_send. Can not send email. Please check your settings! '+traceback.format_exc())
+
+	if twitter == 1:
+		twitter = Twython(system_settings['system_settings_twitter_app_key'],system_settings['system_settings_twitter_app_secret'],system_settings['system_settings_twitter_oauth_token'],system_settings['system_settings_twitter_oauth_token_secret'])
+		try:
+			logger.debug('Try to send notification per twitter')
+			tn = (notification[:137] + '...') if len(notification) > 137 else notification
+			if annouying:
+				logger.debug(tn)
+			twitter.update_status(status=tn)
+			logger.debug('Send notification per twitter successfully')
+		except:
+			logger.debug('Can not send notification with twitter'+traceback.format_exc())
+
+	return True
+
+
+def sensor_notification_data_compare( d1, d2 , type = '>' ):
+	if type == '<':
+		if d1 < d2:
+			return True
+	if type == '>':
+		if d1 > d2:
+			return True
+	return False
+
+def sensor_notifications_data_get( sensor, notifications ):
+	# group by unit and build query
+	sensor_data = {}
+	groups = {}
+	groups['h'] = groups['d'] = groups['m'] = 0
+	for notification in notifications:
+		groups[notifications[notification]['notification_unit']] = int(notifications[notification]['notification_items']) if int(notifications[notification]['notification_items']) > groups[notifications[notification]['notification_unit']] else groups[notifications[notification]['notification_unit']]
+	
+	for unit in groups:
+		if groups[unit] > 0:
+			sensor_data[unit] = {}
+			cnt = 1
+			if unit == 'h':
+				table = 'measure_watt_hourly'
+				order = 'hour_id'
+			elif unit == 'd':
+				table = 'measure_watt_daily'
+				order = 'day_id'
+			else:
+				table = 'measure_watt_monthly'
+				order = 'month_id'
+			logger.debug('Try to get notifications from sensor ' +str(sensor))
+			logger.debug('SELECT * FROM '+table+' WHERE sensor = '+str(sensor)+' ORDER BY '+order+' desc LIMIT '+str(groups[unit]))
+			r = mysql_query('SELECT * FROM '+table+' WHERE sensor = '+str(sensor)+' ORDER BY '+order+' desc LIMIT '+str(groups[unit]),'fetchall')
+			for row in r:
+				sensor_data[unit][row[0]] = row[2]
+	
+	return sensor_data
+
 def date_hour_get( hours ):
 	try:
-		date = mysql_query('SELECT NOW() - INTERVAL '+hours+' HOUR','fetchone')
+		date = mysql_query('SELECT UTC_TIMESTAMP( ) - INTERVAL '+hours+' HOUR','fetchone')
 		r = re.search(r"(\d+-\d+-\d+) (\d+):.+", str(date[0]) )
 		return (r.group(1), r.group(2))
 	except:
@@ -255,6 +434,7 @@ def date_hour_get( hours ):
 def sensor_data_check( sensor, watt, tmpr ):
 	sensor = int(sensor)
 	watt = int(watt)
+	tmpr = float(tmpr)
 	if sensors and sensors.has_key(sensor):
 		if sensors[sensor]['tmpr'] != tmpr:
 			sensors[sensor]['tmpr'] = tmpr
@@ -266,6 +446,8 @@ def sensor_data_check( sensor, watt, tmpr ):
 			sensor_watt_insert( sensor, watt )
 			if sensor_settings[sensor]['pvoutput']:
 				sensor_data_pvoutput_status( sensor, watt, tmpr )
+			if system_settings.has_key('use_twitter'):
+				sensor_notifications_check( sensor, watt, sensor_settings[sensor]['notifications_realtime'] )
 			
 		return True
 
@@ -324,29 +506,35 @@ def sensor_data_pvoutput_init( sensor ):
 		return True
 
 def sensor_data_pvoutput_status( sensor, watt, tmpr ):
-
+	#logger.debug(sensor, watt, tmpr)
 	diff = float(sensor_settings[sensor]['timezone_diff_value'])
-	if sensor_settings[sensor]['timezone_diff_prefix']:
-		d = datetime.datetime.now() - datetime.timedelta(hours=diff)
-	else:
-		d = datetime.datetime.now() + datetime.timedelta(hours=diff)
-	
 	if annouying:
 		logger.debug('sensor: '+str(sensor))
-		logger.debug('current local datetime: '+str(datetime.datetime.now()))
-		logger.debug('current local datetime delta: '+str(datetime.timedelta(hours=diff)))
-		logger.debug('current usage: '+str(datetime.datetime.now() + datetime.timedelta(hours=diff)))
-		logger.debug('current time_str: '+str(d.strftime("%Y%m%d")))
+		logger.debug('current local datetime: '+str(datetime.datetime.now( )))
+		logger.debug('current utc datetime: '+str(datetime.datetime.utcnow( )))
+	if sensor_settings[sensor]['timezone_diff_prefix']:
+		d = datetime.datetime.utcnow( ) - datetime.timedelta(hours=diff)
+		if annouying:
+			logger.debug('current usage: '+str(datetime.datetime.utcnow( ) - datetime.timedelta(hours=diff)))
+	else:
+		d = datetime.datetime.utcnow( ) + datetime.timedelta(hours=diff)
+		if annouying:
+			logger.debug('current usage: '+str(datetime.datetime.utcnow( ) + datetime.timedelta(hours=diff)))
+
+	if annouying:
+		logger.debug('time_str: '+str(d.strftime("%Y%m%d %H%M")))
 
 	day = d.strftime("%Y%m%d")
 	time = str(d.strftime('%H'))+'%3A'+str(d.strftime('%M'))
 	time_str = int(d.strftime("%H%M"))
 
 	if 'time_str' not in sensors[sensor]['pvoutput_watt_sum']:
-		#logger.debug('sensor: '+str(sensor)+'time_str not in sensors[sensor][pvoutput_watt_sum]')
-		#logger.debug('current time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
+		if annouying:
+			logger.debug('sensor: '+str(sensor)+'time_str not in sensors[sensor][pvoutput_watt_sum]')
+			logger.debug('current time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
-		#logger.debug('new time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
+		if annouying:
+			logger.debug('new time_str: '+str(sensors[sensor]['pvoutput_watt_sum']['time_str']))
 	if 'watt_sum' not in sensors[sensor]['pvoutput_watt_sum']:
 		sensors[sensor]['pvoutput_watt_sum']['watt_sum'] = 0
 	if 'day' not in sensors[sensor]['pvoutput_watt_sum']:
@@ -354,7 +542,14 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 	if 'time' not in sensors[sensor]['pvoutput_watt_sum']:
 		sensors[sensor]['pvoutput_watt_sum']['time'] = time
 	
+	if annouying:
+		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']) )
+		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'])+' + '+str(watt)) 
+	
 	sensors[sensor]['pvoutput_watt_sum']['watt_sum'] += watt
+	if annouying:
+		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']) )
+
 	sensors[sensor]['pvoutput_watt_sum']['time'] = time
 	sensors[sensor]['pvoutput_watt_sum']['day'] = day
 	
@@ -382,9 +577,20 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 		sensors[sensor]['pvoutput_watt_sum']['watt_sum'] = watt
 
 def sensor_data_pvoutput_status_generate( sensor ):
-	type = 'v2=0&v4' if sensor_settings[sensor]['type'] == 0 else 'v4=0&v2'
+	type = 'v4' if sensor_settings[sensor]['type'] == 0 else 'v2'
+	if annouying:
+		logger.debug('PVOutput watt sum last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']))
+		logger.debug('PVOutput watt counter last 5 min is '+str(sensor_settings[sensor]['pvoutput_cnt']))
+		logger.debug('PVOutput watt average last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt']))
 	sum = str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt'])
-	url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+sum+'&v5='+str(sensors[sensor]['tmpr']);
+	
+	#convert fahrenheit to celsius
+	if system_settings.has_key('system_settings_tmpr'):
+		if annouying:
+			logger.debug('Temperature setting found '+ str(system_settings['system_settings_tmpr']))
+		tmpr = sensors[sensor]['tmpr'] if system_settings['system_settings_tmpr'] == 'c' else ((float(sensors[sensor]['tmpr'])-32)/9)*5
+	
+	url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+str(sum)+'&v5='+str(tmpr);
 
 	try:
 		r = urllib2.urlopen(url)
@@ -405,20 +611,29 @@ def sensor_data_pvoutput_status_generate( sensor ):
 
 
 def mail_send(email_subject, email_body):
-	simplemail.Email(
-		from_address = email_address,
-		to_address = email_address,
-		subject = email_subject,
-		message = email_body,
-		smtp_server = email_smtp_server,
-		smtp_user = email_smtp_user,
-		smtp_password = email_smtp_passwd, 
-		use_tls = email_smtp_tls
-	).send()
+	if system_settings.has_key('system_settings_email_address') and system_settings.has_key('system_settings_email_pass'):
+		logger.debug('Found email system settings. Try to send email')
+		try:
+			header  = 'From: '+system_settings['system_settings_email_address']+'\n'
+			header += 'To: '+system_settings['system_settings_email_address']+'\n'
+			header += 'Subject: %s\n\n' % email_subject
+			email_body = header + email_body
+			server = smtplib.SMTP("smtp.gmail.com:587")
+			server.starttls()
+			server.login(system_settings['system_settings_email_address'],system_settings['system_settings_email_pass'])
+			server.sendmail(system_settings['system_settings_email_address'],system_settings['system_settings_email_address'], email_body)
+			server.quit()
+		except:
+			logger.debug('Not possible to send email: '+traceback.format_exc())
+	else:
+		logger.debug('Email system settings are not complete')
 
 def err_critical_count():
 	global err_critical
 	err_critical += 1
+	if debug:
+		logger.debug('Critical system error occured')
+		logger.debug('Alert Message will send at 500. Current counter is now: '+str(err_critical))
 	if err_critical > 500:
 		try:
 			mail_send('Message from your measureit installation', 'Please take a look at your installation. It seems there is a problem...')
@@ -441,9 +656,11 @@ def config_parse():
 				continue
 			
 			r = re.search(r".?\$(.+) ?= ?'(.+)';", line)
+
 			if r:
 				if r.group(1) and r.group(2):
 					config[r.group(1).rstrip()] = r.group(2).rstrip()
+					system_settings[r.group(1).rstrip()] = r.group(2).rstrip()
 		logger.info('Parsing config file successful')
 		logger.debug(config)
 		return True
@@ -493,85 +710,120 @@ try:
 	sensor_list_get()
 	system_settings_get()
 	sensor_settings_get()
+	sensor_notifications_get()
 	cron_timer_hourly()
 	cron_timer_daily()
 	cron_timer_weekly()
 	logger.info('Start parsing XML')
-	while True:
-		line = ser.readline()
-		line = line.rstrip('\r\n')
-		clamps = False
-		
-		if info:
-			print line
-		
-		# parsing from history_output 
-		# data will not be used because of the data is buggy and not detailed enough :)
-		# but saving them is not an error. maybe we can use the data later
-		r = re.search(r"<hist>", line)
-		if r:
-			for s in sensors:
-				r = re.search(r"<data><sensor>"+str(s)+"</sensor>(.+?)</data>", line)
-				if r:
-					d = re.findall(r"<(m)(\d+)>(.+?)</.+?>", r.group(1) )
-					if d:
-					 for f in d:
-						 history_update(s,f)
-		
-		r = re.search(r"<tmpr>(.+?)</tmpr><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
-		if r:
-			#print r
-			tmpr = r.group(1)
-			watt_sum = int(r.group(3))
-			# more than 1 clamp
-			if r.group(5):
-				if annouying:
-					logger.debug('Found clamp 2 on sensor '+r.group(2))
-				sensor = int('2'+r.group(2))
-				if sensors and sensors.has_key(sensor):
-					if annouying:
-						logger.debug('Clamp 2 is in the sensor list')
-					watt = int(r.group(5))
-					watt_sum += watt
-					sensor_data_check( sensor, watt, tmpr )
-					clamps = True
-				else:
-					if annouying:
-						logger.debug('Clamp 2 is NOT in the sensor list')
 	
-			if r.group(7):
-				if annouying:
-					logger.info('Found clamp 3 on sensor '+r.group(2))
-				sensor = int('3'+r.group(2))
-				if sensors and sensors.has_key(sensor):
+	if system_settings.has_key('system_settings_system') and system_settings['system_settings_system'] == 'classic':
+		system = 'classic'
+		logger.debug('System is a Classic device from CC so searching for XML in classic format')
+	
+	while True:
+		try:
+			line = ser.readline()
+			line = line.rstrip('\r\n')
+			clamps = False
+		
+			if info or debug:
+				print line
+			# parsing from history_output 
+			# data will not be used because of the data is buggy and not detailed enough :)
+			# but saving them is not an error. maybe we can use the data later
+			r = re.search(r"<hist>", line)
+			if r:
+				for s in sensors:
+					r = re.search(r"<data><sensor>"+str(s)+"</sensor>(.+?)</data>", line)
+					if r:
+						d = re.findall(r"<(m)(\d+)>(.+?)</.+?>", r.group(1) )
+						if d:
+						 for f in d:
+							 history_update(s,f)
+			
+			# arghhhhh xml is changing when fahrenheit is used instead of celsius.
+			# who is doing something like this???
+			if system_settings.has_key('system_settings_tmpr'):
+				tmpr_node = 'tmpr' if system_settings['system_settings_tmpr'] == 'c' else 'tmprF'
+			else:
+				tmpr_node = 'tmpr'
+			
+			if system == 'classic':
+				r = re.search(r"<ch1><watts>(\d+)<\/watts><\/ch1><ch2><watts>(\d+)<\/watts><\/ch2><ch3><watts>(\d+)<\/watts><\/ch3><tmpr>(.+?)</tmpr>", line)
+				if r:
+					tmpr = r.group(4)
+					s = 1
+					clamp1 = r.group(1)
+					clamp2 = r.group(2) if int(r.group(2)) > 0 else False
+					clamp3 = r.group(3) if int(r.group(3)) > 0 else False
+			else:
+				r = re.search(r"<"+tmpr_node+">(.+?)</"+tmpr_node+"><sensor>(\d)+</sensor>.+<ch1><watts>(\d+)<\/watts><\/ch1>(<ch2><watts>(\d+)<\/watts><\/ch2>)?(<ch3><watts>(\d+)<\/watts><\/ch3>)?", line)
+				if r:
+					tmpr = r.group(1)
+					s = r.group(2)
+					clamp1 = r.group(3)
+					clamp2 = r.group(5) if r.group(5) else False
+					clamp3 = r.group(7) if r.group(7) else False
+					
+			if r:
+				watt_sum = int(clamp1)
+				# more than 1 clamp
+				if clamp2:
 					if annouying:
-						logger.debug('Clamp 3 is in the sensor list')
-					watt = int(r.group(7))
-					watt_sum += watt
+						logger.debug('Found clamp 2 on sensor '+str(s))
+					sensor = int('2'+str(s))
+					if sensors and sensors.has_key(sensor):
+						if annouying:
+							logger.debug('Clamp 2 is in the sensor list')
+						watt = int(clamp2)
+						watt_sum += watt
+						sensor_data_check( sensor, watt, tmpr )
+						clamps = True
+					else:
+						if annouying:
+							logger.debug('Clamp 2 is NOT in the sensor list')
+		
+				if clamp3:
+					if annouying:
+						logger.info('Found clamp 3 on sensor '+str(s))
+					sensor = int('3'+str(s))
+					if sensors and sensors.has_key(sensor):
+						if annouying:
+							logger.debug('Clamp 3 is in the sensor list')
+						watt = int(clamp3)
+						watt_sum += watt
+						sensor_data_check( sensor, watt, tmpr )
+						clamps = True
+					else:
+						if annouying:
+							logger.debug('Clamp 3 is NOT in the sensor list')
+					
+				if clamps:
+					if annouying:
+						logger.debug('Clamps found on sensor '+str(s)+'. Add data to clamps')
+					sensor = int('1'+str(s))
+					watt = int(clamp1)
 					sensor_data_check( sensor, watt, tmpr )
-					clamps = True
 				else:
 					if annouying:
-						logger.debug('Clamp 3 is NOT in the sensor list')
-				
-			if clamps:
-				if annouying:
-					logger.debug('Clamps found on sensor '+r.group(2)+'. Add data to clamps')
-				sensor = int('1'+r.group(2))
-				watt = int(r.group(3))
-				sensor_data_check( sensor, watt, tmpr )
-			else:
-				if annouying:
-					logger.debug('No clamps found on sensor '+r.group(2))
-			   
-			sensor_data_check( r.group(2), watt_sum, tmpr )
+						logger.debug('No clamps found on sensor '+str(s))
+				   
+				sensor_data_check( s, watt_sum, tmpr )
+		except:
+			logger.error('Can not connect to the serial device: '+traceback.format_exc())
+			err_critical_count()
+
 
 
 except (KeyboardInterrupt, SystemExit):
-	if platform.system() == 'Linux':
+	r = re.search(r"Linux", platform.system())
+	if r:
 		killstr = 'kill -9 '+str(os.getpid())
 		subprocess.call(killstr, shell=True)
 	if platform.system() == '':
 		print 'On Windows you can close the CMD window'
 		print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
 
+
+
+			
