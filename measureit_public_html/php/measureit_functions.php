@@ -221,7 +221,7 @@ function sensor_detail_statistic( $params = array( ) ){
 }
 
 function summary_start( $request = array( ) ){
-	$debug = isset( $_REQUEST['debug'] ) ? true : false;
+	$debug = isset( $request['debug'] ) ? 'debug' : 'nd';
 	$sensors = sensors_get();
 	$prices = sensor_prices_all_get( );
 	foreach( $sensors as $k=>$v ){
@@ -231,13 +231,11 @@ function summary_start( $request = array( ) ){
 		$r[$k]['sensor'] = $v;
 		$r[$k]['tmpr'] = $vn['tmpr'];
 		$r[$k]['watt'] = $vn['watt'];
-		$data = sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', 'debug' => $debug ) );
-
-		$r[$k]['daily'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 24 ), 'prices'=>$prices ) );
-		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 1 ), 'prices'=>$prices ) );
-		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>array_slice( $data, 168 ), 'prices'=>$prices ) );
-		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>$data, 'prices'=>$prices ) );
-
+		$r[$k]['daily'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 24, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
+		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 1, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
+		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 168, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
+		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
+		
 	}
 	print json_encode($r);
 	return true;
@@ -603,7 +601,7 @@ function sensor_data_raw_get( $params = array( ) ){
 		$query = $db->query( $q );
 		$r = array();
 		while( $d = $db->fetch_array( $query ) ){
-			@$r[] = $d['data'];
+			@$r[$d['hour']] += $d['data'];
 		}
 	}
 	return $r;
@@ -724,6 +722,7 @@ function data_query_build( $params = array( ) ){
 	$selection = isset( $params['selection'] ) ? mysql_real_escape_string( $params['selection'] ) : '*';
 	$query = "SELECT $selection FROM $table WHERE sensor = '$sensor' $timeframe";
 	if( isset( $params['debug'] ) ) debug( $query, $params );
+	#var_dump('<pre>',$params);
 	return $query;
 }
 
