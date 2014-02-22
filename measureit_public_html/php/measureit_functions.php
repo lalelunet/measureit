@@ -324,15 +324,17 @@ function sensor_data_get( $params = array( ) ){
 			if( isset( $params['debug'] ) ) debug( 'NO timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 		}
 		$dgb = array( );
+		date_default_timezone_set('UTC');
 		while( $d = $db->fetch_array( $query ) ){
-			$time =  $ts = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
+			$time = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
+			$ts = @strtotime( $time, time( ) );
 			if( $use_diff ){
-				$ts = $diff['prefix'] == '-' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
+				$ts = $diff['prefix'] == '-' ? $ts - $diff['diff'] : $ts + $diff['diff'];
 				if( isset( $params['debug'] ) ) $dbg[$time] = @date( 'Y-m-d H:i:s', $ts );
 			}else{
-				if( isset( $params['debug'] ) ) $dbg[$time] = @date( 'Y-m-d H:i:s', $time );
+				if( isset( $params['debug'] ) ) $dbg[$time] = $time;
 			}
-			$u = $params['unit_return'] == 'timeframe' ? ( $use_diff ? $ts*1000 : @strtotime( $ts )*1000 ) : $time;
+			$u = $params['unit_return'] == 'timeframe' ? $ts*1000 : $time;
 			$t .= '['. $u .', '. $d['data'] .'],';
 		}
 		$r = preg_replace( '/(.+),$/', "$1", $t );
