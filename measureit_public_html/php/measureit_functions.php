@@ -324,7 +324,6 @@ function sensor_data_get( $params = array( ) ){
 			if( isset( $params['debug'] ) ) debug( 'NO timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 		}
 		$dgb = array( );
-		date_default_timezone_set('UTC');
 		while( $d = $db->fetch_array( $query ) ){
 			$time = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			$ts = @strtotime( $time, time( ) );
@@ -1017,7 +1016,7 @@ function update_information_get( ){
 
 function timezone_diff_get( $params = array( ) ){
 	$sensor = sensor_get( $params['sensor'] );
-	
+	date_default_timezone_set('UTC');
 	if( isset( $sensor[$params['sensor']]['measure_timezone_diff'] ) && is_numeric( $sensor[$params['sensor']]['measure_timezone_diff'] ) && $sensor[$params['sensor']]['measure_timezone_diff'] >= 1 ){
 		if( isset( $params['debug'] ) ) debug( 'Found timezone settings in sensor in timezone_diff_get', $sensor[$params['sensor']] );
 		$timezone_diff =  $sensor[$params['sensor']]['measure_timezone_diff'];
