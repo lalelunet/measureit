@@ -1018,17 +1018,19 @@ function update_information_get( ){
 function timezone_diff_get( $params = array( ) ){
 	$sensor = sensor_get( $params['sensor'] );
 	
-	if( isset( $sensor[$params['sensor']]['measure_timezone_diff'] ) && is_numeric( $sensor[$params['sensor']]['measure_timezone_diff'] ) ){
+	if( isset( $sensor[$params['sensor']]['measure_timezone_diff'] ) && is_numeric( $sensor[$params['sensor']]['measure_timezone_diff'] ) && $sensor[$params['sensor']]['measure_timezone_diff'] >= 1 ){
+		if( isset( $params['debug'] ) ) debug( 'Found timezone settings in sensor in timezone_diff_get', $sensor[$params['sensor']] );
 		$timezone_diff =  $sensor[$params['sensor']]['measure_timezone_diff'];
 	}else{
 		$db = new mydb;
 		$r = array();
 		$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'global_timezone_use'");
 		$d = $db->fetch_array( $query );
-		
+		if( isset( $params['debug'] ) ) debug( 'Search global timezone settings in db in timezone_diff_get', $d );
 		$timezone_diff = $d['measure_system_setting_value'];
 	}
 	if( !isset( $timezone_diff ) || $timezone_diff == 0 ){
+		if( isset( $params['debug'] ) ) debug( 'Found no timezone settings in timezone_diff_get', $timezone_diff );
 		return false;
 	}
 	preg_match( '/(-)?(.+)/', $timezone_diff, $r );
