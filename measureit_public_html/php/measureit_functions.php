@@ -178,6 +178,8 @@ function sensor_detail_statistic( $params = array( ) ){
 		$params['table'] = 'measure_watt_daily';
 		$params['unit_value'] = '1';
 		$params['unit'] = 'YEAR';
+		$use_diff = false;
+		$cnt = 1;
 		if( $diff = timezone_diff_get( $params ) ){
 			$use_diff = true;
 			$diff = timezone_diff_get( $params );
@@ -187,8 +189,10 @@ function sensor_detail_statistic( $params = array( ) ){
 		$query = $db->query( $q );
 		while( $d = $db->fetch_array( $query ) ){
 			$date = @strtotime( $d['time'].' 00:00' );
+			if( isset( $params['debug'] ) && $cnt <= 1 && $use_diff ) { debug( 'date before timezone changing: '.$date.' date_str: '.$d['time'].' 00:00', false, $d ); };
 			if( $use_diff ){
 				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+				if( isset( $params['debug'] ) && $cnt <= 1 ) { debug( 'date after timezone changing: '.$date ); };
 			}
 			
 			$datew = @date( w, $date );
@@ -196,8 +200,10 @@ function sensor_detail_statistic( $params = array( ) ){
 			@$r['yeardays'][$datew] += $d['data'];
 			@$r['yearsdaysdetail'][$daten-1][$datew] += $d['data'];
 			ksort($r['yearsdaysdetail'][$daten-1]);
+			$cnt++;
 		}
 
+		$cnt = 1;
 		$params['table'] = 'measure_watt_hourly';
 		$q = data_query_build( $params );
 		$db = new mydb;
@@ -205,14 +211,17 @@ function sensor_detail_statistic( $params = array( ) ){
 
 		while( $d = $db->fetch_array( $query ) ){
 			$date = @strtotime( $d['time'].' '.$d['hour'].':00' );
+			if( isset( $params['debug'] ) && $cnt <= 1 && $use_diff ) { debug( 'date before timezone changing: '.$date.' date_str: '.$d['time'].' '.$d['hour'].':00', false, $d ); };
 			if( $use_diff ){
 				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
+				if( isset( $params['debug'] ) && $cnt <= 1 ) { debug( 'date after timezone changing: '.$date ); };
 			}
 			$daten = @date( n, $date );
 			@$r['yearhours'][$d['hour']] += $d['data'];
 			ksort($r['yearhours']);
 			@$r['monthshoursdetail'][$daten-1][$d['hour']] += $d['data'];
 			ksort($r['monthshoursdetail'][$daten-1]);
+			$cnt++;
 		}
 		print json_encode($r);
 		return true;
@@ -1025,7 +1034,7 @@ function timezone_diff_get( $params = array( ) ){
 		$r = array();
 		$query = $db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'global_timezone_use'");
 		$d = $db->fetch_array( $query );
-		if( isset( $params['debug'] ) ) debug( 'Search global timezone settings in db in timezone_diff_get', $d );
+		if( isset( $params['debug'] ) ) debug( 'No timezone settings in sensor. Search global timezone settings in db in timezone_diff_get', $d );
 		$timezone_diff = $d['measure_system_setting_value'];
 	}
 	if( !isset( $timezone_diff ) || $timezone_diff == 0 ){
@@ -1048,12 +1057,14 @@ function debug( $info, $request = false, $dump = false ){
 	print $info.'<hr />'; 
 	if( $dump ){
 		var_dump( '<pre>', $dump );
+		print '<hr />';
 	}
-	print '<hr />';
+	
 	if( $request ){
 		var_dump( '<pre>', $request );
+		print '<hr />';
 	}
-	print '<hr />';
+
 }
 
 function error( $error = 'unknown' ){
