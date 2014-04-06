@@ -137,6 +137,7 @@ def cron_timer_hourly():
 	logger.debug('Make hourly usage from day_from to day_to: '+str(day_from) )
 	hour_from = now.hour-1
 	hour_to = now.hour
+	epoch = 0
 	if now.hour != 0:
 		logger.debug('Make hourly usage from hour_from_from to hour_to in utc time: '+str(hour_from)+' - '+str(hour_to) )
 
@@ -149,16 +150,22 @@ def cron_timer_hourly():
 		logger.debug('Make hourly usage from hour_from_from to hour_to  in utc time: '+str(hour_from)+' - '+str(hour_to) )
 	date_from = str(day_from)+' '+str(hour_from)+':00:00'
 	date_to = str(day_to)+' '+str(hour_to)+':00:00'
+	pattern = '%Y-%m-%d %H:%M:%S'
+	epoch = int(time.mktime(time.strptime(date_from, pattern)))
 	try:
 		for sensor in sensors:
-			usage_sum_hourly = usage_sum_count = sum = 0
-			r = mysql_query("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
+			usage_sum_hourly = usage_sum_count = sum = delta_time = previous_epoch_time = usage_sum_hourly_epoch = 0
+			r = mysql_query("select sensor, data, unix_timestamp(time) from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
 			for row in r:
-				usage_sum_hourly += float(row[1])
+				usage_sum_hourly_epoch = int(row[2])
+				if usage_sum_count == 0:
+					delta_time = usage_sum_hourly_epoch - epoch
+				else:
+					delta_time = usage_sum_hourly_epoch - previous_epoch_time
+				usage_sum_hourly += (float(row[1])*delta_time)/3600000
 				usage_sum_count += 1
-			if usage_sum_count != 0:
-				sum = (usage_sum_hourly/usage_sum_count)/1000
-			query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
+				previous_epoch_time = usage_sum_hourly_epoch
+			query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(usage_sum_hourly)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
 			mysql_query(query)
 			if system_settings['use_twitter']:
 				sensor_notifications_cron_check(sensor, sensor_settings[sensor]['notifications'])
@@ -182,16 +189,22 @@ def cron_timer_daily():
 			usage_sum_daily = usage_sum_count = sum = 0
 			date_from = str(datetime.date.today() - datetime.timedelta(days=1))+' 00:00:00'
 			date_to = str(datetime.date.today())+' 00:00:00'
-			r = mysql_query("select sensor, data from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
+			epoch = 0
+			pattern = '%Y-%m-%d %H:%M:%S'
+			epoch = int(time.mktime(time.strptime(date_from, pattern)))
+			r = mysql_query("select sensor, data, unix_timestamp(time) from measure_watt where time between '"+date_from+"' AND '"+date_to+"' AND sensor="+str(sensor),'fetchall')
 			logger.info('Read data from sensor: '+str(sensor))
 			try:
 				for row in r:
-					usage_sum_daily += float(row[1])
+					usage_sum_daily_epoch = int(row[2])
+					if usage_sum_count == 0:
+						delta_time = usage_sum_daily_epoch - epoch
+					else:
+						delta_time = usage_sum_daily_epoch - previous_epoch_time
+					usage_sum_daily += (float(row[1])*delta_time)/3600000
 					usage_sum_count += 1
-				if usage_sum_count != 0:
-					sum = ((usage_sum_daily/usage_sum_count)*24)/1000
-					
-				query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(sum)+'", "'+date_from+'" )'
+					previous_epoch_time = usage_sum_daily_epoch
+				query = 'INSERT IGNORE INTO measure_watt_daily ( sensor, data, time ) VALUES ( "'+str(sensor)+'", "'+str(usage_sum_daily)+'", "'+date_from+'" )'
 				mysql_query(query)
 				usage_sum_daily = usage_sum_count = sum = r = 0
 				logger.info('Sensor data successful collected from sensor: '+str(sensor))
@@ -633,8 +646,8 @@ def err_critical_count():
 	err_critical += 1
 	if debug:
 		logger.debug('Critical system error occured')
-		logger.debug('Alert Message will send at 500. Current counter is now: '+str(err_critical))
-	if err_critical > 500:
+		logger.debug('Alert Message will send at 5000. Current counter is now: '+str(err_critical))
+	if err_critical > 5000:
 		try:
 			mail_send('Message from your measureit installation', 'Please take a look at your installation. It seems there is a problem...')
 			err_critical = 0
@@ -823,7 +836,3 @@ except (KeyboardInterrupt, SystemExit):
 	if platform.system() == '':
 		print 'On Windows you can close the CMD window'
 		print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
-
-
-
-			
