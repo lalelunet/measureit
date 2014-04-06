@@ -1,0 +1,36 @@
+#!/bin/sh
+# init script from marc
+# https://groups.google.com/forum/#!searchin/measureit/init/measureit/tzgVqq-RauY/9i0u2egywCUJ
+### BEGIN INIT INFO
+# Provides:          rsyncd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Should-Start:      $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: measureit data grabber
+# Description:       starts the listening process on /dev/ttyUSB0 to grab sensor data from currentcost device
+### END INIT INFO
+
+DAEMON="/usr/bin/python"
+ARGS="/var/www/python/data-input.py"
+PIDFILE=/var/run/measureit.pid
+
+case "$1" in
+  start)
+    echo "Starting measureit server"
+    /sbin/start-stop-daemon --start --pidfile $PIDFILE \
+        -b --make-pidfile \
+        --exec $DAEMON $ARGS
+    ;;
+  stop)
+    echo "Stopping measureit server"
+    /sbin/start-stop-daemon --stop --pidfile $PIDFILE --verbose
+    ;;
+  *)
+    echo "Usage: /etc/init.d/measureit {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
