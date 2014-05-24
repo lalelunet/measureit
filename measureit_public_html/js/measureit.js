@@ -1006,7 +1006,6 @@ function button_get(parent,id,title,css,value){
 }
 
 function checkbox_get(parent,id,name,css,value,checked){
-	console.log(checked);
 	var css = typeof(css) != 'undefined' ? css : '';
 	var checked = checked == 1 ? ' checked="checked"' : '';
 	$(parent).append( '<input id="'+id+'" class="checkbox '+css+'" type="checkbox" name="'+name+'" value="'+value+'"'+checked+'>' );
