@@ -1006,6 +1006,7 @@ function button_get(parent,id,title,css,value){
 }
 
 function checkbox_get(parent,id,name,css,value,checked){
+	console.log(checked);
 	var css = typeof(css) != 'undefined' ? css : '';
 	var checked = checked == 1 ? ' checked="checked"' : '';
 	$(parent).append( '<input id="'+id+'" class="checkbox '+css+'" type="checkbox" name="'+name+'" value="'+value+'"'+checked+'>' );
@@ -1684,6 +1685,11 @@ function global_settings( ){
 			$('#system_settings_container').append(span_get('system_settings_tmpr','<br />'+lng.temperature+'<br />','padding15'));
 			tmpr_dropdown_get(system_data);
 			
+			div_get('#system_settings_container','system_settings_data_save_type','','padding15');
+			var system_settings_data_save_type = system_data.system_settings_data_save_type != 'undefined' ? system_data.system_settings_data_save_type : 0;
+			checkbox_get('#system_settings_data_save_type','system_settings_data_save_type_check','system_settings_data_save_type','',1,system_settings_data_save_type);
+			$('#system_settings_data_save_type').append( ' '+ lng.save_all_values );
+			
 			system_settings_display(system_data);
 			
 			button_get('#system_settings_container','system_settings_save',lng.save,'margin5');
@@ -1729,6 +1735,7 @@ function system_settings_save(){
 	system_settings['language_use'] =  $('#system_settings_language_value').val();
 	system_settings['system_settings_system'] =  $('#system_settings_system_value').val();
 	system_settings['system_settings_tmpr'] =  $('#system_settings_tmpr_value').val();
+	system_settings['system_settings_data_save_type'] = $("#system_settings_data_save_type_check").is(':checked') ? 1 : 0;
 	$.getJSON('php/measureit_functions.php', { 'do' : 'global_settings_set', 'data' : system_settings }, function(){
 		sensor_settings_clean();
 		sensor_settings_detail_clean();

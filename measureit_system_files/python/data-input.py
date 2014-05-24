@@ -453,7 +453,7 @@ def sensor_data_check( sensor, watt, tmpr ):
 			sensors[sensor]['tmpr'] = tmpr
 			sensor_data_change( 'tmpr', sensor, tmpr )
 			tmpr_insert( tmpr )
-		if sensors[sensor]['watt'] != watt:
+		if ( system_settings.has_key('system_settings_data_save_type') and int(system_settings['system_settings_data_save_type']) == 1 ) or sensors[sensor]['watt'] != watt:
 			sensors[sensor]['watt'] = watt
 			sensor_data_change( 'watt', sensor, watt )
 			sensor_watt_insert( sensor, watt )
