@@ -1684,7 +1684,7 @@ function global_settings( ){
 			$('#system_settings_container').append(span_get('system_settings_tmpr','<br />'+lng.temperature+'<br />','padding15'));
 			tmpr_dropdown_get(system_data);
 			
-			div_get('#system_settings_container','system_settings_data_save_type','','padding15');
+			div_get('#system_settings_container','system_settings_data_save_type','','padding5');
 			var system_settings_data_save_type = system_data.system_settings_data_save_type != 'undefined' ? system_data.system_settings_data_save_type : 0;
 			checkbox_get('#system_settings_data_save_type','system_settings_data_save_type_check','system_settings_data_save_type','',1,system_settings_data_save_type);
 			$('#system_settings_data_save_type').append( ' '+ lng.save_all_values );
