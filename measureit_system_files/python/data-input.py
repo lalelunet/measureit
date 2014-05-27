@@ -217,6 +217,8 @@ def cron_timer_daily():
 					if sensor_settings[sensor]['history'] > 0:
 						query = 'DELETE FROM measure_watt WHERE sensor = '+str(sensor)+' AND time < UTC_TIMESTAMP( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
 						mysql_query(query)
+						query = 'DELETE FROM measure_tmpr WHERE time < UTC_TIMESTAMP( ) - INTERVAL '+str(sensor_settings[sensor]['history'])+' DAY'
+						mysql_query(query)
 						logger.info('Delete successful from old data from sensor: '+str(sensor))
 			except:
 				logger.warning('Error in cron_timer_hourly while deleting old data Error: '+traceback.format_exc())
