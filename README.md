@@ -6,8 +6,6 @@ Currently it works with the hardware from Current Cost (currentcost.com) with th
 
 You are able to see the detailed consumption in real time or see your consumption from the last week or from a user defined time range and has a overview of the energy consumption and cost per sensor / sensor position / year / month /day usage. There are also different graphs to display a weekly or yearly overview in a comparison or you can see the data usage per weekday or per hour or.....
 
-[https://code.google.com/p/measureit/wiki/Screenshots Here you will find some screenshots]
-
 Measureit has clamp support. You can see the data from every clamp and the total usage from a sensor with multiple clamps.
 
 The storage database is optimized to store millions of voltage data without using much storage. In 4 months a sensor writes about 1.000.000 data sets that use just about 25 MB of storage. Measureit delete old data automatically after a user defined period.
@@ -20,14 +18,13 @@ There are options to create notifications per email or twitter if a user defined
 
 More informations about measureit you can find in the wiki from the project.
 
-[https://code.google.com/p/measureit/w/list  Start here :)]
-
 
 *Multiple languages*
 
-Measureit is able to speak your language. If your language is not in the list and you wish to help so feel free to translate this small text file. It is just about 10 minutes of work. Send your translated file and it will be included as soon as possible
+Measureit is able to speak your language. If your language is not in the list and you wish to help so feel free to translate this small text file. It is just about 10 minutes of work. Send your translated file and it will be included as soon as possible.
 
-[http://measureit.googlecode.com/svn/trunk/measureit_public_html/lng/en_EN.txt File to translate]
+The file to translate you will find here:
+https://github.com/lalelunet/measureit/blob/master/measureit_public_html/lng/en_EN.txt
 
 Currently available languages are:
   * English
@@ -48,27 +45,15 @@ https://docs.google.com/document/d/1fKyB458Xb4k1DM5_Vemj-lqx7-h01zAfeONYFyEfmJs/
 
 *FEEDBACK WANTED*
 
-Feel free to contact me and have a lot of fun :)
-
-*TWITTER*
-
-You will find contact and informations about updates on twitter too:
-[http://twitter.com/measureitsoft @measureitsoft] 
-
-
 *SUPPORT*
 
 If you like measureit feel free to give me a tip  :)
 
-[https://flattr.com/thing/113244/Measureit per flattr]
-
-[https://www.paypal.com/cgi-bin/webscr/?cmd=_s-xclick&hosted_button_id=TEHJHXLPSU3C6 per paypal]
+https://www.paypal.com/cgi-bin/webscr/?cmd=_s-xclick&hosted_button_id=TEHJHXLPSU3C6
 
 
 I will use the money for drinking beer or other reasonable things :)
 
-*GOOGLE GROUP*
-
-There is also a google group to discuss about your experience with measureit or anything else that is relatet to energy monitoring :)
+There is also a group to discuss about your experience with measureit or anything else that is relatet to energy monitoring :)
 
 [http://groups.google.com/group/measureit/ http://groups.google.com/group/measureit/]
