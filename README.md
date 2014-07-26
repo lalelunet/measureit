@@ -1,8 +1,5 @@
 Welcome to the measureit Project
 
-Measureit is currently hosted on google gode and is ported to this github repository. Unless not all informations are ported please see google code too. Sorry
-https://code.google.com/p/measureit/
-
 Measureit allows you to have your own server to store your voltage and temperature data. It has a  easy to use web interface that is completely written in javascript and jquery to see your power consumption.
 
 Currently it works with the hardware from Current Cost (currentcost.com) with the Classic, Envi and the EnviR
