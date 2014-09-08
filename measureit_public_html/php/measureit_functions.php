@@ -890,7 +890,14 @@ function sensor_position_add( $params = array() ){
 function sensor_settings_save( $params = array() ){
 	$params['sensor_price'] = preg_replace('/,/', '.', @$params['sensor_price']);
 	$db = new mydb;
-	$db->query("UPDATE measure_settings SET measure_history = '$params[sensor_history]', measure_currency = '$params[sensor_currency]', measure_timezone_diff = '$params[sensor_timezone_diff]', measure_pvoutput_id = '$params[sensor_pvoutput_id]', measure_pvoutput_api = '$params[sensor_pvoutput_api]', measure_scale_factor = '$params[sensor_scale_factor]', measure_type = '$params[sensor_type]' WHERE measure_sensor = '$params[sensor_id]'");
+	$db->query("UPDATE measure_settings SET measure_history = '$params[sensor_history]', 
+		measure_currency = '$params[sensor_currency]', 
+		measure_timezone_diff = '$params[sensor_timezone_diff]', 
+		measure_pvoutput_id = '$params[sensor_pvoutput_id]', 
+		measure_pvoutput_api = '$params[sensor_pvoutput_api]', 
+		measure_scale_factor = '$params[sensor_scale_factor]', 
+		measure_lower_limit = '$params[sensor_lower_limit]',
+		measure_type = '$params[sensor_type]' WHERE measure_sensor = '$params[sensor_id]'");
 	return true;
 }
 function sensor_position_delete( $params = array() ){

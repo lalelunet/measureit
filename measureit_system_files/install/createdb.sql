@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS `measure_settings` (
   `measure_type` tinyint(1) NOT NULL DEFAULT '0',
   `measure_pvoutput_id` int(12) NOT NULL,
   `measure_pvoutput_api` varchar(256) NOT NULL,
-  `measure_scale_factor` decimal(10,2) NOT NULL DEFAULT '1.00'
+  `measure_scale_factor` decimal(10,2) NOT NULL DEFAULT '1.00',
+  `measure_lower_limit` smallint(5) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `measure_system` (
