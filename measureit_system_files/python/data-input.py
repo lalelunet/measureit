@@ -459,9 +459,9 @@ def sensor_data_check( sensor, watt, tmpr ):
 			tmpr_insert( tmpr )
 		if sensor_settings[sensor]['scale_factor'] != 1:
 			watt *= sensor_settings[sensor]['scale_factor']
+		if watt < sensor_settings[sensor]['lower_limit']:
+			watt = 0
 		if ( system_settings.has_key('system_settings_data_save_type') and int(system_settings['system_settings_data_save_type']) == 1 ) or sensors[sensor]['watt'] != watt:
-			if watt < sensor_settings[sensor]['lower_limit']:
-				watt = 0
 			sensors[sensor]['watt'] = watt
 			sensor_data_change( 'watt', sensor, watt )
 			sensor_watt_insert( sensor, watt )
