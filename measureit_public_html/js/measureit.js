@@ -1414,7 +1414,11 @@ function sensor_admin_settings(data, sensor){
 		input_get('#sensor_settings_container','sensor_pvoutput_api',data[sensor].sensor.measure_pvoutput_api === undefined ? '' : data[sensor].sensor.measure_pvoutput_api);
 		div_get('#sensor_settings_container','sensor_id','PVOutput System ID:','padding5 notice');
 		input_get('#sensor_settings_container','sensor_pvoutput_id',data[sensor].sensor.measure_pvoutput_id === undefined ? '' : data[sensor].sensor.measure_pvoutput_id);
-		
+		div_get('#sensor_settings_container','sensor_id','Scale Factor:','padding5 notice');
+		input_get('#sensor_settings_container','sensor_scale_factor',data[sensor].sensor.measure_scale_factor === undefined ? '1' : data[sensor].sensor.measure_scale_factor);
+		div_get('#sensor_settings_container','sensor_id','Lower Limit:','padding5 notice');
+		input_get('#sensor_settings_container','sensor_lower_limit',data[sensor].sensor.measure_lower_limit === undefined ? '' : data[sensor].sensor.measure_lower_limit);
+
 		div_get('#sensor_settings_container','sensor_id','Sensor type:','padding5 notice');
 		$('#sensor_settings_container').append('<select name="sensor_type" id="sensor_type" class="margin5" />');
 		$('#sensor_type').append('<option value="0">'+lng.consumer+'</option>');
@@ -1435,6 +1439,8 @@ function sensor_admin_settings(data, sensor){
 					'sensor_history' : $('#sensor_history').val(),
 					'sensor_pvoutput_api' : $('#sensor_pvoutput_api').val(),
 					'sensor_pvoutput_id' : $('#sensor_pvoutput_id').val(),
+					'sensor_scale_factor' : $('#sensor_scale_factor').val(),
+					'sensor_lower_limit' : $('#sensor_lower_limit').val(),
 					'sensor_type' : $('#sensor_type').val()
 					}, function(){
 						delete data;

@@ -254,6 +254,8 @@ def sensor_settings_get():
 			sensor_settings[row[2]]['pvoutput'] = False
 			sensor_settings[row[2]]['pvoutput_id'] = int(row[8])
 			sensor_settings[row[2]]['pvoutput_api'] = row[9]
+			sensor_settings[row[2]]['scale_factor'] = row[10]
+			sensor_settings[row[2]]['lower_limit'] = row[11]
 			sensor_settings[row[2]]['notifications'] = {}
 			sensor_settings[row[2]]['notifications_realtime'] = {}
 			logger.info('Sensor '+str(row[2])+' Check if there are any PVOutput settings for this sensor')
@@ -449,6 +451,10 @@ def sensor_data_check( sensor, watt, tmpr ):
 			sensors[sensor]['tmpr'] = tmpr
 			sensor_data_change( 'tmpr', sensor, tmpr )
 			tmpr_insert( tmpr )
+		if sensor_settings[sensor]['scale_factor'] != 1:
+			watt *= sensor_settings[sensor]['scale_factor']
+		if watt < sensor_settings[sensor]['lower_limit']:
+			watt = 0
 		if ( system_settings.has_key('system_settings_data_save_type') and int(system_settings['system_settings_data_save_type']) == 1 ) or sensors[sensor]['watt'] != watt:
 			sensors[sensor]['watt'] = watt
 			sensor_data_change( 'watt', sensor, watt )
