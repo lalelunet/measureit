@@ -28,17 +28,11 @@ annouying = False
 system = 'envi'
 logger = logging.getLogger('MeasureIt')
 
-usbport = 'COM3'
-config_file_name = "C:\measureit\measureit.cfg.php"
-hdlr = logging.FileHandler('C:\measureit.log')
-
-r = re.search(r"Linux", platform.system())
-if r:
-	usbport = '/dev/ttyUSB0'
-	config_file_name = "/usr/local/measureit/measureit.cfg.php"
-	hdlr = logging.FileHandler('/tmp/measureit.log')
-	#clear logfile
-	subprocess.call('echo "" > /tmp/measureit.log', shell=True)
+usbport = '/dev/ttyUSB0'
+config_file_name = "/web/measureit/measureit_system_files/measureit.cfg.php"
+hdlr = logging.FileHandler('/tmp/measureit.log')
+#clear logfile
+subprocess.call('echo "" > /tmp/measureit.log', shell=True)
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
