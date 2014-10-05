@@ -9,16 +9,16 @@ class mydb{
 	}
 
 	function connect($host,$user,$pass,$datenbank){
-		$this->link = mysql_connect($host,$user,$pass) or die ("Datenbankverbindung nicht moeglich!");
+		$this->link = mysql_connect($host,$user,$pass) or die ("Could not connect to database!");
 		$this->choosedb($datenbank);
 	}
 
 	function choosedb($datenbank){
-		mysql_select_db($datenbank) or die ("Datenbank konnte nicht ausgewaehlt werden!");
+		mysql_select_db($datenbank) or die ("COuld not choose database! ".$datenbank);
 	}
 
 	function query($query){
-		$res = mysql_query($query, $this->link) or die ("SQL Abfrage ist ungueltig. ".mysql_error());
+		$res = mysql_query($query, $this->link) or die ("SQL query is wrong. ".mysql_error());
 		return $res;
 	}
 
