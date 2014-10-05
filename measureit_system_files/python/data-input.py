@@ -447,8 +447,8 @@ def sensor_data_check( sensor, watt, tmpr ):
 	watt = int(watt)
 	tmpr = float(tmpr)
 	if sensors and sensors.has_key(sensor):
-		if sensors[sensor]['tmpr'] != tmpr:
-			sensors[sensor]['tmpr'] = tmpr
+		if sensors[0]['tmpr'] != tmpr:
+			sensors[0]['tmpr'] = tmpr
 			sensor_data_change( 'tmpr', sensor, tmpr )
 			tmpr_insert( tmpr )
 		if sensor_settings[sensor]['scale_factor'] != 1:
