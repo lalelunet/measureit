@@ -1414,9 +1414,9 @@ function sensor_admin_settings(data, sensor){
 		input_get('#sensor_settings_container','sensor_pvoutput_api',data[sensor].sensor.measure_pvoutput_api === undefined ? '' : data[sensor].sensor.measure_pvoutput_api);
 		div_get('#sensor_settings_container','sensor_id','PVOutput System ID:','padding5 notice');
 		input_get('#sensor_settings_container','sensor_pvoutput_id',data[sensor].sensor.measure_pvoutput_id === undefined ? '' : data[sensor].sensor.measure_pvoutput_id);
-		div_get('#sensor_settings_container','sensor_id','Scale Factor:','padding5 notice');
+		div_get('#sensor_settings_container','sensor_id',lng.scale_factor+':','padding5 notice');
 		input_get('#sensor_settings_container','sensor_scale_factor',data[sensor].sensor.measure_scale_factor === undefined ? '1' : data[sensor].sensor.measure_scale_factor);
-		div_get('#sensor_settings_container','sensor_id','Lower Limit:','padding5 notice');
+		div_get('#sensor_settings_container','sensor_id',lng.lower_limit+':','padding5 notice');
 		input_get('#sensor_settings_container','sensor_lower_limit',data[sensor].sensor.measure_lower_limit === undefined ? '' : data[sensor].sensor.measure_lower_limit);
 
 		div_get('#sensor_settings_container','sensor_id','Sensor type:','padding5 notice');
