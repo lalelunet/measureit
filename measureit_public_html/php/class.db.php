@@ -1,5 +1,5 @@
 <?php
-require_once '/web/measureit/measureit_system_files/measureit.cfg.php';
+require_once '../../measureit_system_files/measureit.cfg.php';
 
 class mydb{
 

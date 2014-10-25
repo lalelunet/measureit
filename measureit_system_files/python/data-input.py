@@ -29,7 +29,7 @@ system = 'envi'
 logger = logging.getLogger('MeasureIt')
 
 usbport = '/dev/ttyUSB0'
-config_file_name = "/web/measureit/measureit_system_files/measureit.cfg.php"
+config_file_name = "/usr/local/measureit/measureit.cfg.php"
 hdlr = logging.FileHandler('/tmp/measureit.log')
 #clear logfile
 subprocess.call('echo "" > /tmp/measureit.log', shell=True)
