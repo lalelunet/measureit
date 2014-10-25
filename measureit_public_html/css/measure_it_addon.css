@@ -1,0 +1,25 @@
+.ui-widget-header {
+ border: 0px;
+ background:none;
+}
+
+.ui-widget-content {
+ border: 0px;
+}
+
+.ui-state-default {
+ border:0px !important;
+}
+
+h5 {
+ color: #0D8800 !important;
+}
+div.data {
+ color:#ccc;
+ font-size:12px;
+}
+
+div.refresh {
+ font-size:30px;
+ color: #74E868; 
+}
