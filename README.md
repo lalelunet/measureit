@@ -57,3 +57,6 @@ I will use the money for drinking beer or other reasonable things :)
 There is also a group to discuss about your experience with measureit or anything else that is relatet to energy monitoring :)
 
 http://groups.google.com/group/measureit/
+
+[![Analytics](https://ga-beacon.appspot.com/UA-6114760-13/lalelunet/measureit?pixel)](https://github.com/lalelunet/measureit)
+
