@@ -154,7 +154,6 @@ function sensor_clamps( data, sensor ){
 
 function sensor_statistic_comparison( sensor ){
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_statistic_comparison', 'sensor' : sensor, 'timeframe' : 'all' }, function(d){
-		//graph_draw_comparison( d, sensor);
 		var dataset = []; var tmp=[]; var cnt = 0;
 		$.each(d, function(dat){
 			//console.log('1',d[dat]);
@@ -668,24 +667,6 @@ function graph_draw_data(sensor, d){
 		//});
 }
 
-
-function graph_draw_comparison( d, sensor){
-	$('#placeholder'+sensor).empty();
-	$('.sensor_legend').empty();
-	$('#overview'+sensor).empty();
-	$('.tooltip').remove();
-	div_get('#placeholder'+sensor,'sensor_comparison'+sensor,'');
-	div_get('#tabs-'+sensor,'sensor_comparison_legend'+sensor,'','sensor_legend');
-	div_get('#sensor_comparison_legend'+sensor,'container-legend','','legend-container float_left');
-	div_get('#sensor_comparison_legend'+sensor,'container-selection','','selection-container float_left');
-	
-	var dataset = [];
-	var cnt = 1;
-	var label = '';
-	
-	console.log(d);
-}
-
 function graph_draw_multiple( d, sensor, range, exclude){
 	$('#placeholder'+sensor).unbind();
 	$('.sensor_legend').empty();
@@ -1108,20 +1089,6 @@ function hour_get_formatted( hour, prefix ){
 	return hours[hour];
 }
 
-function iphone_navigation_main( data ) {
-	$('#tabcontainer li').remove();
-	$.each( data, function(d){
-		$('#tabcontainer').append('<li class="edgetoedge" value="'+data[d].sensor.sensor_id+'"><a href="#page'+data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'" class="slideleft'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
-		//$('#contentconatainer').append('');
-		$('#jqt').append('<div id="page'+data[d].sensor.sensor_id+'" class="info"><div class="toolbar"><a href="#" class="back">back</a><h1>' + data[d].sensor.position_description + '</h1></div>');
-		$('#page'+data[d].sensor.sensor_id).append('<div class="info">The title for this page was automatically set from it&#8217;s referring link, no extra scripts required. Just include the extension and this happens.</div></div>');
-		});
-	$('#tabcontainer').append('<li class="edgetoedge" value="11"><a href="#tabs-11" name="11">Setup</a></li>');
-	$('#home').addClass('current');
-	
-}
-
-
 function measureit_admin( data ){
 	$('#adminmenu').remove();
 	$('#tabs-1011').append('<div id="adminmenu" />');
@@ -1357,14 +1324,29 @@ function sensor_list( data ){
 			button_get('#sensor_admin','backup',lng.backup);
 			sensor_add(data);
 			clamp_add(data);
+			button_get('#sensor_admin','global_settings',lng.settings_system);
+			button_get('#sensor_admin','grabber_restart','grabber restart');
+			button_get('#sensor_admin','grabber_status','grabber status');
+			div_get('#sensor_admin','grabber_status_display','','center');
 			system_backup();
+			$('#global_settings').click(function(){
+				global_settings();
+			});
+			
+			$('#grabber_restart').click(function(){
+				$.get('php/measureit_functions.php', { 'do' : 'grabber_restart_init' }, function(d) {
+					$('#grabber_status_display').html('grabber restart within the next 60 secondes');
+					console.log(d);
+				});
+			});
+			
+			$('#grabber_status').click(function(){
+				$.get('php/measureit_functions.php', { 'do' : 'grabber_status_get' }, function(d) {
+					$('#grabber_status_display').html(d);
+					console.log($('#grabber_status_display'),d,'huhu');
+				});
+			});
 		}
-	});
-	
-	button_get('#sensor_admin','global_settings',lng.settings_system);
-	
-	$('#global_settings').click(function(){
-		global_settings();
 	});
 	
 }
@@ -1608,10 +1590,7 @@ function system_backup(){
 				}
 			});
 		});
-
-		
 	});
-
 }
 
 function global_settings( ){

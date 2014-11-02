@@ -128,6 +128,12 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'update_information_get':
 			update_information_get( );
 		break;
+		case 'grabber_restart_init':
+			grabber_restart_init( );
+		break;
+		case 'grabber_status_get':
+			grabber_status_get( );
+		break;
 		default:
 			echo 'this is not a valid request';
 		break;
@@ -986,6 +992,7 @@ function backup_create(){
 }
 
 function backup_list_get(){
+	if( !is_dir('../backup') ){ mkdir( '../backup', 0775 ); }
 	$dir = opendir('../backup');
 	$files = array( );
 	while( false !== ( $file = readdir( $dir ) ) ){
@@ -1052,6 +1059,19 @@ function timezone_diff_get( $params = array( ) ){
 	$diff['prefix'] = $r[1] != '' ? $r[1] : false;
 	$diff['diff'] = ( $r[2] * 60 ) * 60;
 	return $diff;
+}
+
+function grabber_restart_init( ){
+	system( 'touch /tmp/measureit_grabber_restart' );
+	return true;
+}
+
+function grabber_status_get( ){
+	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f 1" );
+	if( !is_numeric( $pid ) ) return false;
+	$proc_info = system( 'ps -p '.$pid.' -o etime=' );
+	print json_decode($proc_info);
+	return true;
 }
 
 function format_bytes($size) {

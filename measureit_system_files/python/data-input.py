@@ -49,7 +49,6 @@ elif 'debug' in sys.argv:
 else:
 	logger.setLevel(logging.WARNING)
 
-
 def sensor_list_get():
 	try:
 		logger.info('Try to get sensor list in sensor_list_get')
@@ -227,6 +226,26 @@ def cron_timer_weekly():
 	timer_weekly.start()
 	update_check()
 	logger.info('weekly job in cron_timer_weekly successful')
+
+def cron_timer_1minute_restart():
+	# delete file that restart the grabber with cron
+	timer_1minute_restart = threading.Timer(60.0, cron_timer_1minute_restart)
+	timer_1minute_restart.start();
+
+	if annouying:
+		logger.info('Look if I should restart')
+	try:
+		os.remove('/tmp/measureit_grabber_restart')
+		logger.info('Found file /tmp/measureit_grabber_restart. Try to kill me in 3 seconds')
+		time.sleep(3)
+		try:
+			killstr = 'kill -9 '+str(os.getpid())
+			subprocess.call(killstr, shell=True)
+		except:
+			logger.warning('Something went wrong while killing me. Error: '+traceback.format_exc())
+	except:
+		logger.info('No restart file found')
+		
 
 def update_check():
 	if system_settings.has_key('current_version'):
@@ -730,6 +749,7 @@ try:
 	cron_timer_hourly()
 	cron_timer_daily()
 	cron_timer_weekly()
+	cron_timer_1minute_restart()
 	logger.info('Start parsing XML')
 	
 	if system_settings.has_key('system_settings_system') and system_settings['system_settings_system'] == 'classic':
