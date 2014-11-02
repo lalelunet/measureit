@@ -1343,7 +1343,6 @@ function sensor_list( data ){
 			$('#grabber_status').click(function(){
 				$.get('php/measureit_functions.php', { 'do' : 'grabber_status_get' }, function(d) {
 					$('#grabber_status_display').html(d);
-					console.log($('#grabber_status_display'),d,'huhu');
 				});
 			});
 		}
