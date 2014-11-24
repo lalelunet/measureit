@@ -242,7 +242,6 @@ function summary_start( $request = array( ) ){
 	foreach( $sensors as $k=>$v ){
 		$p = end( $v['positions'] );
 		$vn = sensor_values_now_get( $k );
-		
 		$r[$k]['sensor'] = $v;
 		$r[$k]['tmpr'] = $vn['tmpr'];
 		$r[$k]['watt'] = $vn['watt'];
@@ -1067,7 +1066,7 @@ function grabber_restart_init( ){
 }
 
 function grabber_status_get( ){
-	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f 2" );
+	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f 1" );
 	if( !is_numeric( $pid ) ) return false;
 	$proc_info = system( 'ps -p '.$pid.' -o etime=' );
 	print json_decode($proc_info);

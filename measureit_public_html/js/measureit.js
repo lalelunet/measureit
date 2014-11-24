@@ -58,7 +58,7 @@ function navigation_main( data ) {
 		if( data[d].sensor.sensor_id < 10 ){
 			//sensor_statistic_small_get( data[d].sensor.sensor_id );
 			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'" id="submenu'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
-			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /></div>');
+			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 			sensor_clamps(data[d].sensor.clamps,d);
 
 		}
@@ -98,6 +98,7 @@ function sensor_statistic( data, sensor ){
 		//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
 		$('#sensor_statistic'+sensor).click(function( ) { 
 			$('#placeholder'+sensor).empty();
+			$('#overview'+sensor).empty();
 			$('#placeholder'+sensor).unbind();
 			$('.tooltip').remove();
 			$('.sensor_legend').remove();
@@ -138,7 +139,7 @@ function sensor_clamps( data, sensor ){
 		$('#submenu'+sensor).addClass('menu_clamp_with_sensor');
 		$.each(data, function(d){
 			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top sensor_clamp_menu sensor_clamp_menu'+sensor+'"><a href="#tabs-' + d + '" name="'+d+'">' + data[d] + '</a></li>');
-			$('#tabs').append('<div id="tabs-'+d+'" name="'+d+'"><div id="menu'+d+'" class="menu" /><div id="det'+d+'" class="det"><div class="placeholder" id="placeholder' +d+'" /></div>');
+			$('#tabs').append('<div id="tabs-'+d+'" name="'+d+'"><div id="menu'+d+'" class="menu" /><div id="det'+d+'" class="det"><div class="placeholder" id="placeholder' +d+'" /><div class="overview" id="overview' +d+'" /></div></div>');
 		});
 		$('#sensor_hide'+sensor).toggle(
 				function(){
@@ -170,6 +171,7 @@ function sensor_statistic_comparison( sensor ){
 }
 
 function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
+	$('#overview'+sensor).empty();
 	$('#container-legend').remove();
 	$('.sensor_legend').remove();
 	div_get('#placeholder'+sensor, 'loading_main'+sensor,'','loader');
@@ -319,6 +321,7 @@ function sensor_statistic_generate( data, sensor, position ){
 						$('#sensor_statistic_month'+v+m).click(function(){
 							$('#sensor_statistic_month_container'+v+m).toggle('slow');
 							$('#tabs').css('height','100%');
+							$('#overview'+sensor).css('display','none');
 							});
 						//days
 						$.each( this, function( d ){
@@ -522,11 +525,26 @@ function graph_draw(sensor, query, options, info){
 	$('.tooltip').remove();
 	$('#switch-placeholder'+sensor).remove();
 	$('.sensor_legend').empty();
+	$('#overview'+sensor).css('display','none');
 	$.getJSON('php/measureit_functions.php', query, function(d) {
 				var plot = false;
 				var placeholder = '#placeholder'+sensor;
+				var timeline = '#overview'+sensor;
+				var overview = '#overview'+sensor;
 				$(placeholder).empty();
+				$(timeline).empty();
 				var plot = $.plot($(placeholder), [d], options);
+				var overview = $.plot($(timeline), [d], {
+					series: {
+						lines: { show: true, lineWidth: 1, steps: true },
+						shadowSize: 0
+					},
+					xaxis: { ticks: [], mode: "time" },
+					yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
+					selection: { mode: "x" },
+					legend: { show: true, position: 'no' },
+					grid: { hoverable: true, clickable: true }
+				});
 
 				$(placeholder).bind("plothover", function (e, pos, item) {
 					$("#x").text(pos.x.toFixed(2));
@@ -539,7 +557,7 @@ function graph_draw(sensor, query, options, info){
 						}
 				});
 
-				//date_switch_generate(sensor, query, options);
+				date_switch_generate(sensor, query, options);
 				
 				if( $('#show'+sensor).val() !== 't' ){
 						$(placeholder).bind("plotclick", function (e, pos, item) {
@@ -573,6 +591,11 @@ function graph_draw(sensor, query, options, info){
 								  $.extend(true, {}, options, {
 									  xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
 								  }));
+					overview.setSelection(ranges, true);
+				});
+				
+				$(timeline).bind("plotselected", function (event, ranges) {
+					plot.setSelection(ranges);
 				});
 
 				infobox(placeholder, info);
@@ -585,6 +608,7 @@ function graph_draw_data(sensor, d){
 	$('.tooltip').remove();
 	$('#switch-placeholder'+sensor).remove();
 	$('.sensor_legend').empty();
+	$('#overview'+sensor).css('display','inline');
 	var options = {
 			xaxis: { mode: 'time' },
 			lines: { show: true, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
@@ -597,8 +621,22 @@ function graph_draw_data(sensor, d){
 	//$.getJSON('php/measureit_functions.php', query, function(d) {
 				var plot = false;
 				var placeholder = '#placeholder'+sensor;
+				var timeline = '#overview'+sensor;
+				var overview = '#overview'+sensor;
 				$(placeholder).empty();
+				$(timeline).empty();
 				var plot = $.plot($(placeholder), [d], options);
+				var overview = $.plot($(timeline), [d], {
+					series: {
+						lines: { show: true, lineWidth: 1, steps: true },
+						shadowSize: 0
+					},
+					xaxis: { ticks: [], mode: "time" },
+					yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
+					selection: { mode: "x" },
+					legend: { show: true, position: 'no' },
+					grid: { hoverable: true, clickable: true }
+				});
 
 				$(placeholder).bind("plothover", function (e, pos, item) {
 					$("#x").text(pos.x.toFixed(2));
@@ -618,9 +656,13 @@ function graph_draw_data(sensor, d){
 								  $.extend(true, {}, options, {
 									  xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
 								  }));
-					
+					overview.setSelection(ranges, true);
 				});
 				
+				$(timeline).bind("plotselected", function (event, ranges) {
+					plot.setSelection(ranges);
+				});
+
 				//infobox(placeholder, info);
 		//});
 }
@@ -628,6 +670,7 @@ function graph_draw_data(sensor, d){
 function graph_draw_multiple( d, sensor, range, exclude){
 	$('#placeholder'+sensor).unbind();
 	$('.sensor_legend').empty();
+	$('#overview'+sensor).empty();
 	$('.tooltip').remove();
 	div_get('#placeholder'+sensor,'sensor_usage'+sensor,'');
 	div_get('#tabs-'+sensor,'sensor_legend'+sensor,'','sensor_legend');
@@ -885,7 +928,7 @@ function infobox(placeholder, info){
 
 function date_switch_generate( sensor, query, options ){
 	if(query.table != 'measure_watt') return true;
-	div_get('#placeholder'+sensor, 'switch-placeholder'+sensor, '', 'switch-link-container');
+	div_get('#det'+sensor, 'switch-placeholder'+sensor, '', 'switch-link-container');
 	div_get('#switch-placeholder'+sensor, 'switch-link-left'+sensor, '<div id="switch-link-left'+sensor+'" />', 'switch-link switch-link-left float_left');
 	div_get('#switch-placeholder'+sensor, 'switch-link-right'+sensor, '<div id="switch-link-right'+sensor+'" />', 'switch-link switch-link-right float_right');
 	
@@ -1300,6 +1343,7 @@ function sensor_list( data ){
 			$('#grabber_status').click(function(){
 				$.get('php/measureit_functions.php', { 'do' : 'grabber_status_get' }, function(d) {
 					$('#grabber_status_display').html(d);
+					console.log($('#grabber_status_display'),d,'huhu');
 				});
 			});
 		}
@@ -1748,5 +1792,3 @@ function backup_delete( file ){
 	sensor_settings_clean();
 	sensor_settings_detail_clean();
 }
-
-
