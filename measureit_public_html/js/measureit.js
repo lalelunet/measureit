@@ -1,4 +1,9 @@
 if( pc === 1 ){
+	var lng;
+	$.getJSON('php/measureit_functions.php', { 'do' : 'lng_get' }, function(data){
+		lng = data;
+	});
+
 	// load navi
 	$.getJSON('php/measureit_functions.php', { 'do' : 'navigation_main' }, function(data) {
 		navigation_main( data );
@@ -6,21 +11,12 @@ if( pc === 1 ){
 
 	var timer = setTimeout(hist_update, 10000);
 	$('.ui-tabs').click(function(){ $('.ui-tabs').css( 'height', '100%' ) });
-
-	var lng;
-	$.getJSON('php/measureit_functions.php', { 'do' : 'lng_get' }, function(data){
-		lng = data;
-	});
 	
 	$.getJSON('php/measureit_functions.php', { 'do' : 'update_information_get' }, function(data){
 		if( data && data.measure_system_setting_value ){
 			div_get('body','update_information','New version available <a href="https://code.google.com/p/measureit/downloads/list" target="_blank">more information</a>','notice_box margin5');
 		}
 	});
-	
-	// sensor history last 48 hours
-	var history_small = new Array();
-	
 }
 
 
@@ -53,10 +49,10 @@ function navigation_main( data ) {
 	hist_update('0');
 	$('#tabcontainer li').remove();
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1000"><a href="#tabs-1000" name="1000">Home</a></li>');
-	
+	//$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1001"><a href="#tabs-1001" name="1001">TMPR</a></li>');
+
 	$.each( data, function(d){
 		if( data[d].sensor.sensor_id < 10 ){
-			//sensor_statistic_small_get( data[d].sensor.sensor_id );
 			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'" id="submenu'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
 			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 			sensor_clamps(data[d].sensor.clamps,d);
@@ -64,17 +60,23 @@ function navigation_main( data ) {
 		}
 			
 		});
+
 	$('#tabcontainer').append('<li class="ui-state-default ui-corner-top" value="1011"><a href="#tabs-1011" name="1011">Setup</a></li>');
-	$('#tabs,#foo').tabs({
+	$('#tabs').tabs({
 		select: function(event, ui){
 			$('.tooltip').hide();
-			if($(ui.tab).attr('name') != '1000' && $(ui.tab).attr('name') != '1011' ){
+			if($(ui.tab).attr('name') != '1000' && $(ui.tab).attr('name') != '1011' && $(ui.tab).attr('name') != '1001' ){
 				sensor_detail($(ui.tab).attr('name'));
 				hist_update('1');
 				return true;
 			}
 			if($(ui.tab).attr('name') == '1000'){
 				hist_update('0');
+				return true;
+			}
+			if($(ui.tab).attr('name') == '1001'){
+				temperature_view();
+				hist_update('1');
 				return true;
 			}
 			if($(ui.tab).attr('name') == '1011'){
@@ -86,6 +88,64 @@ function navigation_main( data ) {
 	});
 };
 
+function temperature_view(){
+	$('#temperature_view').remove();
+	$('#tabs-1001').append('<div id="temperature_view" />');
+	$.getJSON('php/measureit_functions.php', { 'do' : 'tmpr_view_main' }, function(data) {
+		graph_draw_new(data);
+	});
+	
+}
+
+function graph_draw_new(d){
+	div_get('#temperature_view','tmpr_container','','ui-corner-all');
+
+	var dataset = [];
+	var cnt = 1;
+	var label = '';
+	
+	$.each(d, function(dat){
+		var label = 'label';
+		var series = [];
+		
+		$.each( d[dat], function( set ){
+			series.push([parseFloat(set), parseFloat(d[dat][set].data)]);
+		});
+		var day = {
+			label: dat+' '+label,
+			id: dat,
+			data: series,
+			yaxes: cnt
+		};
+		dataset.push(day);
+		cnt++;
+	});
+
+	$("#tmpr_container").bind("plothover", function (e, pos, item, sensor) {
+		$("#x").text(pos.x.toFixed(2));
+		$("#y").text(pos.y.toFixed(2));
+			if (item) {
+				var description = dataset.length == 8 ? item.series.label+'<br />'+item.datapoint[0]+':00 ' : item.series.label+' day: '+item.datapoint[0]+'<br />';
+				$("#tooltip"+sensor).remove();
+				var x = item.datapoint[0].toFixed(2),
+					y = item.datapoint[1].toFixed(2);
+				showTooltip(item.pageX, item.pageY, description+' '+y+' kwheeee', sensor);
+			}
+	});
+	$.plot($("#tmpr_container"), dataset, {
+		selection: { mode: "time" },
+		grid: { hoverable: true },
+		lines: { show: true, lineWidth: 1 },
+		//bars: { show: true },
+		points: { show: true, radius: 2 },
+		legend: { show: true, container: $('#container-legend') }
+	});
+	
+	$('#tabs').css('height','100%');
+
+	
+}
+
 function sensor_statistic( data, sensor ){
 	// there are no clamp details from the current cost device
 	//if(sensor < 10){
@@ -95,7 +155,6 @@ function sensor_statistic( data, sensor ){
 		button_get('#statistic'+sensor,'sensor_statistic_multiple_week'+sensor,lng.day_last_7);
 		button_get('#statistic'+sensor,'sensor_statistic_multiple_year'+sensor,lng.month_last_12);
 		button_get('#statistic'+sensor,'sensor_statistic_datetime'+sensor,lng.usage_day_time);
-		//button_get('#statistic'+sensor,'sensor_statistic_comparison'+sensor,'comparison');
 		$('#sensor_statistic'+sensor).click(function( ) { 
 			$('#placeholder'+sensor).empty();
 			$('#overview'+sensor).empty();
@@ -119,18 +178,8 @@ function sensor_statistic( data, sensor ){
 		$('#sensor_statistic_multiple_week'+sensor).click( function(){ sensor_history_get( sensor, 'week' ); });
 		$('#sensor_statistic_multiple_year'+sensor).click( function(){ sensor_history_get( sensor, 'month' ); });
 		$('#sensor_statistic_datetime'+sensor).click( function(){ sensor_statistic_datetime( sensor ) });
-		//$('#sensor_statistic_comparison'+sensor).click( function(){ sensor_statistic_comparison( sensor ) });	
+		
 	//}
-}
-
-function sensor_statistic_small_get( sensor ){
-	$.getJSON('php/measureit_functions.php', { 'do' : 'summary_sensor_history_short', 'sensor' : sensor, 'timeframe' : 'static', 'unit' : 'hour', 'unit_value' : 2, 'table' : 'measure_watt' }, function(data){
-		if( data ){
-			console.log(data);
-			history_small[sensor]=data;
-			return true;
-		}
-	});
 }
 
 function sensor_clamps( data, sensor ){
@@ -150,24 +199,6 @@ function sensor_clamps( data, sensor ){
 				}
 			);
 	}
-}
-
-function sensor_statistic_comparison( sensor ){
-	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_statistic_comparison', 'sensor' : sensor, 'timeframe' : 'all' }, function(d){
-		var dataset = []; var tmp=[]; var cnt = 0;
-		$.each(d, function(dat){
-			//console.log('1',d[dat]);
-			$.each(d[dat], function(f){
-				if(typeof(d[dat][f]) == 'object'){
-					//console.log(d[dat][f]);
-					tmp.push({ label: dat+'-'+f,  data: d[dat][f]['data'] });
-				} 
-			});
-			dataset[cnt] = tmp;
-			cnt = cnt+1;
-		});
-		console.log(dataset);
-	});
 }
 
 function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
@@ -512,12 +543,6 @@ function sensor_detail(data){
 		sensor_statistic( d.sensor[data].positions, data );
 		sensor_data_selection( data, lng.hour_last_2 );
 		$('.loader').fadeOut();
-		
-		// last 48 hours
-		if(typeof(history_small[data])=='object'){
-			//(typeof(history_small[data][6].data));
-			//graph_draw_data(data, history_small[data][6].data)
-		}
 	});
 };
 
@@ -1332,6 +1357,7 @@ function sensor_list( data ){
 			$('#global_settings').click(function(){
 				global_settings();
 			});
+			button_get('#sensor_admin','measureit_help',lng.help);
 			
 			$('#grabber_restart').click(function(){
 				$.get('php/measureit_functions.php', { 'do' : 'grabber_restart_init' }, function(d) {
@@ -1343,8 +1369,14 @@ function sensor_list( data ){
 			$('#grabber_status').click(function(){
 				$.get('php/measureit_functions.php', { 'do' : 'grabber_status_get' }, function(d) {
 					$('#grabber_status_display').html(d);
-					console.log($('#grabber_status_display'),d,'huhu');
+					//console.log($('#grabber_status_display'),d,'huhu');
 				});
+			});
+			$('#measureit_help').click(function(){
+				var help = window.open('https://github.com/lalelunet/measureit/wiki', '_blank');
+				if(help){
+				    help.focus();
+				}
 			});
 		}
 	});

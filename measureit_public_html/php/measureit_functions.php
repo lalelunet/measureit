@@ -20,9 +20,6 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'summary_sensor':
 			sensor_data_get( $_REQUEST );
 		break;
-		case 'summary_sensor_history_short':
-			sensor_data_get_sorted( $_REQUEST );
-		break;
 		case 'sensor_detail_statistic':
 			sensor_detail_statistic( $_REQUEST );
 		break;
@@ -31,9 +28,6 @@ if( isset( $_REQUEST['do'] ) ){
 		break;
 		case 'sensor_history_year':
 			sensor_history_year( $_REQUEST );
-		break;
-		case 'sensor_statistic_comparison':
-			sensor_statistic_comparison( $_REQUEST );
 		break;
 		case 'sensor_statistic':
 			sensor_statistic( $_REQUEST );
@@ -134,10 +128,54 @@ if( isset( $_REQUEST['do'] ) ){
 		case 'grabber_status_get':
 			grabber_status_get( );
 		break;
+		case 'tmpr_view_main':
+			tmpr_view_main( $_REQUEST );
+		break;
 		default:
 			echo 'this is not a valid request';
 		break;
 	}
+}
+
+function tmpr_view_main( $params ){
+	$ret = ''; $use_diff = false; $r = array();
+	if( $diff = timezone_diff_get( $params ) ){
+		$use_diff = true;
+		$diff = timezone_diff_get( $params );
+	}
+	$db = new mydb;
+	$query = $db->query( "select hour_id, time, hour, data, unix_timestamp(ts) from measure_tmpr_hourly order by hour_id desc limit 72" );
+
+	while( $d = $db->fetch_array( $query )  ){
+		$ts = $d['unix_timestamp(ts)'];
+		
+		# update old data entries
+		if( $d['unix_timestamp(ts)'] == 0 ){
+			$ts = strtotime( $d['time'].' '.$d['hour'].':00:00' ).'000';
+			$date = $d['time'].' '.$d['hour'].':00:00';
+			$db->query( 'update measure_tmpr_hourly set ts = "'.$date.'" where hour_id = '.$d['hour_id'] );
+		}
+		if( $use_diff ){
+			$ts = $diff['prefix'] == '-' ? $ts - $diff['diff'] : $ts + $diff['diff'];
+		}
+		
+		$r[@date( 'Y-m-d', $ts )][@date( 'G', $ts )]['data'] = $d['data'];
+		ksort($r[@date( 'Y-m-d', $ts )]);
+		
+		#$r .= '['.$ts.','.$d['data'].'],';
+	}
+	print json_encode($r);
+	return true;
+	
+
+	while( $d = $db->fetch_array( $query ) ){
+		
+		$r[@date( 'Y-m-d', $date )][@date( 'G', $date )]['data'] = $d['data'];
+		ksort($r[@date( 'Y-m-d', $date )]);
+	}
+	print json_encode($r);
+	return true;
+	
 }
 
 function navigation_main( ){
@@ -276,33 +314,6 @@ function sensor_history_week( $params = array( ) ){
 	return true;
 }
 
-function sensor_statistic_comparison( $params ){
-	$params['table'] = 'measure_watt_monthly';
-	$q = data_query_build( $params );
-	$db = new mydb;
-	$query = $db->query( $q );
-	while( $d = $db->fetch_array( $query ) ){
-		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
-		$r[$ret[1]][$ret[2]]['data'] = $d['data'];
-	}
-	$params['table'] = 'measure_watt_daily';
-	$q = data_query_build( $params );
-	$query = $db->query( $q );
-	while( $d = $db->fetch_array( $query ) ){
-		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
-		$r[$ret[1]][$ret[2]][$ret[3]]['data'] = $d['data'];
-	}
-	$params['table'] = 'measure_watt_hourly';
-	$q = data_query_build( $params );
-	$query = $db->query( $q );
-	while( $d = $db->fetch_array( $query ) ){
-		preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $d['time'], $ret );
-		$r[$ret[1]][$ret[2]][$ret[3]][$d['hour']]['data'] = $d['data'];
-	}
-	print json_encode($r);
-	return true;
-}
-
 function sensor_history_year( $params = array( ) ){
 	$ret = ''; $use_diff = false;
 	if( $diff = timezone_diff_get( $params ) ){
@@ -354,136 +365,6 @@ function sensor_data_get( $params = array( ) ){
 		$r = '['.$r.']';
 		if( isset( $params['debug'] ) ) debug( 'Values in sensor_data_get', false, $dbg );
 		print $r;
-	}
-}
-
-function sensor_data_get_sorted( $params = array( ) ){
-	$q = !strpos( $params['table'], 'tmpr' ) ? data_query_build( $params ) : tmpr_get_query( $params );
-	if( $q ){
-		$t = ''; $use_diff = false; $cnt_data = $ts_start = 0; $cum = $pr = array( );
-		$db = new mydb;
-		$query = $db->query( $q );
-		if( $diff = timezone_diff_get( $params ) ){
-			$use_diff = true;
-			$diff = timezone_diff_get( $params );
-		}
-		while( $d = $db->fetch_array( $query ) ){
-			$time =  $ts = $d['time'];
-			if( $use_diff ){
-				$ts = $diff['prefix'] == '+' ? @strtotime( $time ) - $diff['diff'] : @strtotime( $time ) + $diff['diff'];
-			}
-			if( $cnt_data == 0 ){
-				$ts_start = $ts;
-			}
-			if( $ts <= $ts_start + 21600 ){
-				@$cum[6][$ts] = $d['data'];
-				@$cum[9][$ts] = $d['data'];
-				@$cum[12][$ts] = $d['data'];
-				@$cum[15][$ts] = $d['data'];
-				@$cum[18][$ts] = $d['data'];
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 32400 ){
-				@$cum[9][$ts] = $d['data'];
-				@$cum[12][$ts] = $d['data'];
-				@$cum[15][$ts] = $d['data'];
-				@$cum[18][$ts] = $d['data'];
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 43200 ){
-				@$cum[12][$ts] = $d['data'];
-				@$cum[15][$ts] = $d['data'];
-				@$cum[18][$ts] = $d['data'];
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 54000 ){
-				@$cum[15][$ts] = $d['data'];
-				@$cum[18][$ts] = $d['data'];
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 64800 ){
-				@$cum[18][$ts] = $d['data'];
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 75600 ){
-				@$cum[21][$ts] = $d['data'];
-				@$cum[24][$ts] = $d['data'];
-			}elseif( $ts <= $ts_start + 86400 ){
-				@$cum[24][$ts] = $d['data'];
-			}
-			
-			$cnt_data++;
-		}
-		
-		foreach ( $cum as $k => $v){
-			$tc = 1;
-			foreach( $v as $kv => $vv ){
-				$tstp = $kv * 1000; 
-				if( $tc == 1 ){
-					$tts = $tstp;
-				}
-				
-				if( $k == 6 ){
-					if( $tc == 3 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 3 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 9 ){
-					if( $tc == 4 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 4 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 12 ){
-					if( $tc == 6 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 6 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 15 ){
-					if( $tc == 7 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 7 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 18 ){
-					if( $tc == 9 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 9 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 21 ){
-					if( $tc == 10 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 10 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}elseif( $k == 24 ){
-					if( $tc == 11 ){
-						$tc = 0;
-						$r[$k][$tts] = round( $r[$k][$tts] / 11 );
-						@$pr[$k]['data'] .= '['. $tts .', '. $r[$k][$tts] .'],';
-					}
-					@$r[$k][$tts] += $vv;
-				}
-				$tc++;
-			}
-		}
-		
-		# remove last colon from arrays
-		foreach( $pr as $k=>$v ){
-			$pr[$k] = preg_replace( '/(.+),$/', "$1", $v );
-		}
-		
-		print json_encode( $pr );
-		return true;
 	}
 }
 
@@ -1066,7 +947,7 @@ function grabber_restart_init( ){
 }
 
 function grabber_status_get( ){
-	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f 1" );
+	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f1" );
 	if( !is_numeric( $pid ) ) return false;
 	$proc_info = system( 'ps -p '.$pid.' -o etime=' );
 	print json_decode($proc_info);
