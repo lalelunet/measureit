@@ -622,8 +622,9 @@ function data_query_build( $params = array( ) ){
 	$selection = isset( $params['selection'] ) ? mysql_real_escape_string( $params['selection'] ) : '*';
 	$query = "SELECT $selection FROM $table WHERE sensor = '$sensor' $timeframe";
 	if( isset( $params['debug'] ) ) debug( $query, $params );
+	return $query;
 	#var_dump('<pre>',$params);
-	return mysql_real_escape_string( $query );
+	#return mysql_real_escape_string( $query );
 }
 
 function price_sum( $params = array( ) ){
