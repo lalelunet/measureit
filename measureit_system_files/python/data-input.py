@@ -737,8 +737,15 @@ try:
 	ser = serial.Serial(port=usbport, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=3)
 	logger.info('Connected to the serial device '+usbport)
 except:
-	logger.error('Can not connect to the serial device. Please check the cable is plugged in and if the device has the correctly drivers installed Error: '+traceback.format_exc())
-	err_critical_count()
+	logger.error('Can not connect to /dev/ttyUSB0. I try now /dev/ttyUSB1')
+	usbport = '/dev/ttyUSB1'
+	try:
+		ser = serial.Serial(port=usbport, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=3)
+		logger.info('Connected to the serial device '+usbport)
+	
+	except:
+		logger.error('Can not connect to the serial device. Please check the cable is plugged in and if the device has the correctly drivers installed Error: '+traceback.format_exc())
+		err_critical_count()
 
 try:
 	config_parse()

@@ -109,7 +109,7 @@ function graph_draw_new(d){
 		var series = [];
 		
 		$.each( d[dat], function( set ){
-			series.push([parseFloat(set), parseFloat(d[dat][set].data)]);
+			series.push([set, parseFloat(d[dat][set].data)]);
 		});
 		var day = {
 			label: dat+' '+label,
@@ -121,6 +121,7 @@ function graph_draw_new(d){
 		cnt++;
 	});
 
+	/*
 	$("#tmpr_container").bind("plothover", function (e, pos, item, sensor) {
 		$("#x").text(pos.x.toFixed(2));
 		$("#y").text(pos.y.toFixed(2));
@@ -132,13 +133,20 @@ function graph_draw_new(d){
 				showTooltip(item.pageX, item.pageY, description+' '+y+' kwheeee', sensor);
 			}
 	});
+	*/
 	$.plot($("#tmpr_container"), dataset, {
-		selection: { mode: "time" },
-		grid: { hoverable: true },
-		lines: { show: true, lineWidth: 1 },
+		selection: { mode: 'time' },
+		select : 'time',
+		xaxis: { mode: 'time' },
+		lines: { show: true, 
+				 lineWidth: 0.5,
+				 fill: true,
+				 fillColor: "rgba(255, 255, 255, 0.7)" },
 		//bars: { show: true },
 		points: { show: true, radius: 2 },
-		legend: { show: true, container: $('#container-legend') }
+		legend: { show: true, container: $('#container-legend') },
+		grid: { backgroundColor: { colors: ["#fff", "#888"] } }
+		
 	});
 	
 	$('#tabs').css('height','100%');
@@ -526,8 +534,8 @@ function sensor_data_selected( data, sensor, info ){
 		lines: { show: lines, lineWidth: 0.5, fill: true, fillColor: "rgba(255, 255, 255, 0.7)" },
 		points: { show: points, radius: 2 },
 		select : select,
-		grid: { hoverable: hoverable,
-				clickable: clickable,
+		grid: { hoverable: true,
+				clickable: false,
 				backgroundColor: { colors: ["#fff", "#888"] } }
 	};
 	graph_draw(sensor,query,options, info);

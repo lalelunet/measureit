@@ -14,11 +14,11 @@ class mydb{
 	}
 
 	function choosedb($datenbank){
-		mysql_select_db($datenbank) or die ("COuld not choose database! ".$datenbank);
+		mysql_select_db($datenbank) or die ("Could not choose database! ".$datenbank);
 	}
 
 	function query($query){
-		$res = mysql_query($query, $this->link) or die ("SQL query is wrong. ".mysql_error());
+		$res = mysql_query($query, $this->link) or die ( );
 		return $res;
 	}
 

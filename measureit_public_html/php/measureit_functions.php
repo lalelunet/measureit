@@ -151,7 +151,7 @@ function tmpr_view_main( $params ){
 		
 		# update old data entries
 		if( $d['unix_timestamp(ts)'] == 0 ){
-			$ts = strtotime( $d['time'].' '.$d['hour'].':00:00' ).'000';
+			$ts = strtotime( $d['time'].' '.$d['hour'].':00:00' );
 			$date = $d['time'].' '.$d['hour'].':00:00';
 			$db->query( 'update measure_tmpr_hourly set ts = "'.$date.'" where hour_id = '.$d['hour_id'] );
 		}
@@ -159,8 +159,9 @@ function tmpr_view_main( $params ){
 			$ts = $diff['prefix'] == '-' ? $ts - $diff['diff'] : $ts + $diff['diff'];
 		}
 		
-		$r[@date( 'Y-m-d', $ts )][@date( 'G', $ts )]['data'] = $d['data'];
-		ksort($r[@date( 'Y-m-d', $ts )]);
+		$r[][$ts.'000']['data'] = $d['data'];
+		//$r[@date( 'Y-m-d', $ts )][@date( 'G', $ts )]['data'] = $d['data'];
+		//ksort($r[@date( 'Y-m-d', $ts )]);
 		
 		#$r .= '['.$ts.','.$d['data'].'],';
 	}
@@ -397,6 +398,7 @@ function sensor_notifications_get( $params = array( ) ){
 
 function sensor_notification_save( $params = array( ) ){
 	$keys = $values = array( );
+	if( !input_check( $params ) ){ return false; }
 	foreach( $params as $k => $v){
 		if( $k == 'do' || $k == 'sensor' || ( $k == 'measure_notifications_id' && $v == 0 ) ) continue;
 		$keys[] = $k;
@@ -466,7 +468,7 @@ function sensor_price_delete( $params = array( ) ){
 }
 
 function sensor_prices_delete( $params = array( ) ){
-	if( !isset( $params['date'] ) ) return true;
+	if( !isset( $params['date'] ) || !input_check( $params ) ) return true;
 	$db = new mydb;
 	$query = $db->query( 'DELETE from measure_costs WHERE costs_since = "'.$params['date'].'"' );
 	return true;
@@ -492,6 +494,7 @@ function sensor_statistic( $params = array( ) ){
 }
 
 function sensor_data_raw_get( $params = array( ) ){
+	$r = array( );
 	if( $q = data_query_build( $params ) ){
 		$db = new mydb;
 		$query = $db->query( $q );
@@ -566,12 +569,13 @@ function lng_str_get( $language = false, $lng_str = array( ) ){
 }
 
 function tmpr_get_query( $params = array( )){
-	if( !strpos( $params['table'], 'tmpr' ) ){ return false; }
+	if( !strpos( $params['table'], 'tmpr' ) || !input_check( $params ) ){ return false; }
 	$query = "SELECT * FROM $params[table] WHERE time = '$params[select]'";
 	return $query;
 }
 
 function data_query_build( $params = array( ) ){
+	if( !input_check( $params ) ){ return false; }
 	$table = preg_match( '/(measure_watt|measure_watt_hourly|measure_watt_daily|measure_watt_monthly)/', $params['table'] ) ? $params['table'] : error( 'no database table selected: '.$params['table'] );
 	$sensor = is_numeric( $params['sensor'] ) ? $params['sensor'] : error( 'no sensor error: '.$params['sensor'] );
 	$order = isset( $params['order'] ) ? $params['order'] : 'time';
@@ -619,10 +623,10 @@ function data_query_build( $params = array( ) ){
 	$query = "SELECT $selection FROM $table WHERE sensor = '$sensor' $timeframe";
 	if( isset( $params['debug'] ) ) debug( $query, $params );
 	#var_dump('<pre>',$params);
-	return $query;
+	return mysql_real_escape_string( $query );
 }
 
-function price_sum( $params ){
+function price_sum( $params = array( ) ){
 	$prices = array();
 	if( array_key_exists( $params['sensor'], $params['prices'] ) ){
 		$prices = array_shift(  $params['prices'][$params['sensor']] );
@@ -686,6 +690,7 @@ function in_range( $from = false, $to = false, $day = false ){
 }
 
 function sensor_position_next_date_get( $params = array( ) ){
+	if( !is_numeric( $params[sensor_position] ) || !is_numeric( $params[sensor] ) ){ return false; }
 	$db = new mydb;
 	$query = $db->query("SELECT position_time FROM measure_positions WHERE position_id > $params[sensor_position] AND position_sensor = $params[sensor]");
 	$date = $db->fetch_row( $query );
@@ -694,6 +699,7 @@ function sensor_position_next_date_get( $params = array( ) ){
 }
 
 function sensor_position_last_get( $sensor ){
+	if( !is_numeric( $params[sensor] ) ){ return false; }
 	$db = new mydb;
 	$query = $db->query("SELECT * FROM `measure_positions` WHERE position_sensor = $sensor  ORDER BY position_id DESC  LIMIT 1");
 	$sp = $db->fetch_row( $query );
@@ -768,12 +774,14 @@ function sensors_get_json( ){
 }
 
 function sensor_position_add( $params = array() ){
+	if( !input_check( $params ) ){ return false; }
 	$db = new mydb;
 	$db->query("INSERT INTO measure_positions ( position_time, position_description, position_sensor ) VALUES ( UTC_TIMESTAMP( ), '$params[sensor_position_name]', '$params[sensor_id]' )");
 	return true;
 }
 
 function sensor_settings_save( $params = array() ){
+	if( !input_check( $params ) ){ return false; }
 	$params['sensor_price'] = preg_replace('/,/', '.', @$params['sensor_price']);
 	$db = new mydb;
 	$db->query("UPDATE measure_settings SET measure_history = '$params[sensor_history]', 
@@ -787,8 +795,9 @@ function sensor_settings_save( $params = array() ){
 	return true;
 }
 function sensor_position_delete( $params = array() ){
-	if( !is_numeric( $params[sensor_position_id] ) ){
+	if( isset( $params[sensor_position_id] ) && !is_numeric( $params[sensor_position_id] ) ){
 		error('sensor position is wrong');
+		return false;
 	}
 	$db = new mydb;
 	$db->query("DELETE FROM measure_positions WHERE position_id = $params[sensor_position_id] LIMIT 1");
@@ -798,6 +807,7 @@ function sensor_position_delete( $params = array() ){
 function sensor_entry_delete( $params = array() ){
 	if( !is_numeric( $params[sensor_id] ) ){
 		error('sensor is wrong');
+		return false;
 	}
 	$db = new mydb;
 	$db->query("DELETE FROM measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
@@ -807,6 +817,7 @@ function sensor_entry_delete( $params = array() ){
 function sensor_delete( $params = array() ){
 	if( !isset( $params['sensor_id'] ) || !is_numeric( $params['sensor_id'] ) ){
 		error('sensor is wrong');
+		return false;
 	}
 	$db = new mydb;
 	$db->query("DELETE FROM measure_sensors WHERE sensor_id = $params[sensor_id] LIMIT 1");
@@ -821,8 +832,9 @@ function sensor_delete( $params = array() ){
 }
 
 function sensor_add( $params = array() ){
+	if( !input_check( $params ) ){ return false; }
 	$db = new mydb;
-	$db->query("INSERT IGNORE INTO measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$parmams[sensor_id]', '0', '0' )");
+	$db->query("INSERT IGNORE INTO measure_data_now ( sensor_id, watt, tmpr) VALUES ( '$params[sensor_id]', '0', '0' )");
 	$db->query("INSERT INTO measure_sensors ( sensor_id, sensor_title ) VALUES ( '$params[sensor_id]', '$params[sensor_name]' )");
 	$db->query("INSERT INTO measure_settings ( measure_sensor ) VALUES ( '$params[sensor_id]' )");
 	return true;
@@ -858,6 +870,7 @@ function global_settings_get( ){
 }
 
 function global_settings_set( $params ){
+	if( !input_check( $params ) ){ return false; }
 	$db = new mydb;
 	$db->query("DELETE FROM measure_system WHERE measure_system_setting_name NOT LIKE( 'current_version' )");
 	foreach( $params['data'] as $k => $v ){
@@ -918,6 +931,7 @@ function update_information_get( ){
 }
 
 function timezone_diff_get( $params = array( ) ){
+	if( !is_numeric( $params['sensor'] ) ){ return false; }
 	$sensor = sensor_get( $params['sensor'] );
 	date_default_timezone_set('UTC');
 	if( isset( $sensor[$params['sensor']]['measure_timezone_diff'] ) && is_numeric( $sensor[$params['sensor']]['measure_timezone_diff'] ) && $sensor[$params['sensor']]['measure_timezone_diff'] >= 1 ){
@@ -958,6 +972,46 @@ function format_bytes($size) {
     $units = array(' B', ' KB', ' MB', ' GB', ' TB');
     for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
     return round($size, 2).$units[$i];
+}
+
+function input_check( $params ){
+	$r = true;$val = '';
+	if( is_array( $params ) ){
+		foreach ( $params as $k => $v ){
+			if( is_array( $v ) ){
+				input_check( $v );
+				continue;
+			}
+			$val = $k.$v;
+			if( preg_match( '![\;\'\"\/\\%<>=#]+!', $val ) ){
+				$r = false;
+			}
+		}
+	}else{
+		if( preg_match( '![\;\'\"\/\\%<>=#]+!', $val ) ){
+			$r = false;
+		}
+		$val = $params;
+	}
+	
+	if(
+			strstr( $val, 'union' ) || 
+			strstr( $val, '0x' ) || 
+			strstr( $val, 'load_file' ) || 
+			strstr( $val, 'union' ) || 
+			strstr( $val, 'uotfile' ) || 
+			strstr( $val, 'database' ) || 
+			strstr( $val, 'benchmark' ) || 
+			strstr( $val, 'hex' )
+	){
+		$r = false;
+	}
+
+	if( $r === false ){
+		error( 'The are not allowed signs in the data.'. var_export( $params ) );
+	}
+	
+	return $r;
 }
 
 function debug( $info, $request = false, $dump = false ){
