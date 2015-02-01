@@ -160,7 +160,7 @@ def cron_timer_hourly():
 				previous_epoch_time = usage_sum_hourly_epoch
 			query = 'INSERT IGNORE INTO measure_watt_hourly ( sensor, data, hour, time ) VALUES ( "'+str(sensor)+'", "'+str(usage_sum_hourly)+'", "'+str(hour_from)+'", "'+str(day_from)+'" )'
 			mysql_query(query)
-			if system_settings['use_twitter']:
+			if system_settings['use_twitter'] or system_settings.has_key('use_email'):
 				sensor_notifications_cron_check(sensor, sensor_settings[sensor]['notifications'])
 		usage_sum_hourly = usage_sum_count = sum = r = 0
 	except:
@@ -293,6 +293,16 @@ def sensor_notifications_get():
 	else:
 		system_settings['use_twitter'] = False
 		logger.debug('No twitter settings found. Twitter notifications will not be used')
+	
+	if system_settings.has_key('system_settings_email_address') and system_settings['system_settings_email_address'] != '' and system_settings.has_key('system_settings_email_pass') and system_settings['system_settings_email_pass'] != '':
+		logger.debug('Found system_settings_email_address and system_settings_email_pass in the system settings so email will be enabled')
+		system_settings['use_email'] = True
+	else:
+		system_settings['use_email'] = False
+		logger.debug('No email settings found. Email notifications will not be used')
+		
+	if system_settings['use_twitter'] == False and system_settings['use_email'] == False:
+		logger.debug('No notification settings found. Notifications will not be used')
 		return True
 
 	try:
@@ -481,7 +491,7 @@ def sensor_data_check( sensor, watt, tmpr ):
 			sensor_watt_insert( sensor, watt )
 			if sensor_settings[sensor]['pvoutput']:
 				sensor_data_pvoutput_status( sensor, watt, tmpr )
-			if system_settings.has_key('use_twitter'):
+			if system_settings.has_key('use_twitter') or system_settings.has_key('use_email'):
 				sensor_notifications_check( sensor, watt, sensor_settings[sensor]['notifications_realtime'] )
 			
 		return True
