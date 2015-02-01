@@ -56,7 +56,6 @@ function navigation_main( data ) {
 			$('#tabcontainer').append('<li class="tab ui-state-default ui-corner-top" value="'+data[d].sensor.sensor_id+'" id="submenu'+data[d].sensor.sensor_id+'"><a href="#tabs-' + data[d].sensor.sensor_id + '" name="'+data[d].sensor.sensor_id+'">' + data[d].sensor.position_description + '</a></li>');
 			$('#tabs').append('<div id="tabs-'+data[d].sensor.sensor_id+'"><div id="menu'+data[d].sensor.sensor_id+'" class="menu" /><div id="det'+data[d].sensor.sensor_id+'" class="det"><div class="placeholder" id="placeholder' +data[d].sensor.sensor_id+'" /><div class="overview" id="overview' +data[d].sensor.sensor_id+'" /></div></div>');
 			sensor_clamps(data[d].sensor.clamps,d);
-
 		}
 			
 		});
@@ -169,6 +168,7 @@ function sensor_statistic( data, sensor ){
 			$('#placeholder'+sensor).unbind();
 			$('.tooltip').remove();
 			$('.sensor_legend').remove();
+			$('.switch-link-container').remove();
 			
 			$.each( data, function(d){
 				div_get('#placeholder'+sensor,'sensor_position'+d,'');
@@ -209,10 +209,13 @@ function sensor_clamps( data, sensor ){
 	}
 }
 
-function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
+function sensor_statistic_datetime( sensor ){
+	$('#placeholder'+sensor).empty();
 	$('#overview'+sensor).empty();
 	$('#container-legend').remove();
 	$('.sensor_legend').remove();
+	$('#data-container'+sensor).empty();
+	$('.switch-link-container').remove();
 	div_get('#placeholder'+sensor, 'loading_main'+sensor,'','loader');
 	$.getJSON('php/measureit_functions.php', { 'do' : 'sensor_detail_statistic', 'sensor' : sensor }, function(d){
 		$.each( d, function(dat){
@@ -240,6 +243,7 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 
 				$('#'+dat+'title'+sensor).click(function(){
 					$('#data-container'+sensor).empty();
+					$('#'+dat+'container'+sensor).empty();
 					div_get('#data-container'+sensor, 'loading'+sensor,'','loader');
 					sensor_detail_statistic_draw( '#data-container'+sensor, dataset);
 					$('.loader').fadeOut();
@@ -289,7 +293,8 @@ function sensor_statistic_datetime( sensor ){$('#placeholder'+sensor).empty();
 		});
 		$('.loader').fadeOut();
 		div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
-		$('#data-container'+sensor).css('height','100%');div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
+		$('#data-container'+sensor).css('height','100%');
+		//div_get('#placeholder'+sensor, 'data-container'+sensor,'','sensor-detail-statistic-data-container padding15');
 		
 	});
 }
@@ -705,6 +710,7 @@ function graph_draw_multiple( d, sensor, range, exclude){
 	$('.sensor_legend').empty();
 	$('#overview'+sensor).empty();
 	$('.tooltip').remove();
+	$('.switch-link-container').remove();
 	div_get('#placeholder'+sensor,'sensor_usage'+sensor,'');
 	div_get('#tabs-'+sensor,'sensor_legend'+sensor,'','sensor_legend');
 	div_get('#sensor_legend'+sensor,'container-legend','','legend-container float_left');
@@ -1370,7 +1376,7 @@ function sensor_list( data ){
 			$('#grabber_restart').click(function(){
 				$.get('php/measureit_functions.php', { 'do' : 'grabber_restart_init' }, function(d) {
 					$('#grabber_status_display').html('grabber restart within the next 60 secondes');
-					console.log(d);
+					//console.log(d);
 				});
 			});
 			
@@ -1429,7 +1435,7 @@ function sensor_admin_settings(data, sensor){
 		div_get('#sensor_settings_container','sensor_id',lng.difference_gmt_hint+':','padding5');
 		input_get('#sensor_settings_container','sensor_timezone_diff',data[sensor].sensor.measure_timezone_diff);
 		div_get('#sensor_settings_container','sensor_id',lng.currency_hint+':','padding5');
-		input_get('#sensor_settings_container','sensor_currency',data[sensor].sensor.measure_currency === undefined ? 'Û' : data[sensor].sensor.measure_currency);
+		input_get('#sensor_settings_container','sensor_currency',data[sensor].sensor.measure_currency === undefined ? 'â‚¬' : data[sensor].sensor.measure_currency);
 		div_get('#sensor_settings_container','sensor_id',lng.history_hint+':','padding5 notice');
 		input_get('#sensor_settings_container','sensor_history',data[sensor].sensor.measure_history === undefined ? '365' : data[sensor].sensor.measure_history);
 		div_get('#sensor_settings_container','sensor_id','PVOutput API Key:','padding5 notice');
