@@ -259,7 +259,7 @@ def update_check():
 			logger.info('Update: No new version found')
 
 	else:
-		mysql_query('INSERT IGNORE INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 116 )')
+		mysql_query('INSERT IGNORE INTO measure_system ( measure_system_setting_name, measure_system_setting_value ) values ( "current_version", 118 )')
 
 def sensor_settings_get():
 	try:
@@ -780,7 +780,7 @@ try:
 			clamps = False
 		
 			if info or debug:
-				print line
+				print(line)
 			# parsing from history_output 
 			# data will not be used because of the data is buggy and not detailed enough :)
 			# but saving them is not an error. maybe we can use the data later
@@ -874,5 +874,5 @@ except (KeyboardInterrupt, SystemExit):
 		killstr = 'kill -9 '+str(os.getpid())
 		subprocess.call(killstr, shell=True)
 	if platform.system() == '':
-		print 'On Windows you can close the CMD window'
-		print 'I can not recognize which OS you are using. Try a google search how to kill a python script + your OS'
+		print('On Windows you can close the CMD window')
+		print('I can not recognize which OS you are using. Try a google search how to kill a python script + your OS')
