@@ -1,4 +1,4 @@
-<?php 
+<?php
 require_once dirname(__FILE__).( '/class.db.pdo.mysql.php' );
 # in demo mode no sensor actions please
 global $demo;
@@ -144,14 +144,14 @@ function tmpr_view_main( $params ){
 		$use_diff = true;
 		$diff = timezone_diff_get( $params );
 	}
-	
+
 	$db = new db;
-	$db->query( 'select hour_id, time, hour, data, unix_timestamp(ts) from measure_tmpr_hourly order by hour_id desc limit 72' );	
+	$db->query( 'select hour_id, time, hour, data, unix_timestamp(ts) from measure_tmpr_hourly order by hour_id desc limit 72' );
 	$ret = $db->results( );
-	
+
 	foreach( $ret as $d  ){
 		$ts = $d['unix_timestamp(ts)'];
-		
+
 		# update old data entries
 		if( $d['unix_timestamp(ts)'] == 0 ){
 			$ts = strtotime( $d['time'].' '.$d['hour'].':00:00' );
@@ -161,26 +161,26 @@ function tmpr_view_main( $params ){
 		if( $use_diff ){
 			$ts = $diff['prefix'] == '-' ? $ts - $diff['diff'] : $ts + $diff['diff'];
 		}
-		
+
 		$r[][$ts.'000']['data'] = $d['data'];
 		//$r[@date( 'Y-m-d', $ts )][@date( 'G', $ts )]['data'] = $d['data'];
 		//ksort($r[@date( 'Y-m-d', $ts )]);
-		
+
 		#$r .= '['.$ts.','.$d['data'].'],';
 	}
 	header( 'Content-Type: application/json' );
 	print json_encode($r);
 	return true;
-	
+
 
 	while( $d = $db->fetch_array( $query ) ){
-		
+
 		$r[@date( 'Y-m-d', $date )][@date( 'G', $date )]['data'] = $d['data'];
 		ksort($r[@date( 'Y-m-d', $date )]);
 	}
 	print json_encode($r);
 	return true;
-	
+
 }
 
 function navigation_main( ){
@@ -245,7 +245,7 @@ function sensor_detail_statistic( $params = array( ) ){
 				$date = $diff['prefix'] == '-' ? $date - $diff['diff'] : $date + $diff['diff'];
 				if( isset( $params['debug'] ) && $cnt <= 1 ) { debug( 'date after timezone changing: '.$date ); };
 			}
-			
+
 			$datew = @date( w, $date );
 			$daten= @date( n, $date );
 			@$r['yeardays'][$datew] += $d['data'];
@@ -293,7 +293,7 @@ function summary_start( $request = array( ) ){
 		$r[$k]['hourly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 1, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
 		$r[$k]['weekly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 168, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
 		$r[$k]['monthly'] = price_sum( array( 'sensor'=>$k, 'data'=>sensor_data_raw_get( array( 'sensor'=> $k, 'unit_value'=> 730, 'unit'=> 'day', 'table'=> 'measure_watt_hourly', 'timeframe'=> 'limit-last', 'order' => 'time DESC, hour', $debug => 1 ) ), 'prices'=>$prices ) );
-		
+
 	}
 	header( 'Content-Type: application/json' );
 	print json_encode($r);
@@ -354,7 +354,7 @@ function sensor_data_get( $params = array( ) ){
 			if( isset( $params['debug'] ) ) debug( 'NO timezone settings in sensor_data_get', $params, timezone_diff_get( $params ) );
 		}
 		$dgb = array( );
-		
+
 		foreach( $q as $d ){
 			$time = preg_match('/hourly/', $params['table']) ? $d['time'].' '.$d['hour'].':00:00' : $d['time'];
 			$ts = @strtotime( $time, time( ) );
@@ -379,7 +379,7 @@ function sensor_values_now_get( $sensor ){
 		$db = new db;
 		$db->query( 'SELECT * FROM measure_data_now WHERE sensor_id = :sensor' );
 		$db->data( 'sensor', $sensor );
-		
+
 		return $db->result( );
 	}
 	return true;
@@ -387,12 +387,12 @@ function sensor_values_now_get( $sensor ){
 
 function sensor_notifications_get( $params = array( ) ){
 	if( !isset( $params['sensor'] ) || !is_numeric( $params['sensor'] ) ) return false;
-	
+
 	$db = new db;
 	$db->query( 'SELECT * FROM measure_notifications WHERE measure_notifications_sensor = :sensor' );
 	$db->data( 'sensor', $params['sensor'] );
 	$ret = $db->results( );
-	
+
 	$r = array();
 	foreach( $ret as $d ){
 		$r[$d['measure_notifications_id']]['measure_notifications_name'] = $d['measure_notifications_name'];
@@ -419,7 +419,7 @@ function sensor_notification_save( $params = array( ) ){
 		$cnt++;
 	}
 	$db->execute( );
-	
+
 	return true;
 }
 
@@ -460,7 +460,7 @@ function sensor_prices_all_get( ){
 	$db = new db;
 	$db->query( 'SELECT * FROM measure_costs ORDER BY costs_since desc' );
 	$ret = $db->results( );
-	
+
 	foreach( $ret as $d ){
 		$from = @strtotime( $d['costs_since'] );
 		if( $d['costs_from'] > $d['costs_to'] ){
@@ -476,7 +476,7 @@ function sensor_prices_all_get( ){
 				$r[$d['costs_sensor']][$from][$i] = $d['costs_price'];
 			}
 		}
-		
+
 	}
 	return $r;
 }
@@ -507,7 +507,7 @@ function sensor_price_add( $params = array( ) ){
 		# 1 price the whole day
 		$params['to'] = 23;
 	}
-	
+
 	$db = new db;
 	$db->query( 'INSERT INTO measure_costs (costs_sensor, costs_from, costs_to, costs_price, costs_since) VALUES ( :sensor, :from, :to, :price, :date )' );
 	$db->data( 'sensor', $params['sensor'] );
@@ -542,7 +542,7 @@ function sensor_statistic_get( $params = array( ) ){
 		foreach( $q as $d ){
 			@$tmp[$d['time']][$d['hour']] += $d['data'];
 		}
-		
+
 		foreach( $tmp as $day => $usage ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $day, $t);
 			$ts = @strtotime( $day );
@@ -571,7 +571,7 @@ function lng_get( $params = array( ) ){
 	$db = new db;
 	$db->query("SELECT * FROM measure_system WHERE measure_system_setting_name = 'language_use'");
 	$language = $db->result( );
-	
+
 	$r = lng_str_get( 'en_EN' );
 	$r = lng_str_get( $language['measure_system_setting_value'], $r );
 	header( 'Content-Type: application/json' );
@@ -588,7 +588,7 @@ function lng_str_get( $language = false, $lng_str = array( ) ){
 			@$lng_str[$r[0]] = $r[1];
 		}
 	}
-	
+
 	return $lng_str;
 }
 
@@ -611,28 +611,28 @@ function data_query_run( $params = array( ) ){
 	$unit_value = isset( $params['unit_value'] ) ? $params['unit_value'] : '';
 	$limit = isset( $params['limit'] ) ? $params['limit'] : '';
 	$timeframe = ( isset( $params['timeframe'] ) && $params['timeframe'] != '' ) ? $params['timeframe'] : 'all';
-	
+
 
 	#var_dump('<pre>',$params);
-	
+
 	# define the table from where data should be reeding
 	switch( $params['table'] ){
 		case 'measure_watt':
-			$table = 'measure_watt'; 
+			$table = 'measure_watt';
 		break;
 		case 'measure_watt_hourly':
-			$table = 'measure_watt_hourly'; 
+			$table = 'measure_watt_hourly';
 		break;
 		case 'measure_watt_daily':
-			$table = 'measure_watt_daily'; 
+			$table = 'measure_watt_daily';
 		break;
 		case 'measure_watt_monthly':
-			$table = 'measure_watt_monthly'; 
+			$table = 'measure_watt_monthly';
 		break;
 		default:
 			error( 'no database table selected: '.$params['table'] );
 	}
-	
+
 	switch( $order ){
 		case 'hour_id':
 			$order = 'hour_id';
@@ -640,7 +640,7 @@ function data_query_run( $params = array( ) ){
 		default:
 			$order = 'time';
 	}
-	
+
 	switch( strtolower( $unit ) ){
 		case 'year':
 			$unit = 'YEAR';
@@ -651,9 +651,9 @@ function data_query_run( $params = array( ) ){
 		default:
 			$unit = 'HOUR';
 	}
-	
+
 	$db = new db;
-	
+
 	switch( $timeframe ){
 		case 'static':
 			$db->query( "SELECT * FROM $table WHERE sensor = :sensor  AND time > UTC_TIMESTAMP( ) - INTERVAL :unit_value $unit ORDER BY $order" );
@@ -712,9 +712,9 @@ function data_query_run( $params = array( ) ){
 			error('No timeframe to get data from');
 		break;
 	}
-	
+
 	#$query = "SELECT $selection FROM $table WHERE sensor = '$sensor' $timeframe";
-	
+
 	return false;
 	#var_dump('<pre>',$params);
 	#return mysql_real_escape_string( $query );
@@ -734,7 +734,7 @@ function price_sum( $params = array( ) ){
 			$price += $v * $prices[$k];
 		}
 	}
-	
+
 	return round( $sum, 3 ).' Kwh<br />'.round( $price, 2 );
 }
 
@@ -748,7 +748,7 @@ function price_sum_statistic( $params ){
 		$prices = $params['prices'][400];
 		if( isset( $_REQUEST['debug'] ) ) debug( 'no sensor found. using system prices', $params['prices'] );
 	}
-	
+
 	$last_date = ''; $sum = $price = $cnt = 0;
 	foreach( $prices as $k => $v ){
 		if( $cnt == 0 ){
@@ -765,7 +765,7 @@ function price_sum_statistic( $params ){
 		}
 		$cnt++;
 	}
-	
+
 	foreach( $params['data'] as $k=>$v ){
 		$sum += $v;
 		@$price += $v * $prices[$k];
@@ -808,7 +808,7 @@ function sensor_get( $sensor = false ){
 	global $demo;
 	$db = new db;
 	$db->query( '
-		SELECT * 
+		SELECT *
 		FROM measure_sensors
 		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
 		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
@@ -817,14 +817,14 @@ function sensor_get( $sensor = false ){
 	' );
 	$db->data( 'sensor', $sensor );
 	$d = $db->result( );
-	
+
 	$r = array();
-	
+
 	foreach( $d as $k => $v){
 		$item = !is_numeric( $k ) ? $k : 'x';
 		$r[$d['sensor_id']][$item] = $d[$k];
 	}
-		
+
 	$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
 	$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
 	$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
@@ -839,7 +839,7 @@ function sensors_get( ){
 	global $demo;
 	$db = new db;
 	$db->query( "
-		SELECT * 
+		SELECT *
 		FROM measure_sensors
 		LEFT JOIN measure_positions ON measure_positions.position_sensor = measure_sensors.sensor_id
 		LEFT JOIN measure_settings ON measure_sensors.sensor_id = measure_settings.measure_sensor
@@ -887,12 +887,12 @@ function sensor_position_add( $params = array() ){
 function sensor_settings_save( $params = array() ){
 	$params['sensor_price'] = preg_replace('/,/', '.', @$params['sensor_price']);
 	$db = new db;
-	$db->query(  'UPDATE measure_settings SET measure_history = :history, 
-		measure_currency = :currency, 
-		measure_timezone_diff = :diff, 
-		measure_pvoutput_id = :id, 
-		measure_pvoutput_api = :api, 
-		measure_scale_factor = :scale, 
+	$db->query(  'UPDATE measure_settings SET measure_history = :history,
+		measure_currency = :currency,
+		measure_timezone_diff = :diff,
+		measure_pvoutput_id = :id,
+		measure_pvoutput_api = :api,
+		measure_scale_factor = :scale,
 		measure_lower_limit = :lower,
 		measure_type = :type WHERE measure_sensor = :sensor' );
 	$db->data( 'history', $params['sensor_history'] );
@@ -1124,12 +1124,12 @@ function format_bytes($size) {
 }
 
 function debug( $info, $request = false, $dump = false ){
-	print $info.'<hr />'; 
+	print $info.'<hr />';
 	if( $dump ){
 		var_dump( '<pre>', $dump );
 		print '<hr />';
 	}
-	
+
 	if( $request ){
 		var_dump( '<pre>', $request );
 		print '<hr />';
