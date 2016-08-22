@@ -1110,7 +1110,7 @@ function grabber_restart_init( ){
 }
 
 function grabber_status_get( ){
-	$pid = system( "ps a -C python | grep data-input.py | head -1 | cut -d ' ' -f1" );
+	$pid = system( "ps a -C python | grep data-input.py | grep -v grep" );
 	if( !is_numeric( $pid ) ) return false;
 	$proc_info = system( 'ps -p '.$pid.' -o etime=' );
 	print json_decode($proc_info);
