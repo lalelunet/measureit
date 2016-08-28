@@ -779,6 +779,9 @@ function graph_draw_multiple( d, sensor, range, exclude){
 				$.each( d[dat], function( set ){
 					tmp.push([parseFloat(set), parseFloat(d[dat][set].data)]);
 				});
+				tmp.sort(function(a,b){
+					return a[0] - b[0];
+				});
 				var day = {
 					label: dat+' '+label,
 					id: dat,
