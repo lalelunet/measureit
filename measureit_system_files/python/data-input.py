@@ -55,7 +55,7 @@ def sensor_list_get():
 		r = mysql_query('SELECT sensor_id FROM measure_sensors','fetchall')
 		for row in r:
 			logger.info('Get sensor in sensor_list_get Sensor: '+str(row[0]))
-			sensor = int(row[0]) 
+			sensor = int(row[0])
 			sensors[sensor] = {'tmpr' : 0, 'watt' : 0, 'counter' :0, 'pvoutput_watt_sum' : {}, 'pvoutput_batch_string' : {} }
 		logger.info('Get sensor list successful')
 		logger.debug(sensors)
@@ -100,7 +100,7 @@ def tmpr_insert( tmpr ):
 		now = datetime.datetime.utcnow( )
 		mysql_query('INSERT INTO measure_tmpr ( data, time ) values( "'+str(tmpr)+'", UTC_TIMESTAMP( ) ) ')
 		mysql_query('INSERT IGNORE INTO measure_tmpr_hourly ( data, time, hour ) VALUES ( "'+str(tmpr)+'", UTC_TIMESTAMP( ), "'+str(now.hour)+'" )')
-	
+
 	except:
 		logger.warning('Error in tmpr_insert while insert tmpr. Error: '+traceback.format_exc())
 		err_critical_count()
@@ -166,11 +166,11 @@ def cron_timer_hourly():
 	except:
 		logger.warning('Error in cron_timer_hourly. Error: '+traceback.format_exc())
 		err_critical_count()
-	
+
 	timer_hourly = threading.Timer(3600.0, cron_timer_hourly)
 	timer_hourly.start()
-		
-	
+
+
 def cron_timer_daily():
 	logger.info('Try to run daily job in cron_timer_daily')
 	timer_daily = threading.Timer(86400.0, cron_timer_daily)
@@ -219,7 +219,7 @@ def cron_timer_daily():
 	except:
 		logger.warning('Error in cron_timer_daily. Error: '+traceback.format_exc())
 		err_critical_count()
-		
+
 def cron_timer_weekly():
 	logger.info('Try to run weekly job in cron_timer_weekly')
 	timer_weekly = threading.Timer(604800.0, cron_timer_weekly)
@@ -245,7 +245,7 @@ def cron_timer_1minute_restart():
 			logger.warning('Something went wrong while killing me. Error: '+traceback.format_exc())
 	except:
 		logger.info('No restart file found')
-		
+
 
 def update_check():
 	if system_settings.has_key('current_version'):
@@ -293,14 +293,14 @@ def sensor_notifications_get():
 	else:
 		system_settings['use_twitter'] = False
 		logger.debug('No twitter settings found. Twitter notifications will not be used')
-	
+
 	if system_settings.has_key('system_settings_email_address') and system_settings['system_settings_email_address'] != '' and system_settings.has_key('system_settings_email_pass') and system_settings['system_settings_email_pass'] != '':
 		logger.debug('Found system_settings_email_address and system_settings_email_pass in the system settings so email will be enabled')
 		system_settings['use_email'] = True
 	else:
 		system_settings['use_email'] = False
 		logger.debug('No email settings found. Email notifications will not be used')
-		
+
 	if system_settings['use_twitter'] == False and system_settings['use_email'] == False:
 		logger.debug('No notification settings found. Notifications will not be used')
 		return True
@@ -346,7 +346,7 @@ def sensor_notifications_check(sensor, data, notifications):
 				if annouying:
 					logger.debug('Notification is false on sensor' +str(sensor))
 					logger.debug(str(data)+' is  not bigger than '+str(notifications[notification]['notification_value']))
-				
+
 		if notifications[notification]['notification_criteria'] == 2:
 			if annouying:
 				logger.debug('Found notification bigger than on sensor' +str(sensor))
@@ -386,7 +386,7 @@ def sensor_notifications_cron_check(sensor, notifications):
 			else:
 				logger.debug('Notification is false on sensor' +str(sensor))
 				logger.debug(str(sum*1000)+' is  not smaller than '+str(notifications[notification]['notification_value']))
-				
+
 		if notifications[notification]['notification_criteria'] == 2:
 			criteria = '>'
 			if sensor_notification_data_compare( sum*1000, notifications[notification]['notification_value'],'>'):
@@ -440,7 +440,7 @@ def sensor_notifications_data_get( sensor, notifications ):
 	groups['h'] = groups['d'] = groups['m'] = 0
 	for notification in notifications:
 		groups[notifications[notification]['notification_unit']] = int(notifications[notification]['notification_items']) if int(notifications[notification]['notification_items']) > groups[notifications[notification]['notification_unit']] else groups[notifications[notification]['notification_unit']]
-	
+
 	for unit in groups:
 		if groups[unit] > 0:
 			sensor_data[unit] = {}
@@ -459,7 +459,7 @@ def sensor_notifications_data_get( sensor, notifications ):
 			r = mysql_query('SELECT * FROM '+table+' WHERE sensor = '+str(sensor)+' ORDER BY '+order+' desc LIMIT '+str(groups[unit]),'fetchall')
 			for row in r:
 				sensor_data[unit][row[0]] = row[2]
-	
+
 	return sensor_data
 
 def date_hour_get( hours ):
@@ -475,7 +475,7 @@ def sensor_data_check( sensor, watt, tmpr ):
 	sensor = int(sensor)
 	watt = int(watt)
 	tmpr = float(tmpr)
-	if sensors and sensors.has_key(sensor):
+	if sensors and sensors.has_key(int(sensor)):
 		if sensors[sensor]['tmpr'] != tmpr:
 			sensors[sensor]['tmpr'] = tmpr
 			sensor_data_change( 'tmpr', sensor, tmpr )
@@ -493,7 +493,7 @@ def sensor_data_check( sensor, watt, tmpr ):
 				sensor_data_pvoutput_status( sensor, watt, tmpr )
 			if system_settings.has_key('use_twitter') or system_settings.has_key('use_email'):
 				sensor_notifications_check( sensor, watt, sensor_settings[sensor]['notifications_realtime'] )
-			
+
 		return True
 
 def sensor_data_pvoutput_init( sensor ):
@@ -501,36 +501,36 @@ def sensor_data_pvoutput_init( sensor ):
 		logger.info('Sensor '+str(sensor)+' has a PVOutput ID')
 		logger.info(sensor_settings[sensor]['pvoutput_id'])
 		logger.info('Sensor '+str(sensor)+' Now checking if there is a PVOutput API key')
-		
+
 		sensor_settings[sensor]['pvoutput_cnt'] = 0
 		sensor_settings[sensor]['pvoutput_batch_str'] = ''
 		sensor_settings[sensor]['timezone_diff_value'] = 0
 		sensor_settings[sensor]['timezone_diff_prefix'] = False
-		
+
 		if sensor_settings[sensor]['pvoutput_api'] == '':
 			logger.info('Sensor '+str(sensor)+' has no PVOutput API. Next check if there is a global API key')
-			
+
 		elif sensor_settings[sensor]['pvoutput_api'] != '':
 			logger.info('Sensor '+str(sensor)+' has PVOutput API.')
 			logger.debug(sensor_settings[sensor]['pvoutput_api'])
-			
+
 			sensor_settings[sensor]['pvoutput_api'] = sensor_settings[sensor]['pvoutput_api']
 			sensor_settings[sensor]['pvoutput'] = True
-		
+
 		if system_settings.has_key('system_settings_pvoutput_api') and system_settings['system_settings_pvoutput_api'] != '':
 			logger.info('Found PVOutput API key in the system settings.')
 			logger.debug(system_settings['system_settings_pvoutput_api'])
-			
+
 			sensor_settings[sensor]['pvoutput_api'] = system_settings['system_settings_pvoutput_api']
 			sensor_settings[sensor]['pvoutput'] = True
-			
+
 		if sensor_settings[sensor]['timezone_diff'] != 0:
 			time_offset = sensor_settings[sensor]['timezone_diff']
 		elif system_settings.has_key('global_timezone_use') and system_settings['global_timezone_use'] != 0:
 			time_offset = system_settings['global_timezone_use']
 		else:
 			time_offset = 0
-		
+
 		r = re.search(r"(-?)(.+)", str(time_offset))
 		if r:
 			if r.group(1) and r.group(2):
@@ -586,18 +586,18 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 		sensors[sensor]['pvoutput_watt_sum']['day'] = day
 	if 'time' not in sensors[sensor]['pvoutput_watt_sum']:
 		sensors[sensor]['pvoutput_watt_sum']['time'] = time
-	
+
 	if annouying:
 		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']) )
-		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'])+' + '+str(watt)) 
-	
+		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'])+' + '+str(watt))
+
 	sensors[sensor]['pvoutput_watt_sum']['watt_sum'] += watt
 	if annouying:
 		logger.debug( 'PVOutput watt sum = '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']) )
 
 	sensors[sensor]['pvoutput_watt_sum']['time'] = time
 	sensors[sensor]['pvoutput_watt_sum']['day'] = day
-	
+
 	# midnight
 	if time_str <= 1:
 		if annouying:
@@ -605,7 +605,7 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
 		if annouying:
 			logger.debug('new time_str: '+str(time_str))
-	
+
 	if time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] < 5:
 		if annouying:
 			logger.debug('sensor: '+str(sensor)+' time_str is < 5')
@@ -613,7 +613,7 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 		sensor_settings[sensor]['pvoutput_cnt']+=1
 		if annouying:
 			logger.debug('new time_str: '+str(sensor_settings[sensor]['pvoutput_cnt']))
-	
+
 	elif time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] >= 5:
 		#next 5 minutes block
 		sensor_data_pvoutput_status_generate( sensor )
@@ -628,13 +628,13 @@ def sensor_data_pvoutput_status_generate( sensor ):
 		logger.debug('PVOutput watt counter last 5 min is '+str(sensor_settings[sensor]['pvoutput_cnt']))
 		logger.debug('PVOutput watt average last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt']))
 	sum = str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt'])
-	
+
 	#convert fahrenheit to celsius
 	if system_settings.has_key('system_settings_tmpr'):
 		if annouying:
 			logger.debug('Temperature setting found '+ str(system_settings['system_settings_tmpr']))
 		tmpr = sensors[sensor]['tmpr'] if system_settings['system_settings_tmpr'] == 'c' else ((float(sensors[sensor]['tmpr'])-32)/9)*5
-	
+
 	url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+str(sum)+'&v5='+str(tmpr);
 
 	try:
@@ -644,7 +644,7 @@ def sensor_data_pvoutput_status_generate( sensor ):
 		if r:
 			if r.group(1):
 				logger.info('Sensor '+str(sensor)+'PVOutput update sucessful from sensor : '+str(sensor)+' Output: '+str(r.read()))
-	
+
 	except:
 		logger.warning('Sensor '+str(sensor)+'sensor_data_pvoutput_status_generate. Error: '+traceback.format_exc())
 		logger.info(url)
@@ -693,13 +693,13 @@ def config_parse():
 
 		for line in config_file:
 			line = line.rstrip()
-			
+
 			if not line:
 				continue
-			
+
 			if line.startswith("#"):
 				continue
-			
+
 			r = re.search(r".?\$(.+) ?= ?'(.+)';", line)
 
 			if r:
@@ -733,11 +733,11 @@ def mysql_query(query, type = False):
 			except:
 				logger.error('Can not execute query. Error: '+traceback.format_exc())
 				err_critical_count()
-			
+
 		except:
 			logger.error('Can not connect to database. Is the database on and are the database settings ok? Error: '+traceback.format_exc())
 			err_critical_count()
-	
+
 	return True
 
 warnings.filterwarnings("ignore")
@@ -752,7 +752,7 @@ except:
 	try:
 		ser = serial.Serial(port=usbport, baudrate=57600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=3)
 		logger.info('Connected to the serial device '+usbport)
-	
+
 	except:
 		logger.error('Can not connect to the serial device. Please check the cable is plugged in and if the device has the correctly drivers installed Error: '+traceback.format_exc())
 		err_critical_count()
@@ -768,20 +768,20 @@ try:
 	cron_timer_weekly()
 	cron_timer_1minute_restart()
 	logger.info('Start parsing XML')
-	
+
 	if system_settings.has_key('system_settings_system') and system_settings['system_settings_system'] == 'classic':
 		system = 'classic'
 		logger.debug('System is a Classic device from CC so searching for XML in classic format')
-	
+
 	while True:
 		try:
 			line = ser.readline()
 			line = line.rstrip('\r\n')
 			clamps = False
-		
+
 			if info or debug:
 				print(line)
-			# parsing from history_output 
+			# parsing from history_output
 			# data will not be used because of the data is buggy and not detailed enough :)
 			# but saving them is not an error. maybe we can use the data later
 			r = re.search(r"<hist>", line)
@@ -793,14 +793,14 @@ try:
 						if d:
 						 for f in d:
 							 history_update(s,f)
-			
+
 			# arghhhhh xml is changing when fahrenheit is used instead of celsius.
 			# who is doing something like this???
 			if system_settings.has_key('system_settings_tmpr'):
 				tmpr_node = 'tmpr' if system_settings['system_settings_tmpr'] == 'c' else 'tmprF'
 			else:
 				tmpr_node = 'tmpr'
-			
+
 			if system == 'classic':
 				r = re.search(r"<ch1><watts>(\d+)<\/watts><\/ch1><ch2><watts>(\d+)<\/watts><\/ch2><ch3><watts>(\d+)<\/watts><\/ch3><tmpr>(.+?)</tmpr>", line)
 				if r:
@@ -817,7 +817,7 @@ try:
 					clamp1 = r.group(3)
 					clamp2 = r.group(5) if r.group(5) else False
 					clamp3 = r.group(7) if r.group(7) else False
-					
+
 			if r:
 				watt_sum = int(clamp1)
 				# more than 1 clamp
@@ -825,7 +825,7 @@ try:
 					if annouying:
 						logger.debug('Found clamp 2 on sensor '+str(s))
 					sensor = int('2'+str(s))
-					if sensors and sensors.has_key(sensor):
+					if sensors and sensors.has_key(int(sensor)):
 						if annouying:
 							logger.debug('Clamp 2 is in the sensor list')
 						watt = int(clamp2)
@@ -835,12 +835,12 @@ try:
 					else:
 						if annouying:
 							logger.debug('Clamp 2 is NOT in the sensor list')
-		
+
 				if clamp3:
 					if annouying:
 						logger.info('Found clamp 3 on sensor '+str(s))
 					sensor = int('3'+str(s))
-					if sensors and sensors.has_key(sensor):
+					if sensors and sensors.has_key(int(sensor)):
 						if annouying:
 							logger.debug('Clamp 3 is in the sensor list')
 						watt = int(clamp3)
@@ -850,7 +850,7 @@ try:
 					else:
 						if annouying:
 							logger.debug('Clamp 3 is NOT in the sensor list')
-					
+
 				if clamps:
 					if annouying:
 						logger.debug('Clamps found on sensor '+str(s)+'. Add data to clamps')
@@ -860,7 +860,7 @@ try:
 				else:
 					if annouying:
 						logger.debug('No clamps found on sensor '+str(s))
-				   
+
 				sensor_data_check( s, watt_sum, tmpr )
 		except:
 			logger.error('Can not connect to the serial device: '+traceback.format_exc())
