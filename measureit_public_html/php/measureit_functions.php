@@ -547,10 +547,11 @@ function sensor_statistic_get( $params = array( ) ){
 			preg_match( '/(\d\d\d\d)-(\d\d)-(\d\d)/', $day, $t);
 			$ts = @strtotime( $day );
 			$month = @date( 'n', $ts );
+			$da = @date( 'j', $ts );
 			$get_day_data = price_sum_statistic( array( 'sensor'=>$params['sensor'], 'data'=>$tmp[$day], 'day'=>( $ts -1 ), 'prices'=>$prices ) );
-			@$r[$t[1]][$month][$t[3]]['data'] = $get_day_data['sum'];
-			@$r[$t[1]][$month][$t[3]]['price'] = $get_day_data['price'];
-			@$r[$t[1]][$month][$t[3]]['weekday'] = @date( 'w', $ts );
+			@$r[$t[1]][$month][$da]['data'] = $get_day_data['sum'];
+			@$r[$t[1]][$month][$da]['price'] = $get_day_data['price'];
+			@$r[$t[1]][$month][$da]['weekday'] = @date( 'w', $ts );
 		}
 		header( 'Content-Type: application/json' );
 		print json_encode($r);
