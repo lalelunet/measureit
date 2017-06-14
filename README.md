@@ -1,26 +1,6 @@
 
 
-# The end of the measureit project ?! #
-
-On Oct 5, 2010 I share the first running version from measureit with the community. The hardware I use was the energy monitors from Current Cost Ltd. This company went into liquidation in September 2015 and meanwhile you can not buy their hardware any more. As a result the community is not longer growing. 
-
-As a result I did not invest much time to bring forward this project. Now there is a point I had to ask me if I should stop this project.
-
-I take a quick look on the market but did not found other smart meters that support reading the data directly. The new trend is to push the data into the cloud and take money from the customer to see the own data...
-If you know alternative hardware [feel free to post your ideas](https://github.com/lalelunet/measureit/issues/27)
-
-The new trend is home automation, I am very interested in and of course I will spend time to develop cool stuff. If you think you had a idea what measureit can do you can [post your idea here](https://github.com/lalelunet/measureit/issues/28)
-
-I would like to use this opportunity to say thank you to all contributor, supporter, creator, promoter, translater, user, ..... It was a great time with all of you! 
-
-**Thank you very much to all of you!**
-
-Please feel free to contact me nevertheless. I am listening always to your feedback  ;)
-
-
-Regards
-
-Thomas
+### [The end of the measureit project ?!](https://github.com/lalelunet/measureit/wiki/The-end-of-the-measureit-project-%3F!) ###
 
 # Welcome to the measureit Project #
 
