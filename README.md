@@ -1,4 +1,28 @@
-#Welcome to the measureit Project#
+
+
+# The end of the measureit project ?! #
+
+On Oct 5, 2010 I share the first running version from measureit with the community. The hardware I use was the energy monitors from Current Cost Ltd. This company went into liquidation in September 2015 and meanwhile you can not buy their hardware any more. As a result the community is not longer growing. 
+
+As a result I did not invest much time to bring forward this project. Now there is a point I had to ask me if I should stop this project.
+
+I take a quick look on the market but did not found other smart meters that support reading the data directly. The new trend is to push the data into the cloud and take money from the customer to see the own data...
+If you know alternative hardware [feel free to post your ideas](https://github.com/lalelunet/measureit/issues/27)
+
+The new trend is home automation, I am very interested in and of course I will spend time to develop cool stuff. If you think you had a idea what measureit can do you can [post your idea here](https://github.com/lalelunet/measureit/issues/28)
+
+I would like to use this opportunity to say thank you to all contributor, supporter, creator, promoter, translater, user, ..... It was a great time with all of you! 
+
+**Thank you very much to all of you!**
+
+Please feel free to contact me nevertheless. I am listening always to your feedback  ;)
+
+
+Regards
+
+Thomas
+
+# Welcome to the measureit Project #
 
 Measureit allows you to have your own server to store your voltage and temperature data. It has a  easy to use web interface that is completely written in javascript and jquery to see your power consumption.
 
@@ -8,7 +32,7 @@ You are able to see the detailed consumption in real time or see your consumptio
 
 Measureit has clamp support. You can see the data from every clamp and the total usage from a sensor with multiple clamps.
 
-##Raspberry Pi##
+## Raspberry Pi ##
 
 Measureit runs on a Raspberry Pi without problems.
 I recommend the usage from a pre configured iso image where all software is installed.
@@ -28,7 +52,7 @@ There are options to create notifications per email or twitter if a user defined
 More informations about measureit you can find in the [wiki](https://github.com/lalelunet/measureit/wiki/) from the project.
 
 
-##Multiple languages##
+## Multiple languages ##
 
 Measureit is able to speak your language. If your language is not in the list and you wish to help so feel free to translate this small text file. It is just about 10 minutes of work. Send your translated file and it will be included as soon as possible.
 
@@ -54,7 +78,7 @@ https://docs.google.com/document/d/1fKyB458Xb4k1DM5_Vemj-lqx7-h01zAfeONYFyEfmJs/
 
 **FEEDBACK WANTED**
 
-##SUPPORT##
+## SUPPORT ##
 
 If you like measureit feel free to give me a tip  :)
 
