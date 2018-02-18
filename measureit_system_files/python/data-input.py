@@ -244,7 +244,8 @@ def cron_timer_1minute_restart():
 		except:
 			logger.warning('Something went wrong while killing me. Error: '+traceback.format_exc())
 	except:
-		logger.info('No restart file found')
+		if annouying:
+			logger.info('No restart file found')
 
 
 def update_check():
@@ -600,11 +601,9 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 
 	# midnight
 	if time_str <= 1:
-		if annouying:
-			logger.debug('sensor: '+str(sensor)+'time_str is <= 0')
+		logger.debug('Midnight. sensor: '+str(sensor)+'time_str is <= 0')
 		sensors[sensor]['pvoutput_watt_sum']['time_str'] = time_str
-		if annouying:
-			logger.debug('new time_str: '+str(time_str))
+		logger.debug('new time_str: '+str(time_str))
 
 	if time_str - sensors[sensor]['pvoutput_watt_sum']['time_str'] < 5:
 		if annouying:
@@ -623,11 +622,11 @@ def sensor_data_pvoutput_status( sensor, watt, tmpr ):
 
 def sensor_data_pvoutput_status_generate( sensor ):
 	type = 'v4' if sensor_settings[sensor]['type'] == 0 else 'v2'
-	if annouying:
-		logger.debug('PVOutput watt sum last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']))
-		logger.debug('PVOutput watt counter last 5 min is '+str(sensor_settings[sensor]['pvoutput_cnt']))
-		logger.debug('PVOutput watt average last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt']))
+
+	logger.debug('PVOutput watt sum last 5 min is '+str(sensors[sensor]['pvoutput_watt_sum']['watt_sum']))
+	logger.debug('PVOutput watt counter last 5 min is '+str(sensor_settings[sensor]['pvoutput_cnt']))
 	sum = str(sensors[sensor]['pvoutput_watt_sum']['watt_sum'] / sensor_settings[sensor]['pvoutput_cnt'])
+	logger.debug('PVOutput watt average last 5 min is '+sum)
 
 	#convert fahrenheit to celsius
 	if system_settings.has_key('system_settings_tmpr'):
@@ -635,7 +634,7 @@ def sensor_data_pvoutput_status_generate( sensor ):
 			logger.debug('Temperature setting found '+ str(system_settings['system_settings_tmpr']))
 		tmpr = sensors[sensor]['tmpr'] if system_settings['system_settings_tmpr'] == 'c' else ((float(sensors[sensor]['tmpr'])-32)/9)*5
 
-	url = 'http://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+str(sum)+'&v5='+str(tmpr);
+	url = 'https://pvoutput.org/service/r2/addstatus.jsp?key='+sensor_settings[sensor]['pvoutput_api']+'&sid='+str(sensor_settings[sensor]['pvoutput_id'])+'&d='+sensors[sensor]['pvoutput_watt_sum']['day']+'&t='+sensors[sensor]['pvoutput_watt_sum']['time']+'&'+type+'='+str(sum)+'&v5='+str(tmpr);
 
 	try:
 		r = urllib2.urlopen(url)
