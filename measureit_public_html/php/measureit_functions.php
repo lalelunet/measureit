@@ -817,20 +817,21 @@ function sensor_get( $sensor = false ){
 		ORDER BY measure_sensors.sensor_id, measure_positions.position_id
 	' );
 	$db->data( 'sensor', $sensor );
-	$d = $db->result( );
-
+	$ret = $db->results( );
 	$r = array();
 
-	foreach( $d as $k => $v){
-		$item = !is_numeric( $k ) ? $k : 'x';
-		$r[$d['sensor_id']][$item] = $d[$k];
-	}
-
-	$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
-	$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
-	$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
-	if( $demo ){
-		$r[$d['sensor_id']]['measure_pvoutput_api'] = '';
+	foreach( $ret as $d ){
+		foreach( $d as $k => $v){
+			$item = !is_numeric( $k ) ? $k : 'x';
+			$r[$d['sensor_id']][$item] = $d[$k];
+		}
+		if( $demo ){
+			$r[$d['sensor_id']]['measure_pvoutput_api'] = '';
+			$r[$d['sensor_id']]['measure_pvoutput_id'] = '';
+		}
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['position'] = $d['position_id'];
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['time'] = $d['position_time'];
+		$r[$d['sensor_id']]['positions'][$d['position_id']]['description'] = $d['position_description'];
 	}
 
 	return $r;
