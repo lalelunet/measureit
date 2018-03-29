@@ -1,0 +1,7 @@
+[web]
+    comment = web
+    browseable = yes
+    path = /web
+    guest ok = no
+    read only = no
+    create mask = 775

@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>&1
+DIR=`[ -d /var/run/mysqld ]|| mkdir -p /var/run/mysqld && chown -R mysql:mysql /var/run/mysqld`
+exec /usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --user=mysql --skip-log-error --port=3306
