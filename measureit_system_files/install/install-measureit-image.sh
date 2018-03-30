@@ -112,6 +112,8 @@ mkdir /etc/servers/measureit
 # change back to the pi user home dir where we clone measureit to
 cd /home/pi/measureit/measureit_system_files/install
 cat svc-run-measureit > /etc/servers/measureit/run
+chmod +x /etc/servers/measureit/run
+ln -s /etc/servers/measureit /etc/service/measureit
 printf "\n >> done >>\n\n"
 
 printf "\n >> clean up the system and shutdown  >>\n#########################\n"
