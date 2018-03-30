@@ -1,11 +1,15 @@
+# The "new" way from the raspian image is to use dhcpcd daemon even for static ip addresses.
+# I do not believe that a dhcp client is the correct way and place to set static addresses to the system
+# so I put them nevertheless in network interfaces where they are right until debian says something other
+
 auto eth0:1
 iface eth0:1 inet static
-address 10.0.0.99
+address 10.0.0.102
 netmask 255.255.0.0
 gateway 10.0.0.1
 
 auto eth0:2
 iface eth0:2 inet static
-address 192.168.0.99
+address 192.168.0.102
 netmask 255.255.0.0
 gateway 192.168.0.1
