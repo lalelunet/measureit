@@ -1,3 +1,6 @@
+# measureit is moved to gitlab #
+
+Please go to: https://gitlab.com/lalelunet/measureit/
 
 
 ### [The end of the measureit project ?!](https://github.com/lalelunet/measureit/wiki/The-end-of-the-measureit-project-%3F!) ###
